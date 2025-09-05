@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.Schema import user_schema
+from app.schema import user_schema
 from app.models.user_m import User
 from app.models.role_m import Role  # make sure Role model is imported
 from app.utils import hash_password, verify_password, create_access_token
@@ -34,7 +34,8 @@ def register(user: user_schema.UserCreate, db: Session = Depends(get_db)):
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    return new_user
+    return new_user   # 👈 now FastAPI can serialize it
+
 
 @router.post("/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
