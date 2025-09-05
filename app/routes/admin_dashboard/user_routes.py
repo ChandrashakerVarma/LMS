@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.Schema import user_schema
+from app.schema import user_schema
 from app.models.user_m import User
 from app.utils import hash_password
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, require_admin
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -13,7 +13,7 @@ router = APIRouter(prefix="/users", tags=["Users"])
 @router.post("/", response_model=user_schema.UserResponse)
 def create_user(
     user: user_schema.UserCreate,
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_db),current_user: User = Depends(require_admin)
 ):
     # Check if email exists
     if db.query(User).filter(User.email == user.email).first():
@@ -33,7 +33,7 @@ def create_user(
 # READ - Get All Users
 @router.get("/", response_model=list[user_schema.UserResponse])
 def get_users(
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_db),current_user: User = Depends(require_admin)
 ):
     return db.query(User).all()
 
@@ -42,7 +42,7 @@ def get_users(
 def get_user(
     user_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)  # User can see own profile, admin can see all
+    current_user: User = Depends(require_admin)  # User can see own profile, admin can see all
 ):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
@@ -59,7 +59,7 @@ def get_user(
 def update_user(
     user_id: int,
     updated_user: user_schema.UserBase,
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_db),current_user: User = Depends(require_admin)
 ):
      user = db.query(User).filter(User.id == user_id).first()
      if not user:
@@ -76,7 +76,7 @@ def update_user(
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_user(
     user_id: int,
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_db),current_user: User = Depends(require_admin)
 ):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:

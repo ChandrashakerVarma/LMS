@@ -16,6 +16,7 @@ if config.config_file_name is not None:
 
 # Import Base from database.py
 from app.database import Base as DatabaseBase
+from app.models import role_m, user_m, course_m, Progress_m
 target_metadata = DatabaseBase.metadata  # Use the Base metadata from database.py
 
 def run_migrations_offline() -> None:

@@ -15,5 +15,9 @@ class User(Base):
     updated_at = Column(DateTime, onupdate=func.now())
     inactive = Column(Boolean, default=False)
 
-    # ✅ relationship with Role
+    # relationship
     role = relationship("Role", back_populates="users")
+    progress = relationship("Progress", back_populates="user")
+
+   
+
