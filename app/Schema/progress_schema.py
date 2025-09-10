@@ -1,18 +1,13 @@
 from pydantic import BaseModel
 from datetime import datetime
 
-# Used for creating a progress record
-class ProgressCreate(BaseModel):
+# Used for updating progress after video/quiz checkpoint
+class ProgressUpdateSchema(BaseModel):
+    user_id: int
     course_id: int
-    watched_minutes: float = 0.0
-    progress_percentage: float = 0.0
+    watched_minutes: float  # frontend sends current watched minutes
 
-# Used for updating progress
-class ProgressUpdate(BaseModel):
-    watched_minutes: float
-    progress_percentage: float
-
-# Used for responses
+# Response
 class ProgressResponse(BaseModel):
     id: int
     user_id: int
@@ -23,4 +18,4 @@ class ProgressResponse(BaseModel):
     updated_at: datetime
 
     class Config:
-        orm_mode = True   # ✅ Required for SQLAlchemy -> Pydantic
+        orm_mode = True

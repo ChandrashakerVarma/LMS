@@ -1,10 +1,11 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
+from typing import Optional, List
 
 # ---------- Role ----------
 class RoleResponse(BaseModel):
     id: int
-    role: str
+    role: Optional[str] = None  # Make role optional
 
     class Config:
         orm_mode = True
@@ -14,7 +15,7 @@ class RoleResponse(BaseModel):
 class ProgressResponse(BaseModel):
     id: int
     course_id: int
-    progress: int  # percentage progress (0–100)
+    progress: Optional[int] = 0  # Default to 0 if missing
 
     class Config:
         orm_mode = True
@@ -33,12 +34,12 @@ class UserCreate(UserBase):
 
 class UserResponse(UserBase):
     id: int
-    created_at: datetime | None = None
-    updated_at: datetime | None = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
     inactive: bool
 
-    role: RoleResponse | None = None  # nested role info
-    progress: list[ProgressResponse] = []  # nested progress list
+    role: Optional[RoleResponse] = None  # nested role info
+    progress: List[ProgressResponse] = []  # nested progress list
 
     class Config:
         orm_mode = True

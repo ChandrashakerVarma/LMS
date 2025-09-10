@@ -1,23 +1,23 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from app.database import get_db
 from app.schema import user_schema
 from app.models.user_m import User
 from app.utils import hash_password
-from app.dependencies import get_current_user, require_admin
+from app.dependencies import require_admin
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
-
-# CREATE User
+# ---------- CREATE User ----------
 @router.post("/", response_model=user_schema.UserResponse)
 def create_user(
     user: user_schema.UserCreate,
-    db: Session = Depends(get_db),current_user: User = Depends(require_admin)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin)
 ):
     # Check if email exists
     if db.query(User).filter(User.email == user.email).first():
-        raise HTTPException( status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
     
     new_user = User(
         name=user.name,
@@ -28,23 +28,40 @@ def create_user(
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    return new_user
 
-# READ - Get All Users
+    # Eager load role and progress for response
+    db.refresh(new_user)
+    return db.query(User).options(
+        selectinload(User.role),
+        selectinload(User.progress)
+    ).filter(User.id == new_user.id).first()
+
+
+# ---------- READ - Get All Users ----------
 @router.get("/", response_model=list[user_schema.UserResponse])
 def get_users(
-    db: Session = Depends(get_db),current_user: User = Depends(require_admin)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin)
 ):
-    return db.query(User).all()
+    users = db.query(User).options(
+        selectinload(User.role),
+        selectinload(User.progress)
+    ).all()
+    return users
 
-# READ - Get Single User
+
+# ---------- READ - Get Single User ----------
 @router.get("/{user_id}", response_model=user_schema.UserResponse)
 def get_user(
     user_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin)  # User can see own profile, admin can see all
 ):
-    user = db.query(User).filter(User.id == user_id).first()
+    user = db.query(User).options(
+        selectinload(User.role),
+        selectinload(User.progress)
+    ).filter(User.id == user_id).first()
+    
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
@@ -54,29 +71,39 @@ def get_user(
 
     return user
 
-#Update user
+
+# ---------- UPDATE User ----------
 @router.put("/{user_id}", response_model=user_schema.UserResponse)
 def update_user(
     user_id: int,
     updated_user: user_schema.UserBase,
-    db: Session = Depends(get_db),current_user: User = Depends(require_admin)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin)
 ):
-     user = db.query(User).filter(User.id == user_id).first()
-     if not user:
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-     
-     user.name = updated_user.name
-     user.email = updated_user.email
-     
-     db.commit()
-     db.refresh(user)
-     return user
 
-# DELETE User
+    user.name = updated_user.name
+    user.email = updated_user.email
+    user.role_id = updated_user.role_id
+
+    db.commit()
+    db.refresh(user)
+
+    # Eager load role and progress for response
+    return db.query(User).options(
+        selectinload(User.role),
+        selectinload(User.progress)
+    ).filter(User.id == user.id).first()
+
+
+# ---------- DELETE User ----------
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_user(
     user_id: int,
-    db: Session = Depends(get_db),current_user: User = Depends(require_admin)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin)
 ):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
@@ -85,5 +112,3 @@ def delete_user(
     db.delete(user)
     db.commit()
     return None
-
-
