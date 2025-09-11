@@ -1,10 +1,14 @@
 from pydantic import BaseModel
 from datetime import datetime
+from typing import Optional
 
 class QuizHistoryBase(BaseModel):
     user_id: int
     checkpoint_id: int
-    score: float
+    course_id: int
+    answer: Optional[str] = None
+    result: Optional[str] = None
+    question: Optional[str] = None
 
 class QuizHistoryCreate(QuizHistoryBase):
     pass
@@ -15,7 +19,10 @@ class QuizHistoryMessageResponse(BaseModel):
     id: int
     user_id: int
     checkpoint_id: int
-    score: float = 0
+    course_id: int
+    answer: Optional[str] = None
+    result: Optional[str] = None
+    question: Optional[str] = None
     completed_at: datetime
 
     class Config:
@@ -27,4 +34,3 @@ class QuizHistoryResponse(QuizHistoryBase):
 
     class Config:
         orm_mode = True
-

@@ -1,31 +1,32 @@
-from pydantic import BaseModel
-from typing import Optional, List
+from pydantic import BaseModel, Field
+from typing import Optional
 
-# Updated History schema (answer and result can be None)
-class QuizHistoryResponse(BaseModel):
-    id: int
-    user_id: int
-    answer: Optional[str] = None
-    result: Optional[str] = None
+# Schema for creating a checkpoint
+class QuizCheckpointCreate(BaseModel):
+    video_id: int
+    timestamp: float
+    question: str
+    choices: str  # Can be a JSON string or comma-separated values
+    correct_answer: str
+    required: Optional[bool] = True
 
-    class Config:
-        orm_mode = True
+# Schema for updating a checkpoint
+class QuizCheckpointUpdate(BaseModel):
+    timestamp: Optional[float]
+    question: Optional[str]
+    choices: Optional[str]
+    correct_answer: Optional[str]
+    required: Optional[bool]
 
-# Checkpoint schema
+# Schema for returning a checkpoint
 class QuizCheckpointResponse(BaseModel):
     id: int
     video_id: int
     timestamp: float
     question: str
+    choices: str
+    correct_answer: str
     required: bool
-    histories: Optional[List[QuizHistoryResponse]] = []  # Include related histories
 
     class Config:
         orm_mode = True
-
-# Create schema for input
-class QuizCheckpointCreate(BaseModel):
-    video_id: int
-    timestamp: float
-    question: str
-    required: bool

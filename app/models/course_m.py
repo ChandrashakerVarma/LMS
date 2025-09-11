@@ -22,3 +22,8 @@ class Course(Base):
 
     def __repr__(self):
         return f"<Course id={self.id} title={self.title!r} instructor={self.instructor!r}>"
+    
+
+    #Relationships
+    enrollments = relationship("app.models.enrollment_m.Enrollment", back_populates="course", cascade="all, delete-orphan")
+

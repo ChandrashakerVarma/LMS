@@ -1,5 +1,5 @@
-# app/models/QuizHistory_m.py
-from sqlalchemy import Column, Integer, ForeignKey, String
+# app/models/quiz_history_m.py
+from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from app.database import Base
 
@@ -9,9 +9,11 @@ class QuizHistory(Base):
     id = Column(Integer, primary_key=True, index=True)
     checkpoint_id = Column(Integer, ForeignKey("quiz_checkpoints.id", ondelete="CASCADE"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    answer = Column(String(500), nullable=True)   # optional
-    result = Column(String(50), nullable=True)    # optional
-    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False)  # ✅ Add this
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False)
+    question = Column(String(500), nullable=True)  # ✅ Add this field to store the question at submission time
+    answer = Column(String(500), nullable=True)
+    result = Column(String(50), nullable=True)
+    
 
     # Relationships
     checkpoint = relationship("QuizCheckpoint", back_populates="histories")
