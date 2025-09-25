@@ -9,6 +9,8 @@ class CourseBase(BaseModel):
     level: Optional[str] = "beginner"
     
     price: Optional[float] = 0.0
+    organization_id: Optional[int]  # new
+
 
 class CourseCreate(CourseBase):
     pass
@@ -18,6 +20,8 @@ class CourseUpdate(BaseModel):
     instructor: Optional[str]
     level: Optional[str]
     price: Optional[float]
+    organization_id: Optional[int]  # new
+
 
 class CourseResponse(CourseBase):
     id: int
