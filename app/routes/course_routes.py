@@ -1,15 +1,17 @@
 # app/routes/course_routes.py
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List
 
 from app.database import get_db
 from app.models.course_m import Course
+from app.models.video_m import Video
 from app.schema.course_schema import CourseCreate, CourseResponse, CourseUpdate
 from app.dependencies import get_current_user, require_admin
 
 router = APIRouter(prefix="/courses", tags=["courses"])
 
+# Create a new course
 @router.post("/", response_model=CourseResponse, status_code=status.HTTP_201_CREATED)
 def create_course(course: CourseCreate, db: Session = Depends(get_db), current_user: dict = Depends(require_admin)):
     existing = db.query(Course).filter(Course.title == course.title).first()
@@ -21,17 +23,25 @@ def create_course(course: CourseCreate, db: Session = Depends(get_db), current_u
     db.refresh(new_course)
     return CourseResponse.from_orm(new_course)
 
+# List all courses with videos and checkpoints
 @router.get("/", response_model=List[CourseResponse])
 def list_courses(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    return db.query(Course).all()
+    courses = db.query(Course)\
+                .options(joinedload(Course.videos).joinedload(Video.checkpoints))\
+                .all()
+    return courses
 
+# Get a single course with videos and checkpoints
 @router.get("/{course_id}", response_model=CourseResponse)
 def get_course(course_id: int, db: Session = Depends(get_db)):
-    course = db.query(Course).filter(Course.id == course_id).first()
+    course = db.query(Course)\
+               .options(joinedload(Course.videos).joinedload(Video.checkpoints))\
+               .filter(Course.id == course_id).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
     return course
 
+# Update course details (excluding duration)
 @router.put("/{course_id}", response_model=CourseResponse)
 def update_course(course_id: int, payload: CourseUpdate, db: Session = Depends(get_db), current_user: dict = Depends(require_admin)):
     course = db.query(Course).filter(Course.id == course_id).first()
@@ -45,6 +55,7 @@ def update_course(course_id: int, payload: CourseUpdate, db: Session = Depends(g
     db.refresh(course)
     return course
 
+# Delete a course
 @router.delete("/{course_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_course(course_id: int, db: Session = Depends(get_db), current_user: dict = Depends(require_admin)):
     course = db.query(Course).filter(Course.id == course_id).first()

@@ -19,4 +19,4 @@ class User(Base):
     role = relationship("Role", back_populates="users", lazy="joined")  # eager load by default
     progress = relationship("Progress", back_populates="user", lazy="selectin")  # selectinload for lists
     # In User model
-    enrollments = relationship("app.models.enrollment_m.Enrollment", back_populates="user", cascade="all, delete-orphan")
+    enrollments = relationship("Enrollment", back_populates="user")  # only class name
