@@ -26,4 +26,6 @@ class Course(Base):
 
     #Relationships
     enrollments = relationship("app.models.enrollment_m.Enrollment", back_populates="course", cascade="all, delete-orphan")
+    checkpoints = relationship("QuizCheckpoint", back_populates="course", cascade="all, delete-orphan")
+
 

@@ -1,5 +1,7 @@
 from pydantic import BaseModel, HttpUrl
 from typing import List, Optional
+from app.schema.quiz_checkpoint_schema import QuizCheckpointResponse
+
 
 class VideoBase(BaseModel):
     title: Optional[str]
@@ -19,6 +21,8 @@ class VideoUpdate(BaseModel):
 class VideoResponse(VideoBase):
     id: int
     course_id: int
+    checkpoints: Optional[List[QuizCheckpointResponse]] = []  # Add checkpoints here
+
 
     class Config:
         orm_mode = True

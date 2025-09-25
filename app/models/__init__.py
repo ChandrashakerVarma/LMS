@@ -5,3 +5,4 @@ from app.models.video_m import Video
 from app.models.QuizCheckpoint_m import QuizCheckpoint
 from app.models.QuizHistory_m import QuizHistory
 from app.models.Progress_m import Progress
+from app.models.enrollment_m import Enrollment
