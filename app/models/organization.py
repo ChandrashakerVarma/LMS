@@ -1,5 +1,5 @@
 # app/models/organization_m.py
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, DateTime, func
 from sqlalchemy.orm import relationship
 from app.database import Base
 
@@ -7,13 +7,22 @@ class Organization(Base):
     __tablename__ = "organizations"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(150), unique=True, nullable=False)
-    description = Column(String(500), nullable=True)
+    name = Column(String(150), nullable=False, unique=True)
+    description = Column(String(255), nullable=True)
+
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(),
+                        server_onupdate=func.now(), nullable=False)
+
 
     # Relationships
-    courses = relationship(
-        "Course",
+    branches = relationship(
+        "Branch",
         back_populates="organization",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
+        # remove foreign_keys if it referenced branch_id
+
     )
-    users = relationship("User", back_populates="organization")
+
+    users = relationship("User", back_populates="organization", cascade="all, delete-orphan")
+    courses = relationship("Course", back_populates="organization", cascade="all, delete-orphan")

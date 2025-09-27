@@ -14,6 +14,7 @@ class User(Base):
     hashed_password = Column(String(200), nullable=False)
     role_id = Column(Integer, ForeignKey("roles.id"), nullable=True)
     organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True)
+    branch_id = Column(Integer, ForeignKey("branches.id", ondelete="SET NULL"), nullable=True)  # ✅ added
 
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
@@ -22,5 +23,8 @@ class User(Base):
     # Relationships
     role = relationship("Role", back_populates="users", lazy="joined")
     organization = relationship(Organization, back_populates="users")
+    branch = relationship("Branch", back_populates="users")  # ✅ now works
     progress = relationship("Progress", back_populates="user", lazy="selectin")
     enrollments = relationship("Enrollment", back_populates="user")
+
+
