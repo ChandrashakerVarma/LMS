@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, ForeignKey, DateTime, Boolean, func
+from sqlalchemy import Column, String, Integer, ForeignKey, DateTime, Boolean, func, LargeBinary
 from sqlalchemy.orm import relationship
 from app.database import Base
 
@@ -11,6 +11,14 @@ class User(Base):
     hashed_password = Column(String(200), nullable=False)
     role_id = Column(Integer, ForeignKey("roles.id"), nullable=True)  # Make role_id nullable if needed
 
+    # Extra fields
+    date_of_birth = Column(DateTime, nullable=True)
+    joining_date = Column(DateTime, nullable=True)
+    relieving_date = Column(DateTime, nullable=True)
+    address = Column(String(500), nullable=True)
+    #photo = Column(LargeBinary, nullable=True)  # Store file path or URL
+    designation = Column(String(100), nullable=True)
+
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
     inactive = Column(Boolean, default=False)
@@ -18,5 +26,9 @@ class User(Base):
     # Relationships
     role = relationship("Role", back_populates="users", lazy="joined")  # eager load by default
     progress = relationship("Progress", back_populates="user", lazy="selectin")  # selectinload for lists
-    # In User model
-    enrollments = relationship("app.models.enrollment_m.Enrollment", back_populates="user", cascade="all, delete-orphan")
+    enrollments = relationship(
+        "app.models.enrollment_m.Enrollment",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    leave_records = relationship("LeaveMaster", back_populates="user", cascade="all, delete-orphan")
