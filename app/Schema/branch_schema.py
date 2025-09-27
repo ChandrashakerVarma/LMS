@@ -17,6 +17,7 @@ class BranchUpdate(BaseModel):
 
 class BranchResponse(BranchBase):
     id: int
+    organization_id: int
 
     class Config:
         orm_mode = True
