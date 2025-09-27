@@ -72,3 +72,4 @@ def delete_progress(course_id: int, user_id: int, db: Session = Depends(get_db),
     db.delete(progress)
     db.commit()
     return {"message": "Progress deleted sucessfully"}
+
