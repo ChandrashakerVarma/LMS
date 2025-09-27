@@ -10,9 +10,9 @@ class Department(Base):
     name = Column(String(100), nullable=False, unique=True)
     code = Column(String(20), nullable=False, unique=True)
     description = Column(Text, nullable=True)
-    
+
     status = Column(Boolean, default=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
-
+    
     
