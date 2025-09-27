@@ -1,7 +1,7 @@
+# app/models/leavemaster_m.py
 from sqlalchemy import Column, Integer, String, Date, Boolean, ForeignKey, Text, DateTime, func
 from sqlalchemy.orm import relationship
 from app.database import Base
-
 
 class LeaveMaster(Base):
     __tablename__ = "leave_master"
@@ -15,8 +15,6 @@ class LeaveMaster(Base):
     name = Column(String(100), nullable=True)
     description = Column(Text, nullable=True)
     status = Column(Boolean, default=True)
-
-    # Holiday fields
     date = Column(Date, nullable=True)
 
     # Leave balance fields
@@ -30,4 +28,5 @@ class LeaveMaster(Base):
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
 
+    # Relationship with User
     user = relationship("User", back_populates="leave_records")
