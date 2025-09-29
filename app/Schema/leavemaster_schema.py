@@ -6,11 +6,11 @@ from datetime import date, datetime
 
 # Base Schema
 class LeaveMasterBase(BaseModel):
-    holiday: Optional[bool] = False   # False = Leave balance, True = Holiday
+    # holiday: Optional[bool] = False   # False = Leave balance, True = Holiday
     name: Optional[str] = None
     description: Optional[str] = None
     status: Optional[bool] = True
-    date: Optional[date] = None
+    date: Optional[date] = None # type: ignore
     user_id: Optional[int] = None
     year: Optional[int] = None
     allocated: Optional[int] = 0
