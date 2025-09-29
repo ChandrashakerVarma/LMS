@@ -19,6 +19,7 @@ from app.database import Base as DatabaseBase
 from app.models.organization import Organization  # must come first
 from app.models import course_m, role_m, user_m, Progress_m, video_m, QuizCheckpoint_m, QuizHistory_m, enrollment_m
 from app.models import branch_m
+from app.models import category_m
 target_metadata = DatabaseBase.metadata
 
 def run_migrations_offline() -> None:
