@@ -9,7 +9,7 @@ class LeaveMaster(Base):
     id = Column(Integer, primary_key=True, index=True)
 
     # Holiday or Leave Balance
-    holiday = Column(Boolean, default=True)  # True = Holiday, False = Leave balance
+    holiday = Column(Boolean, default=False)  # False = Leave balance, True = Holiday
 
     # Common fields
     name = Column(String(100), nullable=True)
