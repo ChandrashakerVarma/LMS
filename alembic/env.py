@@ -1,8 +1,15 @@
 from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 from alembic import context
+
 import os
 from dotenv import load_dotenv
+
+import sys
+import os
+
+# Add the root project folder to sys.path so 'app' can be imported
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Load environment variables
 load_dotenv()
@@ -15,7 +22,9 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Import Base and all models
-from app.database import Base as DatabaseBase
+from app.database import Base as DatabaseBas
+from app.models import role_m, user_m, course_m, Progress_m, video_m, QuizCheckpoint_m, QuizHistory_m, enrollment_m, shift_m,department_m, leavemaster_m
+target_metadata = DatabaseBase.metadata  # Use the Base metadata from database.py
 from app.models.organization import Organization  # must come first
 from app.models import course_m, role_m, user_m, Progress_m, video_m, QuizCheckpoint_m, QuizHistory_m, enrollment_m
 from app.models import branch_m
