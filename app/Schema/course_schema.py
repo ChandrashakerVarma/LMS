@@ -1,14 +1,16 @@
-# app/schema/course_schema.py
 from pydantic import BaseModel
-from typing import List, Optional
-from app.schema.video_schema import VideoResponse
+from typing import Optional, List
+from datetime import datetime
+from app.schema.video_schema import VideoResponse  # ✅ Import VideoResponse
 
 class CourseBase(BaseModel):
     title: str
     instructor: str
     level: Optional[str] = "beginner"
-    
     price: Optional[float] = 0.0
+    organization_id: Optional[int]
+    branch_id: Optional[int]       # new
+    category_id: Optional[int]
 
 class CourseCreate(CourseBase):
     pass
@@ -18,6 +20,9 @@ class CourseUpdate(BaseModel):
     instructor: Optional[str]
     level: Optional[str]
     price: Optional[float]
+    organization_id: Optional[int]
+    branch_id: Optional[int]       # new
+    category_id: Optional[int]
 
 class CourseResponse(CourseBase):
     id: int

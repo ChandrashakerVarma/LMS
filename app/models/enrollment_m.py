@@ -15,3 +15,4 @@ class Enrollment(Base):
     # Relationships
     user = relationship("User", back_populates="enrollments")
     course = relationship("Course", back_populates="enrollments")
+

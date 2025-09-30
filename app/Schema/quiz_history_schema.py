@@ -6,12 +6,15 @@ class QuizHistoryBase(BaseModel):
     user_id: int
     checkpoint_id: int
     course_id: int
+    video_id: int   # ✅ new field
     answer: Optional[str] = None
     result: Optional[str] = None
     question: Optional[str] = None
 
+
 class QuizHistoryCreate(QuizHistoryBase):
     pass
+
 
 # Custom response model with message
 class QuizHistoryMessageResponse(BaseModel):
@@ -20,6 +23,7 @@ class QuizHistoryMessageResponse(BaseModel):
     user_id: int
     checkpoint_id: int
     course_id: int
+    video_id: int   # ✅ new field
     answer: Optional[str] = None
     result: Optional[str] = None
     question: Optional[str] = None
@@ -27,6 +31,7 @@ class QuizHistoryMessageResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
 
 class QuizHistoryResponse(QuizHistoryBase):
     id: int
