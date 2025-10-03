@@ -1,45 +1,47 @@
-from pydantic import BaseModel, EmailStr
+from typing import List, Optional
 from datetime import datetime
-from typing import Optional, List
+from pydantic import BaseModel, EmailStr
 
-# ---------- Role ----------
+# Nested schemas
 class RoleResponse(BaseModel):
     id: int
-    role: Optional[str] = None  # Make role optional
+    name: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
-
-# ---------- Progress ----------
 class ProgressResponse(BaseModel):
     id: int
-    course_id: int
-    progress: Optional[int] = 0  # Default to 0 if missing
+    progress_name: str  # replace with actual fields in your Progress model
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
-
-# ---------- User ----------
+# Base schema for shared fields
 class UserBase(BaseModel):
     name: str
     email: EmailStr
-    role_id: int
+    role_id: Optional[int] = None
+    date_of_birth: Optional[datetime] = None
+    joining_date: Optional[datetime] = None
+    relieving_date: Optional[datetime] = None
+    address: Optional[str] = None
+    #photo: Optional[str] = None
+    designation: Optional[str] = None
 
-
+# Schema for creating a user
 class UserCreate(UserBase):
-    password: str
+    password: str  # plain password, will be hashed in service layer
 
-
+# Schema for returning a user
 class UserResponse(UserBase):
     id: int
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
-    inactive: bool
+    inactive: bool = False
 
     role: Optional[RoleResponse] = None  # nested role info
     progress: List[ProgressResponse] = []  # nested progress list
 
     class Config:
-        orm_mode = True
+        from_attributes = True

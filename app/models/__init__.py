@@ -8,3 +8,7 @@ from app.models.Progress_m import *
 from app.models.enrollment_m import *
 from app.models.organization import *
 from app.models.branch_m import *
+from app.models.category_m import *
+from app.models.department_m import *
+from app.models.leavemaster_m import *
+from app.models.shift_m import *

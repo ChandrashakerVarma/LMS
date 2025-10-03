@@ -21,3 +21,5 @@ Thumbs.db
 
 # Alembic cache
 alembic/versions/__pycache__/
+# Ignore Alembic migration scripts
+alembic/versions/
