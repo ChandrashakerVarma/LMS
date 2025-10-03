@@ -1,0 +1,23 @@
+lms_env/
+
+# Bytecode files
+__pycache__/
+*.py[cod]
+
+# Secrets
+.env
+.env.*
+
+# Editor/IDE settings
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Alembic cache
+alembic/versions/__pycache__/
