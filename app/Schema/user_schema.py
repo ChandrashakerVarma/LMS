@@ -22,13 +22,7 @@ class UserBase(BaseModel):
     name: str
     email: EmailStr
     role_id: Optional[int] = None
-    date_of_birth: Optional[datetime] = None
-    joining_date: Optional[datetime] = None
-    relieving_date: Optional[datetime] = None
-    address: Optional[str] = None
-    #photo: Optional[str] = None
-    designation: Optional[str] = None
-
+   
 # Schema for creating a user
 class UserCreate(UserBase):
     password: str  # plain password, will be hashed in service layer
