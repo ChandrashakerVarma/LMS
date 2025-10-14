@@ -8,3 +8,6 @@ from app.models.Progress_m import Progress
 from app.models.organization import *
 from app.models.branch_m import Branch
 from app.models.category_m import Category
+from app.models.salary_structure_m import SalaryStructure
+from app.models.payroll_m import Payroll
+from app.models.formula_m import Formula
