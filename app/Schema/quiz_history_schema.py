@@ -30,7 +30,7 @@ class QuizHistoryMessageResponse(BaseModel):
     completed_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes  = True
 
 
 class QuizHistoryResponse(QuizHistoryBase):
@@ -38,4 +38,4 @@ class QuizHistoryResponse(QuizHistoryBase):
     completed_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True

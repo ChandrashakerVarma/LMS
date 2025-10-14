@@ -10,13 +10,14 @@ load_dotenv()
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_HOST = os.getenv("DB_HOST")
+DB_PORT = os.getenv("DB_PORT", 5432)  # default PostgreSQL port
 DB_NAME = os.getenv("DB_NAME")
 
 # Optional safety check
-if not all([DB_USER, DB_PASSWORD, DB_HOST, DB_NAME]):
+if not all([DB_USER, DB_HOST, DB_NAME]):
     raise EnvironmentError("One or more required DB environment variables are missing")
 
-# Construct URL
+# Construct PostgreSQL URL
 DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
 
 # Create engine & session
@@ -25,7 +26,7 @@ SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 
 Base = declarative_base()
 
-# Dependency
+# Dependency for FastAPI routes
 def get_db():
     db = SessionLocal()
     try:

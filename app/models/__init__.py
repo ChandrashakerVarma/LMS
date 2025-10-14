@@ -7,3 +7,6 @@ from app.models.QuizHistory_m import QuizHistory
 from app.models.Progress_m import Progress
 from app.models.enrollment_m import Enrollment
 from app.models.organization import *
+from app.models.candidate_m import *
+from app.models.workflow_m import *
+from app.models.candidate_document_m import * 

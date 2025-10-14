@@ -2,13 +2,15 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 from typing import List
-from app.database import get_db
+
 from app.models.course_m import Course
 from app.models.video_m import Video
 from app.models.organization import Organization
 from app.models.branch_m import Branch
 from app.models.category_m import Category
 from app.schema.course_schema import CourseCreate, CourseResponse, CourseUpdate
+from app.dependencies import get_current_user, require_admin
+from app.database import get_db  # make sure you have these
 
 router = APIRouter(prefix="/courses", tags=["courses"])
 
@@ -16,8 +18,6 @@ router = APIRouter(prefix="/courses", tags=["courses"])
 # Create a new course
 # -----------------------
 @router.post("/", response_model=CourseResponse, status_code=status.HTTP_201_CREATED)
-def create_course(course: CourseCreate, db: Session = Depends(get_db)):
-
 def create_course(
     course: CourseCreate,
     db: Session = Depends(get_db),
@@ -48,17 +48,13 @@ def create_course(
     db.add(new_course)
     db.commit()
     db.refresh(new_course)
-    return CourseResponse.from_orm(new_course)
+    return new_course
 
 
 # -----------------------
 # List all courses
 # -----------------------
 @router.get("/", response_model=List[CourseResponse])
-
-def list_courses(db: Session = Depends(get_db)):
-    return db.query(Course).all()
-
 def list_courses(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
@@ -89,8 +85,6 @@ def get_course(course_id: int, db: Session = Depends(get_db)):
 # Update course details (partial updates)
 # -----------------------
 @router.put("/{course_id}", response_model=CourseResponse)
-def update_course(course_id: int, payload: CourseUpdate, db: Session = Depends(get_db)):
-
 def update_course(
     course_id: int,
     payload: CourseUpdate,
@@ -101,7 +95,7 @@ def update_course(
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
 
-    update_data = payload.dict(exclude_unset=True)  # only fields provided will update
+    update_data = payload.dict(exclude_unset=True)
 
     # Validate foreign keys if provided
     if "organization_id" in update_data and update_data["organization_id"] is not None:
@@ -119,7 +113,7 @@ def update_course(
         if not cat:
             raise HTTPException(status_code=400, detail="Category not found")
 
-    # Apply updates (excluding duration)
+    # Apply updates (excluding duration if needed)
     for key, value in update_data.items():
         if key != "duration":
             setattr(course, key, value)
@@ -128,23 +122,20 @@ def update_course(
     db.refresh(course)
     return course
 
-@router.delete("/{course_id}", status_code=status.HTTP_200_OK)
-def delete_course(course_id: int, db: Session = Depends(get_db)):
-
 
 # -----------------------
 # Delete a course
 # -----------------------
-@router.delete("/{course_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{course_id}", status_code=status.HTTP_200_OK)
 def delete_course(
     course_id: int,
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_admin)
 ):
-
-  course = db.query(Course).filter(Course.id == course_id).first()
+    course = db.query(Course).filter(Course.id == course_id).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
     db.delete(course)
     db.commit()
     return {"message": "Course deleted successfully"}
+

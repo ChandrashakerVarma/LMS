@@ -44,4 +44,4 @@ class UserResponse(UserBase):
     progress: List[ProgressResponse] = []  # nested progress list
 
     class Config:
-        from_attributes = True
+        from_attribute = True

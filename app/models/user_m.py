@@ -25,8 +25,8 @@ class User(Base):
     relieving_date = Column(DateTime, nullable=True)
     address = Column(String(500), nullable=True)
     #photo = Column(LargeBinary, nullable=True)  # Store file path or URL
-    designation = Column(String(100), nullable=True)
 
+    designation = Column(String(100), nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
     inactive = Column(Boolean, default=False)
