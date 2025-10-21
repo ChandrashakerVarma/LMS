@@ -12,7 +12,8 @@ class User(Base):
     __tablename__ = "users"
     
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(100), nullable=False)
+    first_name = Column(String(100), nullable=False)
+    last_name = Column(String(100), nullable=False)
     email = Column(String(100), unique=True, nullable=False, index=True)
     hashed_password = Column(String(200), nullable=False)
     role_id = Column(Integer, ForeignKey("roles.id"), nullable=True)
@@ -45,5 +46,3 @@ class User(Base):
     branch = relationship("Branch", back_populates="users")  # ✅ now works
     progress = relationship("Progress", back_populates="user", lazy="selectin")
     enrollments = relationship("Enrollment", back_populates="user")
-
-

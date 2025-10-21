@@ -19,6 +19,7 @@ class Workflow(Base):
     approver_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     approval_status = Column(Enum(ApprovalStatus), default=ApprovalStatus.Pending)
 
+
     job_posting = relationship("JobPosting", back_populates="workflows")
     approver = relationship("User")
     candidates = relationship("Candidate", back_populates="workflow")

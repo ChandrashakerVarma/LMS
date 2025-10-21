@@ -20,17 +20,21 @@ def create_user(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
     
     new_user = User(
-        name=user.name,
+        first_name=user.first_name,
+        last_name=user.last_name,
         email=user.email,
         hashed_password=hash_password(user.password),
-        role_id=user.role_id
+        role_id=user.role_id,
+        date_of_birth=user.date_of_birth,
+        joining_date=user.joining_date,
+        relieving_date=user.relieving_date,
+        address=user.address,
+        designation=user.designation
     )
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
 
-    # Eager load role and progress for response
-    db.refresh(new_user)
     return db.query(User).options(
         selectinload(User.role),
         selectinload(User.progress)
@@ -84,14 +88,19 @@ def update_user(
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    user.name = updated_user.name
+    user.first_name = updated_user.first_name
+    user.last_name = updated_user.last_name
     user.email = updated_user.email
     user.role_id = updated_user.role_id
+    user.date_of_birth = updated_user.date_of_birth
+    user.joining_date = updated_user.joining_date
+    user.relieving_date = updated_user.relieving_date
+    user.address = updated_user.address
+    user.designation = updated_user.designation
 
     db.commit()
     db.refresh(user)
 
-    # Eager load role and progress for response
     return db.query(User).options(
         selectinload(User.role),
         selectinload(User.progress)

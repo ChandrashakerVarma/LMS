@@ -19,7 +19,8 @@ class ProgressResponse(BaseModel):
 
 # Base schema for shared fields
 class UserBase(BaseModel):
-    name: str
+    first_name: str
+    last_name: str
     email: EmailStr
     role_id: Optional[int] = None
     date_of_birth: Optional[datetime] = None
