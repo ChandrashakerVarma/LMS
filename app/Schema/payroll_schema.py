@@ -6,40 +6,41 @@ from datetime import datetime
 # ---------------- Base Schema ----------------
 class PayrollBase(BaseModel):
     user_id: int
-    salary_structure_id: Optional[int] = None
+    salary_structure_id: int
     month: str = Field(..., example="2025-10")  # Format: YYYY-MM
-    basic_salary: float
-    allowances: Optional[float] = 0.0
-    deductions: Optional[float] = 0.0
-    bonus: Optional[float] = 0.0
-    gross_salary: Optional[float] = 0.0
-    net_salary: Optional[float] = 0.0
-    status: Optional[str] = "Pending"
 
 
 # ---------------- Create Schema ----------------
 class PayrollCreate(PayrollBase):
+    # HR shouldn't send salary fields — backend calculates automatically
     pass
 
 
 # ---------------- Update Schema ----------------
 class PayrollUpdate(BaseModel):
-    basic_salary: Optional[float] = None
-    allowances: Optional[float] = None
-    deductions: Optional[float] = None
-    bonus: Optional[float] = None
-    gross_salary: Optional[float] = None
-    net_salary: Optional[float] = None
-    status: Optional[str] = None
+    status: Optional[str] = None  # For marking Paid, Approved, etc.
+    recalculate: Optional[bool] = Field(
+        False, description="If True, system recalculates salary using latest formulas."
+    )
 
 
 # ---------------- Response Schema ----------------
-class PayrollResponse(PayrollBase):
+class PayrollResponse(BaseModel):
     id: int
+    user_id: int
+    salary_structure_id: int
+    month: str
+    basic_salary: float
+    allowances: float
+    deductions: float
+    bonus: float
+    gross_salary: float
+    net_salary: float
+    status: str
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
     user_name: Optional[str] = None
-    salary_structure_name: Optional[str] = None  # For easy display, not nested
+    salary_structure_name: Optional[str] = None
 
     class Config:
         orm_mode = True

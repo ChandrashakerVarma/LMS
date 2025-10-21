@@ -3,11 +3,8 @@ from sqlalchemy.orm import Session
 from typing import List
 from app.database import get_db
 from app.models.salary_structure_m import SalaryStructure
-from app.schema.salary_structure_schema import (
-    SalaryStructureCreate,
-    SalaryStructureUpdate,
-    SalaryStructureResponse,
-)
+from app.schema.salary_structure_schema import SalaryStructureCreate, SalaryStructureUpdate, SalaryStructureResponse
+
 
 router = APIRouter(prefix="/salary-structures", tags=["Salary Structure"])
 

@@ -9,7 +9,7 @@ class Formula(Base):
     id = Column(Integer, primary_key=True, index=True)
     component_code = Column(String(50), unique=True, nullable=False)
     component_name = Column(String(100), nullable=False)
-    formula_text = Column(String(255), nullable=False)  # store the actual formula here
+    formula_expression = Column(String(255), nullable=False)
     formula_type = Column(String(50), default="earning")  # optional: earning/deduction
     description = Column(String(255), nullable=True)
     is_active = Column(Boolean, default=True)
