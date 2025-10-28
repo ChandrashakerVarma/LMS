@@ -39,7 +39,11 @@ def enroll_user(payload: EnrollmentCreate, db: Session = Depends(get_db), curren
 
 # List all enrollments
 @router.get("/", response_model=List[EnrollmentResponse])
+<<<<<<< HEAD
 def enrollments_list(db: Session = Depends(get_db), current_user: dict = Depends(require_admin)):
+=======
+def list_enrollments(db: Session = Depends(get_db), current_user: dict = Depends(require_admin)):
+>>>>>>> origin/main
     enrollments = db.query(Enrollment).all()
     return [EnrollmentResponse.from_orm(e) for e in enrollments]
 

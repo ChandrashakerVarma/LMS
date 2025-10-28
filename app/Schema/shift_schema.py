@@ -39,4 +39,8 @@ class ShiftResponse(ShiftBase):
     updated_at: Optional[datetime] = None
 
     class Config:
+<<<<<<< HEAD
         from_attributes  = True
+=======
+        orm_mode = True
+>>>>>>> origin/main

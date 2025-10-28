@@ -4,7 +4,11 @@ from sqlalchemy.orm import Session
 from typing import List
 from app.database import get_db
 from app.models.organization import Organization
+<<<<<<< HEAD
 from app.models.branch_m import Branch
+=======
+from app.models.branch_m import Branch 
+>>>>>>> origin/main
 from app.schema.organization_schema import OrganizationCreate, OrganizationUpdate, OrganizationResponse
 from app.dependencies import require_admin, get_current_user
 
@@ -71,4 +75,8 @@ def delete_organization(org_id: int, db: Session = Depends(get_db), current_user
         raise HTTPException(status_code=404, detail="Organization not found")
     db.delete(org)
     db.commit()
+<<<<<<< HEAD
     return {"message": "Organization deleted successfully"}
+=======
+    return {"message": "Organization deleted successfully"}
+>>>>>>> origin/main

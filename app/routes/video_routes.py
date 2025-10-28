@@ -1,6 +1,11 @@
+<<<<<<< HEAD
 # app/routes/video_routes.py
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+=======
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session, joinedload
+>>>>>>> origin/main
 from sqlalchemy import func
 from typing import List
 
@@ -12,6 +17,10 @@ from app.dependencies import get_current_user, require_admin
 
 router = APIRouter(prefix="/videos", tags=["videos"])
 
+<<<<<<< HEAD
+=======
+# ---------------- CREATE ----------------
+>>>>>>> origin/main
 @router.post("/", response_model=VideoResponse, status_code=status.HTTP_201_CREATED)
 def create_video(video: VideoCreate, db: Session = Depends(get_db), current_user: dict = Depends(require_admin)):
     course = db.query(Course).filter(Course.id == video.course_id).first()
@@ -29,6 +38,7 @@ def create_video(video: VideoCreate, db: Session = Depends(get_db), current_user
     db.commit()
     db.refresh(course)
 
+<<<<<<< HEAD
     return new_video
 
 @router.get("/", response_model=List[VideoResponse])
@@ -38,10 +48,30 @@ def list_videos(db: Session = Depends(get_db)):
 @router.get("/{video_id}", response_model=VideoResponse)
 def get_video(video_id: int, db: Session = Depends(get_db)):
     video = db.query(Video).filter(Video.id == video_id).first()
+=======
+    return db.query(Video).options(joinedload(Video.checkpoints)).filter(Video.id == new_video.id).first()
+
+
+# ---------------- LIST ----------------
+@router.get("/", response_model=List[VideoResponse])
+def list_videos(db: Session = Depends(get_db)):
+    return db.query(Video).options(joinedload(Video.checkpoints)).all()
+
+
+# ---------------- GET BY ID ----------------
+@router.get("/{video_id}", response_model=VideoResponse)
+def get_video(video_id: int, db: Session = Depends(get_db)):
+    video = db.query(Video).options(joinedload(Video.checkpoints)).filter(Video.id == video_id).first()
+>>>>>>> origin/main
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
     return video
 
+<<<<<<< HEAD
+=======
+
+# ---------------- UPDATE ----------------
+>>>>>>> origin/main
 @router.put("/{video_id}", response_model=VideoResponse)
 def update_video(video_id: int, payload: VideoUpdate, db: Session = Depends(get_db), current_user: dict = Depends(require_admin)):
     video = db.query(Video).filter(Video.id == video_id).first()
@@ -55,7 +85,11 @@ def update_video(video_id: int, payload: VideoUpdate, db: Session = Depends(get_
     db.commit()
     db.refresh(video)
 
+<<<<<<< HEAD
     # Recalculate course duration after update
+=======
+    # Recalculate course duration
+>>>>>>> origin/main
     course = db.query(Course).filter(Course.id == video.course_id).first()
     if course:
         total_duration = db.query(func.sum(Video.duration)).filter(Video.course_id == video.course_id).scalar() or 0.0
@@ -63,8 +97,15 @@ def update_video(video_id: int, payload: VideoUpdate, db: Session = Depends(get_
         db.commit()
         db.refresh(course)
 
+<<<<<<< HEAD
     return video
 
+=======
+    return db.query(Video).options(joinedload(Video.checkpoints)).filter(Video.id == video.id).first()
+
+
+# ---------------- DELETE ----------------
+>>>>>>> origin/main
 @router.delete("/{video_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_video(video_id: int, db: Session = Depends(get_db), current_user: dict = Depends(require_admin)):
     video = db.query(Video).filter(Video.id == video_id).first()
@@ -75,7 +116,11 @@ def delete_video(video_id: int, db: Session = Depends(get_db), current_user: dic
     db.delete(video)
     db.commit()
 
+<<<<<<< HEAD
     # Recalculate and update the course duration
+=======
+    # Recalculate course duration
+>>>>>>> origin/main
     course = db.query(Course).filter(Course.id == course_id).first()
     if course:
         total_duration = db.query(func.sum(Video.duration)).filter(Video.course_id == course_id).scalar() or 0.0

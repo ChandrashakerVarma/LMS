@@ -18,4 +18,8 @@ class ProgressResponse(BaseModel):
     updated_at: datetime
 
     class Config:
+<<<<<<< HEAD
         from_attributes = True
+=======
+        orm_mode = True
+>>>>>>> origin/main

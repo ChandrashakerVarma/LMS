@@ -12,4 +12,8 @@ class EnrollmentResponse(BaseModel):
     enrolled_at: datetime
 
     class Config:
+<<<<<<< HEAD
         from_attributes = True
+=======
+        orm_mode = True
+>>>>>>> origin/main

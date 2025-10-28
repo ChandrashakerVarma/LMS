@@ -20,4 +20,8 @@ class BranchResponse(BranchBase):
     organization_id: int
 
     class Config:
+<<<<<<< HEAD
         from_attributes = True
+=======
+        orm_mode = True
+>>>>>>> origin/main

@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 # app/models/quiz_history_m.py
+=======
+>>>>>>> origin/main
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, func
 from sqlalchemy.orm import relationship
 from app.database import Base
@@ -10,6 +13,7 @@ class QuizHistory(Base):
     checkpoint_id = Column(Integer, ForeignKey("quiz_checkpoints.id", ondelete="CASCADE"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False)
+<<<<<<< HEAD
     video_id = Column(Integer, ForeignKey("videos.id", ondelete="CASCADE"), nullable=False)  # ✅ new
     question = Column(String(500), nullable=True)
     answer = Column(String(500), nullable=True)
@@ -19,3 +23,14 @@ class QuizHistory(Base):
     # Relationships
     checkpoint = relationship("QuizCheckpoint", back_populates="histories")
     video = relationship("Video", back_populates="quiz_histories")  # ✅ link to Video
+=======
+    video_id = Column(Integer, ForeignKey("videos.id", ondelete="CASCADE"), nullable=False)  # ✅ video link
+    question = Column(String(500), nullable=True)  # question at submission
+    answer = Column(String(500), nullable=True)
+    result = Column(String(50), nullable=True)
+    completed_at = Column(DateTime(timezone=True), server_default=func.now())  # timestamp
+
+    # Relationships
+    checkpoint = relationship("QuizCheckpoint", back_populates="histories")
+    video = relationship("Video")
+>>>>>>> origin/main

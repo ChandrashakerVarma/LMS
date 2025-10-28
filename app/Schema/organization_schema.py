@@ -27,4 +27,8 @@ class OrganizationResponse(OrganizationBase):
     users: Optional[List[UserResponse]] = []
 
     class Config:
+<<<<<<< HEAD
         from_attributes = True
+=======
+        orm_mode = True
+>>>>>>> origin/main

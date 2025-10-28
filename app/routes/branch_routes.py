@@ -56,4 +56,8 @@ def delete_branch(branch_id: int, db: Session = Depends(get_db), current_user: d
         raise HTTPException(status_code=404, detail="Branch not found")
     db.delete(branch)
     db.commit()
+<<<<<<< HEAD
     return {"message": "Branch deleted successfully"}
+=======
+    return {"message": "Branch deleted successfully"}
+>>>>>>> origin/main

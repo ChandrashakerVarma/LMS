@@ -25,4 +25,8 @@ class Organization(Base):
     )
 
     users = relationship("User", back_populates="organization", cascade="all, delete-orphan")
+<<<<<<< HEAD
     courses = relationship("Course", back_populates="organization", cascade="all, delete-orphan")
+=======
+    courses = relationship("Course", back_populates="organization", cascade="all, delete-orphan")
+>>>>>>> origin/main

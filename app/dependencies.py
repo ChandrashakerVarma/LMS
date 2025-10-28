@@ -3,7 +3,11 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user_m import User
+<<<<<<< HEAD
 from app.utils import decode_access_token
+=======
+from app.utils.utils import decode_access_token
+>>>>>>> origin/main
 
 
 oauth2_schema = OAuth2PasswordBearer(tokenUrl="/auth/login")
