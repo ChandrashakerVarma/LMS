@@ -1,41 +1,47 @@
-from typing import List, Optional
-from datetime import datetime
 from pydantic import BaseModel, EmailStr
+from datetime import date, datetime
+from typing import Optional
 
-# Nested schemas
-class RoleResponse(BaseModel):
-    id: int
-    name: str
 
-    class Config:
-        from_attributes = True
-
-class ProgressResponse(BaseModel):
-    id: int
-    progress_name: str  # replace with actual fields in your Progress model
-
-    class Config:
-        from_attributes = True
-
-# Base schema for shared fields
 class UserBase(BaseModel):
-    name: str
+    first_name: str
+    last_name: Optional[str] = None
     email: EmailStr
-    role_id: Optional[int] = None
-   
-# Schema for creating a user
-class UserCreate(UserBase):
-    password: str  # plain password, will be hashed in service layer
+    role_id: int
+    branch_id: Optional[int] = None
+    organization_id: Optional[int] = None
+    date_of_birth: Optional[date] = None
+    joining_date: Optional[date] = None
+    relieving_date: Optional[date] = None
+    address: Optional[str] = None
+    designation: Optional[str] = None
+    inactive: Optional[bool] = False
+    biometric_id: Optional[str] = None
 
-# Schema for returning a user
+
+class UserCreate(UserBase):
+    password: str
+
+
+class UserUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    role_id: Optional[int] = None
+    branch_id: Optional[int] = None
+    organization_id: Optional[int] = None
+    date_of_birth: Optional[date] = None
+    joining_date: Optional[date] = None
+    relieving_date: Optional[date] = None
+    address: Optional[str] = None
+    designation: Optional[str] = None
+    inactive: Optional[bool] = None
+    biometric_id: Optional[str] = None
+
+
 class UserResponse(UserBase):
     id: int
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
-    inactive: bool = False
-
-    role: Optional[RoleResponse] = None  # nested role info
-    progress: List[ProgressResponse] = []  # nested progress list
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         from_attributes = True

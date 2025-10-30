@@ -1,32 +1,25 @@
-# app/models/leavemaster_m.py
-from sqlalchemy import Column, Integer, String, Date, Boolean, ForeignKey, Text, DateTime, func
+from sqlalchemy import Column, Integer, String, Date, Boolean, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
+from datetime import datetime
 from app.database import Base
+
 
 class LeaveMaster(Base):
     __tablename__ = "leave_master"
 
     id = Column(Integer, primary_key=True, index=True)
-
-    # Holiday or Leave Balance
-    holiday = Column(Boolean, default=False)  # False = Leave balance, True = Holiday
-
-    # Common fields
-    name = Column(String(100), nullable=True)
-    description = Column(Text, nullable=True)
-    status = Column(Boolean, default=True)
-    date = Column(Date, nullable=True)
-
-    # Leave balance fields
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # linked to user
-    year = Column(Integer, nullable=True)
+    holiday = Column(String(100), nullable=False)
+    description = Column(String(255), nullable=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     allocated = Column(Integer, default=0)
     used = Column(Integer, default=0)
     balance = Column(Integer, default=0)
     carry_forward = Column(Boolean, default=False)
+    leave_type = Column(String(50), nullable=False)  # e.g. "Sick Leave", "Casual Leave"
+    start_date = Column(Date, nullable=True)
+    end_date = Column(Date, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(DateTime, onupdate=func.now())
-
-    # Relationship with User
-    user = relationship("User", back_populates="leave_records")
+    # Relationship to User
+    user = relationship("User", back_populates="leaves")

@@ -21,4 +21,4 @@ class CategoryResponse(CategoryBase):
     courses: Optional[List[CourseResponse]] = []
 
     class Config:
-        orm_mode = True
+        from_attributes = True

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
+
 from app.database import get_db
 from app.schema.user_schema import UserCreate, UserResponse
 from app.models.user_m import User
@@ -11,7 +12,7 @@ from app.dependencies import get_current_user
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-# Register
+# ✅ Register new user
 @router.post("/register", response_model=UserResponse)
 def register(user: UserCreate, db: Session = Depends(get_db)):
     # Check if email already exists
@@ -26,20 +27,30 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
 
     # Create new user
     new_user = User(
-        name=user.name,
+        first_name=user.first_name,
+        last_name=user.last_name,
         email=user.email,
         hashed_password=hash_password(user.password),
-        role_id=user.role_id
+        role_id=user.role_id,
+        branch_id=user.branch_id,
+        organization_id=user.organization_id,
+        date_of_birth=user.date_of_birth,
+        joining_date=user.joining_date,
+        relieving_date=user.relieving_date,
+        address=user.address,
+        designation=user.designation,
+        inactive=user.inactive,
+        biometric_id=user.biometric_id
     )
+
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
 
-    # Return as Pydantic model
     return UserResponse.from_orm(new_user)
 
 
-# Login
+# ✅ Login
 @router.post("/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == form_data.username).first()
@@ -50,13 +61,13 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     return {"access_token": token, "token_type": "bearer"}
 
 
-# Get logged-in user
+# ✅ Get logged-in user
 @router.get("/me", response_model=UserResponse)
 def read_users_me(current_user: User = Depends(get_current_user)):
     return UserResponse.from_orm(current_user)
 
 
-# Get specific user
+# ✅ Get user by ID
 @router.get("/{user_id}", response_model=UserResponse)
 def get_user(user_id: int, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
@@ -65,7 +76,7 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
     return UserResponse.from_orm(user)
 
 
-# List all users
+# ✅ List all users
 @router.get("/", response_model=list[UserResponse])
 def list_users(db: Session = Depends(get_db)):
     users = db.query(User).all()

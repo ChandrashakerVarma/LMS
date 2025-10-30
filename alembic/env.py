@@ -24,8 +24,12 @@ from app.models import (
     role_m, user_m, course_m, Progress_m, video_m,
     QuizCheckpoint_m, QuizHistory_m, enrollment_m,
     shift_m, department_m, leavemaster_m,
-    branch_m, category_m, organization
-)
+    branch_m, category_m, 
+    organization_m, job_posting_m,
+    jobrole_m,workflow_m,
+    candidate_m,candidate_documents_m,
+    user_shifts_m,shift_change_request_m,attendance_m
+    )
 
 # Metadata for autogenerate
 target_metadata = Base.metadata

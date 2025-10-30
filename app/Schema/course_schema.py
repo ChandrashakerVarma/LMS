@@ -25,4 +25,4 @@ class CourseResponse(CourseBase):
     duration: Optional[float] = 0.0
 
     class Config:
-        orm_mode = True
+        from_attributes = True
