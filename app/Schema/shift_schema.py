@@ -1,42 +1,30 @@
 from pydantic import BaseModel
-from datetime import time, datetime
 from typing import Optional
+from datetime import datetime
 
-
-# Base schema (shared fields)
 class ShiftBase(BaseModel):
-    name: str
-    start_time: time
-    end_time: time
-    description: Optional[str] = None
+    start_time: str
+    end_time: str
     shift_code: str
-    shift_name: str
     working_minutes: int
-    status: Optional[str] = "active"
+    status: Optional[str] = "Active"
+    is_rotational: Optional[bool] = False
 
-
-# For creating a new shift
 class ShiftCreate(ShiftBase):
     pass
 
-
-# For updating an existing shift
 class ShiftUpdate(BaseModel):
-    name: Optional[str] = None
-    start_time: Optional[time] = None
-    end_time: Optional[time] = None
-    description: Optional[str] = None
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
     shift_code: Optional[str] = None
-    shift_name: Optional[str] = None
     working_minutes: Optional[int] = None
     status: Optional[str] = None
+    is_rotational: Optional[bool] = None
 
-
-# Response schema
-class ShiftResponse(ShiftBase):
+class ShiftOut(ShiftBase):
     id: int
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
 
     class Config:
-        orm_mode = True
+        from_attributes = True

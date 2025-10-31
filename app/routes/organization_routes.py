@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from app.database import get_db
-from app.models.organization import Organization
+from app.models.organization_m import Organization
 from app.models.branch_m import Branch 
 from app.schema.organization_schema import OrganizationCreate, OrganizationUpdate, OrganizationResponse
 from app.dependencies import require_admin, get_current_user

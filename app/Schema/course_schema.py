@@ -26,8 +26,4 @@ class CourseResponse(CourseBase):
     category: Optional["CategoryResponse"] = None  # forward ref as string
 
     class Config:
-        orm_mode = True
-
-# ⚠️ resolve forward references at the end
-from app.schema.category_schema import CategoryResponse
-CourseResponse.update_forward_refs()
+        from_attributes = True

@@ -23,9 +23,4 @@ class CategoryResponse(CategoryBase):
     courses: Optional[List["CourseResponse"]] = []  # forward reference
 
     class Config:
-        orm_mode = True
-
-
-# ⚠️ Import CourseResponse **after** defining CategoryResponse
-from app.schema.course_schema import CourseResponse
-CategoryResponse.update_forward_refs()
+        from_attributes = True
