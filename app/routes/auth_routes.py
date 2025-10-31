@@ -1,13 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.database import get_db
-from app.schema.user_schema import UserCreate, UserResponse
 from app.models.user_m import User
 from app.models.role_m import Role
-from app.utils import hash_password, verify_password, create_access_token
-from app.dependencies import get_current_user
+from app.schema.user_schema import AuthRegister, AuthRegisterResponse
+from app.utils.utils import hash_password, verify_password, create_access_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -16,16 +14,16 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 @router.post("/register", response_model=UserResponse)
 def register(user: UserCreate, db: Session = Depends(get_db)):
     # Check if email already exists
-    if db.query(User).filter(User.email == user.email).first():
+    if db.query(User).filter(User.email == payload.email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
 
     # Validate role_id
-    if user.role_id:
-        role = db.query(Role).filter(Role.id == user.role_id).first()
+    if payload.role_id:
+        role = db.query(Role).filter(Role.id == payload.role_id).first()
         if not role:
             raise HTTPException(status_code=400, detail="Invalid role_id")
 
-    # Create new user
+    # Create user
     new_user = User(
         first_name=user.first_name,
         last_name=user.last_name,
@@ -52,10 +50,10 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
 
 # ✅ Login
 @router.post("/login")
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == form_data.username).first()
     if not user or not verify_password(form_data.password, user.hashed_password):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+        raise HTTPException(status_code=401, detail="Invalid email or password")
 
     token = create_access_token(data={"sub": str(user.id)})
     return {"access_token": token, "token_type": "bearer"}

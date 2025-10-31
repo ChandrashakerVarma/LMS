@@ -25,7 +25,8 @@ def create_leave(leave: LeaveMasterCreate, db: Session = Depends(get_db)):
 # 📋 Get All Leaves
 @router.get("/", response_model=List[LeaveMasterOut])
 def get_all_leaves(db: Session = Depends(get_db)):
-    return db.query(LeaveMaster).all()
+    leaves = db.query(LeaveMaster).all()
+    return leaves
 
 # 🔍 Get Leave by ID
 @router.get("/{leave_id}", response_model=LeaveMasterOut)

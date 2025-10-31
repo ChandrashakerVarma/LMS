@@ -26,7 +26,7 @@ class Course(Base):
     # Relationships
     organization = relationship("Organization", back_populates="courses")
     branch = relationship("Branch", back_populates="courses")
-
+    checkpoints = relationship("QuizCheckpoint", back_populates="course")
     videos = relationship("Video", back_populates="course", cascade="all, delete-orphan")
     progress_records = relationship("Progress", back_populates="course", cascade="all, delete-orphan")
     enrollments = relationship("Enrollment", back_populates="course", cascade="all, delete-orphan")
