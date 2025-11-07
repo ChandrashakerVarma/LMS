@@ -1,6 +1,9 @@
+# app/routes/attendance_routes.py
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
+from datetime import date
+
 from app.database import get_db
 from app.models.attendance_m import Attendance
 from app.models.shift_m import Shift
@@ -20,6 +23,9 @@ def create_attendance(payload: AttendanceCreate, db: Session = Depends(get_db)):
     if payload.punch_in >= payload.punch_out:
         raise HTTPException(status_code=400, detail="Punch-out must be after punch-in")
 
+    # Always store attendance under the shift start date
+    attendance_date = payload.punch_in.date()
+
     result = calculate_attendance_status(
         shift_start=shift.start_time,
         shift_end=shift.end_time,
@@ -29,22 +35,23 @@ def create_attendance(payload: AttendanceCreate, db: Session = Depends(get_db)):
         punch_out=payload.punch_out
     )
 
-    attendance = Attendance(
+    record = Attendance(
         user_id=payload.user_id,
         shift_id=payload.shift_id,
+        attendance_date=attendance_date,
         punch_in=payload.punch_in,
         punch_out=payload.punch_out,
         total_worked_minutes=result["total_worked_minutes"],
         status=result["status"]
     )
 
-    db.add(attendance)
+    db.add(record)
     db.commit()
-    db.refresh(attendance)
-    return attendance
+    db.refresh(record)
+    return record
 
 
-# GET all attendance
+# GET all
 @router.get("/", response_model=List[AttendanceResponse])
 def get_all_attendance(db: Session = Depends(get_db)):
     return db.query(Attendance).all()
@@ -66,7 +73,6 @@ def update_attendance(attendance_id: int, payload: AttendanceUpdate, db: Session
     if not record:
         raise HTTPException(status_code=404, detail="Attendance not found")
 
-    # Update punch_in/out if provided
     for key, value in payload.dict(exclude_unset=True).items():
         setattr(record, key, value)
 
@@ -82,18 +88,20 @@ def update_attendance(attendance_id: int, payload: AttendanceUpdate, db: Session
         )
         record.total_worked_minutes = result["total_worked_minutes"]
         record.status = result["status"]
+        record.attendance_date = record.punch_in.date()
 
     db.commit()
     db.refresh(record)
     return record
 
 
-# DELETE attendance
+# DELETE
 @router.delete("/{attendance_id}")
 def delete_attendance(attendance_id: int, db: Session = Depends(get_db)):
     record = db.query(Attendance).filter(Attendance.id == attendance_id).first()
     if not record:
         raise HTTPException(status_code=404, detail="Attendance not found")
+
     db.delete(record)
     db.commit()
     return {"message": "Attendance deleted successfully"}

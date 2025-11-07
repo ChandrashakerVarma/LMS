@@ -23,8 +23,8 @@ from app.database import Base  # keep only one Base import
 from app.models import (
     role_m, user_m, course_m, Progress_m, video_m,
     QuizCheckpoint_m, QuizHistory_m, enrollment_m,
-    shift_m, department_m, leavemaster_m,
-    branch_m, category_m, organization, salary_structure_m, payroll_m, formula_m
+    shift_m, department_m, leavemaster_m, payroll_attendance_m,
+    branch_m, category_m, organization, salary_structure_m, payroll_m, formula_m, permission_m, attendance_m
 )
 
 # Metadata for autogenerate
