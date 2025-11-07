@@ -12,6 +12,7 @@ class ShiftBase(BaseModel):
     shift_code: str
     shift_name: str
     working_minutes: int
+    lag_minutes: Optional[int] = 60          # ✅ Added field
     status: Optional[str] = "active"
 
 
@@ -29,6 +30,7 @@ class ShiftUpdate(BaseModel):
     shift_code: Optional[str] = None
     shift_name: Optional[str] = None
     working_minutes: Optional[int] = None
+    lag_minutes: Optional[int] = None        # ✅ Added field
     status: Optional[str] = None
 
 

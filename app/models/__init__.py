@@ -11,3 +11,6 @@ from app.models.category_m import Category
 from app.models.salary_structure_m import SalaryStructure
 from app.models.payroll_m import Payroll
 from app.models.formula_m import Formula
+from app.models.permission_m import Permission
+from app.models.attendance_m import Attendance
+from app.models.payroll_attendance_m import PayrollAttendance

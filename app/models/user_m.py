@@ -33,5 +33,9 @@ class User(Base):
     organization = relationship("Organization", back_populates="users")
     enrollments = relationship("app.models.enrollment_m.Enrollment", back_populates="user", cascade="all, delete-orphan")
     leave_records = relationship("LeaveMaster", back_populates="user", cascade="all, delete-orphan")
-    salary_structure = relationship("SalaryStructure", back_populates="user", uselist=False)
+    salary_structure = relationship("SalaryStructure", back_populates="user", cascade="all, delete-orphan", passive_deletes=True)
     payrolls = relationship("Payroll", back_populates="user", cascade="all, delete-orphan")
+    payroll_attendances = relationship("PayrollAttendance", back_populates="user")
+    attendances = relationship("Attendance", back_populates="user", cascade="all, delete-orphan")
+    permissions = relationship("Permission", back_populates="user", cascade="all, delete-orphan")
+
