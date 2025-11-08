@@ -1,53 +1,47 @@
-from pydantic import BaseModel, EmailStr, Field
-from typing import Optional
+from pydantic import BaseModel, EmailStr
 from datetime import date, datetime
+from typing import Optional
 
-# ---------------------- Base Schema ----------------------
+
 class UserBase(BaseModel):
-    name: str
+    first_name: str
+    last_name: Optional[str] = None
     email: EmailStr
-    role_id: Optional[int] = None
+    role_id: int
     branch_id: Optional[int] = None
     organization_id: Optional[int] = None
+    date_of_birth: Optional[date] = None
+    joining_date: Optional[date] = None
+    relieving_date: Optional[date] = None
     address: Optional[str] = None
     designation: Optional[str] = None
-    date_of_birth: Optional[date] = None         # Only date, not datetime
-    joining_date: Optional[datetime] = None      # Full datetime
-    relieving_date: Optional[datetime] = None    # Optional datetime, can be null
+    inactive: Optional[bool] = False
+    biometric_id: Optional[str] = None
 
 
-# ---------------------- Create Schema ----------------------
 class UserCreate(UserBase):
-    password: str = Field(..., min_length=6)    # Ensure password >= 6 chars
+    password: str
 
 
-# ---------------------- Update Schema ----------------------
 class UserUpdate(BaseModel):
-    name: Optional[str] = None
-    email: Optional[EmailStr] = None
-    password: Optional[str] = Field(None, min_length=6)
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     role_id: Optional[int] = None
     branch_id: Optional[int] = None
     organization_id: Optional[int] = None
+    date_of_birth: Optional[date] = None
+    joining_date: Optional[date] = None
+    relieving_date: Optional[date] = None
     address: Optional[str] = None
     designation: Optional[str] = None
     inactive: Optional[bool] = None
-    date_of_birth: Optional[date] = None
-    joining_date: Optional[datetime] = None
-    relieving_date: Optional[datetime] = None
+    biometric_id: Optional[str] = None
 
 
-# ---------------------- Response Schema ----------------------
 class UserResponse(UserBase):
     id: int
-    inactive: bool = False
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
-
-    # Related names (IDs or names)
-    role_name: Optional[str] = None
-    branch_name: Optional[str] = None
-    organization_name: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         orm_mode = True

@@ -5,7 +5,7 @@ from app.models.video_m import Video
 from app.models.QuizCheckpoint_m import QuizCheckpoint
 from app.models.QuizHistory_m import QuizHistory
 from app.models.Progress_m import Progress
-from app.models.organization import *
+from app.models.organization_m import *
 from app.models.branch_m import Branch
 from app.models.category_m import Category
 from app.models.salary_structure_m import SalaryStructure

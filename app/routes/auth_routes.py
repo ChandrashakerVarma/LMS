@@ -4,8 +4,9 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user_m import User
 from app.models.role_m import Role
-from app.schema.user_schema import AuthRegister, AuthRegisterResponse
+from app.schema.user_schema import AuthRegister, AuthRegisterResponse, UserCreate, UserResponse
 from app.utils.utils import hash_password, verify_password, create_access_token
+from dependencies import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -31,6 +32,7 @@ def register(user: AuthRegister, db: Session = Depends(get_db)):
         hashed_password=hash_password(user.password),
         role_id=user.role_id
     )
+
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
@@ -42,7 +44,7 @@ def register(user: AuthRegister, db: Session = Depends(get_db)):
     )
 
 
-# ---------------- LOGIN ----------------
+# ✅ Login
 @router.post("/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     """ User login with email and password"""

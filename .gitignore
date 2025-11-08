@@ -1,0 +1,32 @@
+# --- Virtual Environments ---
+lms_env/
+l_env/
+venv/
+Lib/
+Include/
+bin/
+Scripts/
+pyvenv.cfg
+
+# --- Bytecode and Cache ---
+__pycache__/
+*.py[cod]
+*.pyo
+
+# --- Environment & Secrets ---
+.env
+.env.*
+
+# --- IDE / Editor Settings ---
+.vscode/
+.idea/
+
+# --- OS / System Files ---
+.DS_Store
+Thumbs.db
+
+# --- Logs ---
+*.log
+
+# --- Alembic ---
+alembic/versions/__pycache__/
