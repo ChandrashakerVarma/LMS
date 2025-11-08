@@ -7,8 +7,9 @@ class ShiftBase(BaseModel):
     end_time: str
     shift_code: str
     working_minutes: int
-    status: Optional[str] = "Active"
-    is_rotational: Optional[bool] = False
+    lag_minutes: Optional[int] = 60          # ✅ Added field
+    status: Optional[str] = "active"
+
 
 class ShiftCreate(ShiftBase):
     pass
@@ -18,6 +19,7 @@ class ShiftUpdate(BaseModel):
     end_time: Optional[str] = None
     shift_code: Optional[str] = None
     working_minutes: Optional[int] = None
+    lag_minutes: Optional[int] = None        # ✅ Added field
     status: Optional[str] = None
     is_rotational: Optional[bool] = None
 

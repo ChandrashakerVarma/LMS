@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, ForeignKey, DateTime, Float, String, func
+# app/models/attendance_m.py
+from sqlalchemy import Column, Integer, Date, String, ForeignKey, DateTime, func
 from sqlalchemy.orm import relationship
 from app.database import Base
 
@@ -8,18 +9,16 @@ class Attendance(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    punch_id = Column(String(100), nullable=False)
+    shift_id = Column(Integer, ForeignKey("shifts.id"), nullable=False)
 
-    first_punch = Column(DateTime, nullable=True)
-    last_punch = Column(DateTime, nullable=True)
-    shift_start = Column(DateTime, nullable=True)
-    shift_end = Column(DateTime, nullable=True)
+    attendance_date = Column(Date, nullable=False)  # Always shift start date
+    punch_in = Column(DateTime, nullable=False)
+    punch_out = Column(DateTime, nullable=False)
+    total_worked_minutes = Column(Integer, nullable=True)
+    status = Column(String(20), nullable=False, default="Pending")  # Full Day / Half Day / Absent
 
-    latitude = Column(Float, nullable=True)
-    longitude = Column(Float, nullable=True)
-    status = Column(String(50), nullable=True)  # e.g. Full-day / Half-day / Absent / Pending
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(DateTime, onupdate=func.now(), server_default=func.now())
-
+    # Relationships
     user = relationship("User", back_populates="attendances")
+    shift = relationship("Shift")

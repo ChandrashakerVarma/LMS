@@ -15,7 +15,6 @@ class PayrollCreate(PayrollBase):
     # HR shouldn't send salary fields — backend calculates automatically
     pass
 
-
 # ---------------- Update Schema ----------------
 class PayrollUpdate(BaseModel):
     status: Optional[str] = None  # For marking Paid, Approved, etc.
