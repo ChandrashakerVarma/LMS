@@ -1,6 +1,6 @@
-from pydantic import BaseModel, EmailStr
-from datetime import date, datetime
+from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
+from datetime import date, datetime
 
 
 class UserBase(BaseModel):
@@ -44,4 +44,23 @@ class UserResponse(UserBase):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+
+
+class AuthRegister(BaseModel):
+    """Used in /auth/register"""
+    name: str
+    email: EmailStr
+    role_id: Optional[int] = None
+    password: str = Field(..., min_length=6)
+
+
+class AuthRegisterResponse(BaseModel):
+    """Response for /auth/register"""
+    name: str
+    email: EmailStr
+    role_id: Optional[int] = None
+
+    class Config:
+        from_attributes = True

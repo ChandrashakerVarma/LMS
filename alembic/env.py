@@ -5,6 +5,7 @@ from sqlalchemy import create_engine, pool
 from alembic import context
 from dotenv import load_dotenv
 
+
 # Add project root to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -24,9 +25,9 @@ from app.models import (
     role_m, user_m, course_m, Progress_m, video_m,
     QuizCheckpoint_m, QuizHistory_m, enrollment_m,
     shift_m, department_m, leavemaster_m,
-    branch_m, category_m, 
+    branch_m, category_m,week_day_m,
     organization_m, job_posting_m,
-    jobrole_m,workflow_m,
+    jobrole_m,workflow_m,shift_roaster_m,shift_roaster_detail_m,permission_m,
     candidate_m,candidate_documents_m,
     user_shifts_m,shift_change_request_m,attendance_m
     )

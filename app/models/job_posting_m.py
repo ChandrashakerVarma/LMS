@@ -20,4 +20,5 @@ class JobPosting(Base):
     role = relationship("Role", back_populates="job_postings", lazy="joined")
     created_by = relationship("User", back_populates="job_postings", lazy="joined")
     
+
     user = relationship("User", back_populates="job_postings", overlaps="created_by")

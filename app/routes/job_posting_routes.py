@@ -6,6 +6,9 @@ from datetime import date
 from app.database import get_db
 from app.models.job_posting_m import JobPosting
 from app.schema.job_posting_schema import JobPostingCreate, JobPostingOut
+from app.models.workflow_m import Workflow, ApprovalStatus
+from app.models.candidate_m import Candidate
+from app.schema.candidate_schema import CandidateOut
 
 router = APIRouter(prefix="/job_postings", tags=["Job Postings"])
 
@@ -59,3 +62,27 @@ def delete_job_posting(job_id: int, db: Session = Depends(get_db)):
     db.delete(job)
     db.commit()
     return {"message": "Job posting deleted successfully"}
+
+@router.get("/{job_id}/candidates/accepted", response_model=List[CandidateOut])
+def get_accepted_candidates(job_id: int, db: Session = Depends(get_db)):
+    """
+    Get all accepted candidates for a given job posting
+    """
+    # Check if the job exists
+    job = db.query(JobPosting).filter(JobPosting.id == job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job posting not found")
+
+    # Get workflows with approved/accepted status
+    accepted_workflows = db.query(Workflow).filter(
+        Workflow.posting_id == job_id,
+        Workflow.approval_status == ApprovalStatus.accepted
+    ).all()
+
+    # Collect all candidates from accepted workflows
+    accepted_candidates = []
+    for workflow in accepted_workflows:
+        candidates = db.query(Candidate).filter(Candidate.workflow_id == workflow.id).all()
+        accepted_candidates.extend(candidates)
+
+    return accepted_candidates

@@ -1,6 +1,12 @@
+import enum
 from sqlalchemy import Column, Integer, Boolean, String, ForeignKey
 from sqlalchemy.orm import relationship
 from app.database import Base
+
+class ApprovalStatus(str, enum.Enum):
+    pending = "Pending"
+    accepted = "Accepted"
+    rejected = "Rejected"
 
 class Workflow(Base):
     __tablename__ = "workflows"

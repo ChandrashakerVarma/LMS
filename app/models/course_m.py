@@ -1,4 +1,4 @@
-# app/models/course_m.py
+# app/models/course_LMS_m.py
 from sqlalchemy import Column, String, Integer, Float, DateTime, func, ForeignKey
 from sqlalchemy.orm import relationship
 from app.database import Base
@@ -26,7 +26,7 @@ class Course(Base):
     # Relationships
     organization = relationship("Organization", back_populates="courses")
     branch = relationship("Branch", back_populates="courses")
-    checkpoints = relationship("QuizCheckpoint", back_populates="course")
+
     videos = relationship("Video", back_populates="course", cascade="all, delete-orphan")
     progress_records = relationship("Progress", back_populates="course", cascade="all, delete-orphan")
     enrollments = relationship("Enrollment", back_populates="course", cascade="all, delete-orphan")

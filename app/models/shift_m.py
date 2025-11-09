@@ -19,3 +19,4 @@ class Shift(Base):
 
 
     user_shifts = relationship("UserShift", back_populates="shift")
+    shift_roster_details = relationship("ShiftRosterDetail", back_populates="shift")

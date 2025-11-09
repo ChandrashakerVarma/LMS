@@ -9,6 +9,7 @@ class ShiftChangeRequest(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     old_shift_id = Column(Integer, ForeignKey("shifts.id"), nullable=True)
     new_shift_id = Column(Integer, ForeignKey("shifts.id"), nullable=False)
+
     request_date = Column(Date, nullable=False)
     reason = Column(String(255), nullable=True)
     status = Column(String(20), default="Pending")  # Approved / Rejected / Pending
@@ -17,3 +18,5 @@ class ShiftChangeRequest(Base):
     
     old_shift = relationship("Shift", foreign_keys=[old_shift_id])
     new_shift = relationship("Shift", foreign_keys=[new_shift_id])
+  
+    

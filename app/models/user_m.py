@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.database import Base
 
+
 class User(Base):
     __tablename__ = "users"
 
@@ -35,17 +36,7 @@ class User(Base):
     organization = relationship("Organization", back_populates="users", lazy="joined")
     progress = relationship("Progress", back_populates="user")
     enrollments = relationship("Enrollment", back_populates="user")
-
-
-
-
-
-
-
-
-
-
-
+    permissions = relationship("Permission", back_populates="users")
     # Links to other models
     leaves = relationship("LeaveMaster", back_populates="user", cascade="all, delete-orphan")
     user_shifts = relationship("UserShift", back_populates="user", cascade="all, delete-orphan")
