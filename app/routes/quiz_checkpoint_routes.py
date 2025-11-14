@@ -1,16 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from typing import List
 from app.database import get_db
 from app.models.video_m import Video
-from app.models.course_m import Course  # ✅ import Course
+from app.models.course_m import Course
 from app.models.QuizCheckpoint_m import QuizCheckpoint
 from app.schema.quiz_checkpoint_schema import QuizCheckpointResponse, QuizCheckpointCreate, QuizCheckpointUpdate
 from app.dependencies import require_admin
-from typing import List
 
 router = APIRouter(prefix="/checkpoints", tags=["checkpoints"])
 
-# Helper function to validate timestamp
+# Helper to validate timestamp
 def validate_checkpoint_timestamp(db: Session, course_id: int, video_id: int, timestamp: float):
     course = db.query(Course).filter(Course.id == course_id).first()
     if not course:
@@ -33,12 +33,13 @@ def create_checkpoint(checkpoint: QuizCheckpointCreate, db: Session = Depends(ge
     db.add(new_checkpoint)
     db.commit()
     db.refresh(new_checkpoint)
-    return new_checkpoint
+    return QuizCheckpointResponse.from_orm(new_checkpoint)  # ✅ Use from_orm
 
 # List checkpoints
 @router.get("/", response_model=List[QuizCheckpointResponse])
 def list_checkpoints(db: Session = Depends(get_db), current_user: dict = Depends(require_admin)):
-    return db.query(QuizCheckpoint).all()
+    checkpoints = db.query(QuizCheckpoint).all()
+    return [QuizCheckpointResponse.from_orm(c) for c in checkpoints]  # ✅ Convert each
 
 # Get checkpoint by ID
 @router.get("/{checkpoint_id}", response_model=QuizCheckpointResponse)
@@ -46,7 +47,7 @@ def get_checkpoint(checkpoint_id: int, db: Session = Depends(get_db), current_us
     checkpoint = db.query(QuizCheckpoint).filter(QuizCheckpoint.id == checkpoint_id).first()
     if not checkpoint:
         raise HTTPException(status_code=404, detail="Checkpoint not found")
-    return checkpoint
+    return QuizCheckpointResponse.from_orm(checkpoint)  # ✅ Use from_orm
 
 # Update checkpoint
 @router.put("/{checkpoint_id}", response_model=QuizCheckpointResponse)
@@ -65,7 +66,7 @@ def update_checkpoint(checkpoint_id: int, updated_data: QuizCheckpointUpdate, db
     
     db.commit()
     db.refresh(checkpoint)
-    return checkpoint
+    return QuizCheckpointResponse.from_orm(checkpoint)  # ✅ Use from_orm
 
 # Delete checkpoint
 @router.delete("/{checkpoint_id}", status_code=status.HTTP_204_NO_CONTENT)

@@ -4,9 +4,8 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user_m import User
 from app.models.role_m import Role
-from app.schema.user_schema import AuthRegister, AuthRegisterResponse, UserCreate, UserResponse
+from app.schema.user_schema import AuthRegister, AuthRegisterResponse
 from app.utils.utils import hash_password, verify_password, create_access_token
-from dependencies import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -25,9 +24,10 @@ def register(user: AuthRegister, db: Session = Depends(get_db)):
         if not role:
             raise HTTPException(status_code=400, detail="Invalid role_id")
 
-    # Create new user
+    # ✅ Create new user (no 'name' field — use first_name / last_name)
     new_user = User(
-        name=user.name,
+        first_name=user.first_name,
+        last_name=user.last_name,
         email=user.email,
         hashed_password=hash_password(user.password),
         role_id=user.role_id
@@ -38,16 +38,17 @@ def register(user: AuthRegister, db: Session = Depends(get_db)):
     db.refresh(new_user)
 
     return AuthRegisterResponse(
-        name=new_user.name,
+        first_name=new_user.first_name,
+        last_name=new_user.last_name,
         email=new_user.email,
         role_id=new_user.role_id
     )
 
 
-# ✅ Login
+# ---------------- LOGIN ----------------
 @router.post("/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    """ User login with email and password"""
+    """✅ User login with email and password"""
     user = db.query(User).filter(User.email == form_data.username).first()
 
     if not user or not verify_password(form_data.password, user.hashed_password):
@@ -66,7 +67,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
         "token_type": "bearer",
         "user": {
             "id": user.id,
-            "name": user.name,
+            "name": f"{user.first_name} {user.last_name or ''}".strip(),
             "email": user.email,
             "role_id": role_id,
             "role_name": role_name

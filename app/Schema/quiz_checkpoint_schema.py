@@ -33,4 +33,4 @@ class QuizCheckpointResponse(BaseModel):
     required: bool
 
     class Config:
-        from_attributes = True
+        orm_mode = True  # ✅ Fix for from_orm

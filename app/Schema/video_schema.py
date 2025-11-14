@@ -24,4 +24,4 @@ class VideoResponse(VideoBase):
     updated_at: Optional[datetime] = None
 
     class Config:
-        from_attributes = True
+        orm_mode = True  # ✅ must have for .from_orm()

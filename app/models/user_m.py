@@ -23,7 +23,6 @@ class User(Base):
     address = Column(String(255), nullable=True)
     designation = Column(String(100), nullable=True)
     inactive = Column(Boolean, default=False)
-
     biometric_id = Column(String(50), nullable=True)
 
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -41,4 +40,8 @@ class User(Base):
     payroll_attendances = relationship("PayrollAttendance", back_populates="user")
     attendances = relationship("Attendance", back_populates="user", cascade="all, delete-orphan")
     permissions = relationship("Permission", back_populates="user", cascade="all, delete-orphan")
+    job_postings = relationship("JobPosting", back_populates="user")
+    shift_change_requests = relationship("ShiftChangeRequest", back_populates="user", cascade="all, delete-orphan")
 
+    # ✅ Correct UserShift relationship (keep only one)
+    user_shifts = relationship("UserShift", back_populates="user", cascade="all, delete-orphan")

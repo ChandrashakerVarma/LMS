@@ -5,10 +5,12 @@ from app.routes import video_routes, quiz_checkpoint_routes, quiz_history_routes
 from app.routes import categorys_routes, formula_routes, permission_routes, attendance_routes
 from app.database import engine, Base
 from app.models import user_m, role_m, course_m, video_m, QuizCheckpoint_m, Progress_m, QuizHistory_m, enrollment_m,shift_m, department_m, leavemaster_m
-from app.models import organization, branch_m, category_m, salary_structure_m, payroll_m, formula_m, permission_m, attendance_m, payroll_attendance_m
+from app.models import organization_m, branch_m, category_m, salary_structure_m, payroll_m, formula_m, permission_m, attendance_m, payroll_attendance_m
+from app.models import job_posting_m, jobrole_m, workflow_m, candidate_m, candidate_documents_m
 from app.seeders.role_seeder import seed_roles
 from app.routes import shift_routes,department_routes
-from app.routes import leavemaster_routes, salary_structure_routes, payroll_routes, payroll_attendance_routes
+from app.routes import leavemaster_routes, salary_structure_routes, payroll_routes, payroll_attendance_routes, user_shifts_routes, shift_change_request_routes
+from app.routes import job_posting_routes, jobrole_routes, workflow_routes, candidate_routes, candidates_documents_routes
 
  
 app = FastAPI()

@@ -1,8 +1,8 @@
+# app/models/leave_m.py
 from sqlalchemy import Column, Integer, String, Date, Boolean, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.database import Base
-
 
 class LeaveMaster(Base):
     __tablename__ = "leave_master"
@@ -22,4 +22,4 @@ class LeaveMaster(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationship to User
-    user = relationship("User", back_populates="leaves")
+    user = relationship("User", back_populates="leave_records")

@@ -1,8 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-from datetime import date
-
 from app.database import get_db
 from app.models.candidate_m import Candidate
 from app.schema.candidate_schema import CandidateCreate, CandidateOut, CandidateUpdate
@@ -16,14 +14,14 @@ def create_candidate(candidate: CandidateCreate, db: Session = Depends(get_db)):
     db.add(db_candidate)
     db.commit()
     db.refresh(db_candidate)
-    return db_candidate
+    return CandidateOut.from_orm(db_candidate)   # ✅ FIXED
 
 
 # 📜 Get All Candidates
 @router.get("/", response_model=List[CandidateOut])
 def get_all_candidates(db: Session = Depends(get_db)):
     candidates = db.query(Candidate).all()
-    return candidates
+    return [CandidateOut.from_orm(c) for c in candidates]   # ✅ FIXED
 
 
 # 🔍 Get Candidate by ID
@@ -32,7 +30,7 @@ def get_candidate(candidate_id: int, db: Session = Depends(get_db)):
     candidate = db.query(Candidate).filter(Candidate.id == candidate_id).first()
     if not candidate:
         raise HTTPException(status_code=404, detail="Candidate not found")
-    return candidate
+    return CandidateOut.from_orm(candidate)   # ✅ FIXED
 
 
 # ✏️ Update Candidate
@@ -47,7 +45,7 @@ def update_candidate(candidate_id: int, updated_data: CandidateUpdate, db: Sessi
 
     db.commit()
     db.refresh(candidate)
-    return candidate
+    return CandidateOut.from_orm(candidate)   # ✅ FIXED
 
 
 # ❌ Delete Candidate

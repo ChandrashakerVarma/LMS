@@ -29,13 +29,17 @@ def create_video(video: VideoCreate, db: Session = Depends(get_db), current_user
     db.commit()
     db.refresh(course)
 
-    return db.query(Video).options(joinedload(Video.checkpoints)).filter(Video.id == new_video.id).first()
+    # Return Pydantic model
+    return VideoResponse.from_orm(
+        db.query(Video).options(joinedload(Video.checkpoints)).filter(Video.id == new_video.id).first()
+    )
 
 
 # ---------------- LIST ----------------
 @router.get("/", response_model=List[VideoResponse])
 def list_videos(db: Session = Depends(get_db)):
-    return db.query(Video).options(joinedload(Video.checkpoints)).all()
+    videos = db.query(Video).options(joinedload(Video.checkpoints)).all()
+    return [VideoResponse.from_orm(v) for v in videos]
 
 
 # ---------------- GET BY ID ----------------
@@ -44,7 +48,7 @@ def get_video(video_id: int, db: Session = Depends(get_db)):
     video = db.query(Video).options(joinedload(Video.checkpoints)).filter(Video.id == video_id).first()
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
-    return video
+    return VideoResponse.from_orm(video)
 
 
 # ---------------- UPDATE ----------------
@@ -69,7 +73,9 @@ def update_video(video_id: int, payload: VideoUpdate, db: Session = Depends(get_
         db.commit()
         db.refresh(course)
 
-    return db.query(Video).options(joinedload(Video.checkpoints)).filter(Video.id == video.id).first()
+    return VideoResponse.from_orm(
+        db.query(Video).options(joinedload(Video.checkpoints)).filter(Video.id == video.id).first()
+    )
 
 
 # ---------------- DELETE ----------------

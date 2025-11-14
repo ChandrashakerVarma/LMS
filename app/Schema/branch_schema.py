@@ -1,6 +1,7 @@
 # app/schema/branch_schema.py
 from pydantic import BaseModel
 from typing import Optional
+from datetime import datetime
 
 class BranchBase(BaseModel):
     name: str
@@ -17,7 +18,8 @@ class BranchUpdate(BaseModel):
 
 class BranchResponse(BranchBase):
     id: int
-    organization_id: int
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     class Config:
-        from_attributes = True
+        orm_mode = True  # ✅ Needed for from_orm()

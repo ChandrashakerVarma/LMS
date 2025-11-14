@@ -7,15 +7,17 @@ class WorkflowBase(BaseModel):
     approval_status: Optional[str] = "Pending"
     posting_id: int
 
+
 class WorkflowCreate(WorkflowBase):
     pass
+
 
 class WorkflowUpdate(WorkflowBase):
     pass
 
-class WorkflowOut(WorkflowBase):
+
+class WorkflowResponse(WorkflowBase):
     id: int
 
-    model_config = {
-        "from_attributes": True  # replaces orm_mode in Pydantic v2
-    }
+    class Config:
+        orm_mode = True

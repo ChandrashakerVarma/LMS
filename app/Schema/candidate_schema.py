@@ -29,4 +29,4 @@ class CandidateOut(CandidateBase):
     id: int
 
     class Config:
-        from_attributes = True
+        orm_mode = True   # ✅ Correct for Pydantic v1

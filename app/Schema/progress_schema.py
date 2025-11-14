@@ -7,7 +7,8 @@ class ProgressUpdateSchema(BaseModel):
     course_id: int
     watched_minutes: float  # frontend sends current watched minutes
 
-# Response
+
+# Response schema
 class ProgressResponse(BaseModel):
     id: int
     user_id: int
@@ -18,4 +19,4 @@ class ProgressResponse(BaseModel):
     updated_at: datetime
 
     class Config:
-        from_attributes = True
+        orm_mode = True  # ✅ Use this for Pydantic v1

@@ -14,3 +14,11 @@ from app.models.formula_m import Formula
 from app.models.permission_m import Permission
 from app.models.attendance_m import Attendance
 from app.models.payroll_attendance_m import PayrollAttendance
+from app.models.candidate_documents_m import CandidateDocument
+from app.models.candidate_m import Candidate
+from app.models.job_posting_m import JobPosting
+from app.models.jobrole_m import JobRole
+from app.models.leavemaster_m import LeaveMaster
+from app.models.shift_change_request_m import ShiftChangeRequest
+from app.models.user_shifts_m import UserShift
+from app.models.workflow_m import Workflow

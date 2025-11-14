@@ -1,6 +1,6 @@
 # app/schema/department_schema.py
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional
 from datetime import datetime
 
 class DepartmentBase(BaseModel):
@@ -21,4 +21,4 @@ class DepartmentResponse(DepartmentBase):
     updated_at: Optional[datetime]
 
     class Config:
-        from_attributes = True
+        orm_mode = True
