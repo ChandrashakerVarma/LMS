@@ -1,0 +1,19 @@
+[33mfebefef[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mchandu[m[33m)[m HEAD@{0}: pull origin chandu: Merge made by the 'ort' strategy.
+[33mb7ed9a2[m HEAD@{1}: checkout: moving from chandu to chandu
+[33mb7ed9a2[m HEAD@{2}: commit: Updated organization code and fixes
+[33m0f2734b[m HEAD@{3}: checkout: moving from chandu to chandu
+[33m0f2734b[m HEAD@{4}: checkout: moving from main to chandu
+[33meb3c618[m[33m ([m[1;32mmain[m[33m)[m HEAD@{5}: commit: WIP: local changes before switching to chandu
+[33ma45610a[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{6}: pull: Fast-forward
+[33m8861a50[m HEAD@{7}: checkout: moving from chandu to main
+[33m0f2734b[m HEAD@{8}: commit: Resolved merge conflicts with main branch
+[33mb14e5a1[m HEAD@{9}: checkout: moving from chandu to chandu
+[33mb14e5a1[m HEAD@{10}: checkout: moving from chandu to chandu
+[33mb14e5a1[m HEAD@{11}: commit: Updated LMS: quiz checkpoints bound to videos and course improvements
+[33m8861a50[m HEAD@{12}: checkout: moving from main to chandu
+[33m8861a50[m HEAD@{13}: commit: Forced update with latest code
+[33m89bd48d[m HEAD@{14}: commit: Updated modified code in LMS project
+[33md2e960e[m HEAD@{15}: commit: Remove venv and .env from repo; ignore them
+[33m7d537fa[m HEAD@{16}: Branch: renamed refs/heads/srilaxmi to refs/heads/main
+[33m7d537fa[m HEAD@{18}: commit: Added full CRUD operations for QuizHistory with updated schema
+[33m223b92f[m HEAD@{19}: clone: from https://github.com/ChandrashakerVarma/LMS.git
