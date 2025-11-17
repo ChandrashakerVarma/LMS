@@ -2,8 +2,11 @@ from pydantic import BaseModel, EmailStr
 from datetime import date
 from typing import Optional
 
+
+# -------------------- BASE --------------------
 class CandidateBase(BaseModel):
     workflow_id: int
+    job_posting_id: int
     first_name: str
     last_name: str
     email: EmailStr
@@ -12,10 +15,12 @@ class CandidateBase(BaseModel):
     resume_url: Optional[str] = None
 
 
+# -------------------- CREATE --------------------
 class CandidateCreate(CandidateBase):
     pass
 
 
+# -------------------- UPDATE --------------------
 class CandidateUpdate(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
@@ -23,10 +28,13 @@ class CandidateUpdate(BaseModel):
     phone_number: Optional[str] = None
     applied_date: Optional[date] = None
     resume_url: Optional[str] = None
+    status: Optional[str] = None   # Pending / Approved / Rejected
 
 
+# -------------------- OUTPUT --------------------
 class CandidateOut(CandidateBase):
     id: int
+    status: str
 
     class Config:
-        orm_mode = True   # ✅ Correct for Pydantic v1
+        orm_mode = True

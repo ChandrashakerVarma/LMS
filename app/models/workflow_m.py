@@ -1,18 +1,19 @@
-from sqlalchemy import Column, Integer, Boolean, String, ForeignKey, DateTime, func
+from sqlalchemy import Column, Integer, Enum, ForeignKey
 from sqlalchemy.orm import relationship
+from enum import Enum as PyEnum
 from app.database import Base
+
+class ApprovalStatus(str, PyEnum):
+    pending = "pending"
+    accepted = "accepted"
+    rejected = "rejected"
 
 class Workflow(Base):
     __tablename__ = "workflows"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     posting_id = Column(Integer, ForeignKey("job_postings.id"))
-    approval_required = Column(Boolean, default=False)
-    approver_id = Column(Integer, ForeignKey("users.id"))
-    approval_status = Column(String, default="Pending")
+    approval_status = Column(Enum(ApprovalStatus), default=ApprovalStatus.pending)
 
-
-    # Relationships
-    approver = relationship("User", backref="workflows", foreign_keys=[approver_id])
-    posting = relationship("JobPosting", backref="workflows")
+    job_posting = relationship("JobPosting", back_populates="workflow")
     candidates = relationship("Candidate", back_populates="workflow")

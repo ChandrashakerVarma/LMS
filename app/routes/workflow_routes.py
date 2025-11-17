@@ -5,10 +5,7 @@ from app.database import get_db
 from app.models.workflow_m import Workflow
 from app.schema.workflow_schema import WorkflowCreate, WorkflowUpdate, WorkflowResponse
 
-router = APIRouter(
-    prefix="/workflows",
-    tags=["Workflows"]
-)
+router = APIRouter(prefix="/workflows", tags=["Workflows"])
 
 # Create Workflow
 @router.post("/", response_model=WorkflowResponse)
@@ -43,7 +40,7 @@ def update_workflow(workflow_id: int, workflow: WorkflowUpdate, db: Session = De
     if not db_wf:
         raise HTTPException(status_code=404, detail="Workflow not found")
 
-    for key, value in workflow.dict().items():
+    for key, value in workflow.dict(exclude_unset=True).items():
         setattr(db_wf, key, value)
 
     db.commit()

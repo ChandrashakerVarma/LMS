@@ -57,3 +57,5 @@ def delete_candidate(candidate_id: int, db: Session = Depends(get_db)):
     db.delete(candidate)
     db.commit()
     return {"message": "Candidate deleted successfully"}
+
+

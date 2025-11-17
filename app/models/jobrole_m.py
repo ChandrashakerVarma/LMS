@@ -1,4 +1,6 @@
-from sqlalchemy import Column, Integer, String, DateTime, func
+from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 from app.database import Base
 
 class JobRole(Base):
@@ -10,3 +12,5 @@ class JobRole(Base):
     required_skills = Column(String(1000))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    job_postings = relationship("JobPosting", back_populates="jobrole")

@@ -26,7 +26,7 @@ from app.models import (
     shift_m, department_m, leavemaster_m, payroll_attendance_m,
     branch_m, category_m, organization_m, salary_structure_m, payroll_m,
     formula_m, permission_m, attendance_m,candidate_documents_m, candidate_m, job_posting_m, 
-    jobrole_m, shift_change_request_m, user_shifts_m, workflow_m
+    jobrole_m, shift_change_request_m, user_shifts_m, workflow_m,notification_m
 )
 
 # Metadata for autogenerate
