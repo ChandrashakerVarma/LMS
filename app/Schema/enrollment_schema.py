@@ -12,4 +12,4 @@ class EnrollmentResponse(BaseModel):
     enrolled_at: datetime
 
     class Config:
-        from_attributes = True
+        orm_mode = True  # ✅ Required for .from_orm() to work

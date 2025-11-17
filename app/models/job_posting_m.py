@@ -2,23 +2,24 @@ from sqlalchemy import Column, Integer, String, Date, ForeignKey
 from sqlalchemy.orm import relationship
 from app.database import Base
 
+
 class JobPosting(Base):
     __tablename__ = "job_postings"
 
     id = Column(Integer, primary_key=True, index=True)
-    role_id = Column(Integer, ForeignKey("roles.id"))
-    number_of_positions = Column(Integer)
-    employment_type = Column(String(50))
-    location = Column(String(100))
+    job_role_id = Column(Integer, ForeignKey("job_roles.id"), nullable=False)
+
+    number_of_positions = Column(Integer, nullable=False)
+    employment_type = Column(String(50), nullable=False)
+    location = Column(String(100), nullable=False)
     salary = Column(Integer)
-    posting_date = Column(Date)
+    posting_date = Column(Date, nullable=False)
     closing_date = Column(Date)
-    description_id = Column(Integer, nullable=True)
-    created_by_id = Column(Integer, ForeignKey("users.id"))
+    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
-    # Relationships (optional, if these tables exist)
-    role = relationship("Role", back_populates="job_postings", lazy="joined")
-    created_by = relationship("User", back_populates="job_postings", lazy="joined")
-    
+    # Relationships
+    jobrole = relationship("JobRole", back_populates="job_postings")
+    created_by = relationship("User", back_populates="job_postings")
 
-    user = relationship("User", back_populates="job_postings", overlaps="created_by")
+    workflow = relationship("Workflow", back_populates="job_posting", uselist=False)
+    candidates = relationship("Candidate", back_populates="job_posting")

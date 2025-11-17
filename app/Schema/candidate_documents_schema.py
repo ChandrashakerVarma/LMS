@@ -13,8 +13,10 @@ class CandidateDocumentUpdate(BaseModel):
     document_type: Optional[str] = None
     document_url: Optional[HttpUrl] = None
 
-class CandidateDocumentOut(CandidateDocumentBase):
+class CandidateDocumentOut(BaseModel):
     id: int
+    candidate_id: int
+    document_type: str
+    document_url: HttpUrl
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}

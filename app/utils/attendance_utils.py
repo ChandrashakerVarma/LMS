@@ -1,4 +1,6 @@
+# app/utils/attendance_utils.py
 from datetime import datetime, timedelta, time
+
 
 def calculate_attendance_status(
     shift_start: time,
@@ -10,7 +12,7 @@ def calculate_attendance_status(
 ):
     """
     Calculate attendance status based on shift timing, lag, and punch duration.
-    Supports overnight shifts (e.g., 10 PM to 6 AM next day).
+    Handles overnight shifts (e.g., 22:00–06:00 next day).
     """
 
     # Convert timezone-aware datetimes to naive
@@ -23,28 +25,29 @@ def calculate_attendance_status(
     shift_start_dt = datetime.combine(punch_in.date(), shift_start)
     shift_end_dt = datetime.combine(punch_in.date(), shift_end)
 
-    # Handle overnight shifts
+    # Handle cross-midnight shifts
     if shift_end_dt <= shift_start_dt:
         shift_end_dt += timedelta(days=1)
 
-    # Lag window
+    # Allow small lag buffer
     early_start = shift_start_dt - timedelta(minutes=lag_minutes)
     late_end = shift_end_dt + timedelta(minutes=lag_minutes)
 
-    # Clip punch_in/out to valid window
+    # Clip actual punches within this window
     punch_in_clipped = max(punch_in, early_start)
     punch_out_clipped = min(punch_out, late_end)
 
-    # Total worked minutes
+    # Ensure valid range
+    if punch_out_clipped < punch_in_clipped:
+        return {"total_worked_minutes": 0, "status": "Absent"}
+
     total_worked_minutes = int((punch_out_clipped - punch_in_clipped).total_seconds() / 60)
 
-    # Attendance rules
+    # Determine status
     half_day_threshold = working_minutes // 2
-    quarter_day_threshold = half_day_threshold // 2
-
-    if total_worked_minutes >= half_day_threshold:
+    if total_worked_minutes >= working_minutes:
         status = "Full Day"
-    elif quarter_day_threshold <= total_worked_minutes < half_day_threshold:
+    elif total_worked_minutes >= half_day_threshold:
         status = "Half Day"
     else:
         status = "Absent"

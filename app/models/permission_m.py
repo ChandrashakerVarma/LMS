@@ -15,6 +15,5 @@ class Permission(Base):
     reason = Column(String(255), nullable=True)
 
     # Relationships
-
+    user = relationship("User", back_populates="permissions")
     shift = relationship("Shift", back_populates="permissions", lazy="joined")
-    users = relationship("User", back_populates="permissions")

@@ -1,25 +1,35 @@
 from pydantic import BaseModel
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, time
+
 
 class ShiftBase(BaseModel):
-    start_time: str
-    end_time: str
-    shift_code: str
-    working_minutes: int
-    status: Optional[str] = "Active"
-    is_rotational: Optional[bool] = False
+    shift_name: Optional[str] = None
+    description: Optional[str] = None
+    start_time: Optional[time] = None
+    end_time: Optional[time] = None
+    shift_code: Optional[str] = None
+    shift_type: Optional[str] = None  # Day / Night etc.
+    working_minutes: Optional[int] = None
+    lag_minutes: Optional[int] = 60
+    status: Optional[str] = "active"
 
-class ShiftCreate(ShiftBase):
+
+class ShiftCreate(BaseModel):
+    shift_name: str
+    description: Optional[str] = None
+    start_time: time
+    end_time: time
+    shift_code: str
+    shift_type: Optional[str] = None
+    working_minutes: int
+    lag_minutes: Optional[int] = 60
+    status: Optional[str] = "active"
+
+
+class ShiftUpdate(ShiftBase):
     pass
 
-class ShiftUpdate(BaseModel):
-    start_time: Optional[str] = None
-    end_time: Optional[str] = None
-    shift_code: Optional[str] = None
-    working_minutes: Optional[int] = None
-    status: Optional[str] = None
-    is_rotational: Optional[bool] = None
 
 class ShiftOut(ShiftBase):
     id: int
@@ -27,4 +37,4 @@ class ShiftOut(ShiftBase):
     updated_at: Optional[datetime]
 
     class Config:
-        from_attributes = True
+        orm_mode = True

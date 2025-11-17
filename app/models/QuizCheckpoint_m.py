@@ -7,6 +7,7 @@ class QuizCheckpoint(Base):
     __tablename__ = "quiz_checkpoints"
 
     id = Column(Integer, primary_key=True, index=True)  # Unique question ID
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False)  # ✅ course link
     video_id = Column(Integer, ForeignKey("videos.id", ondelete="CASCADE"), nullable=False)
     timestamp = Column(Float, nullable=False)  # Time in seconds or minutes
     question = Column(String(500), nullable=False)
@@ -16,3 +17,5 @@ class QuizCheckpoint(Base):
 
     video = relationship("Video", back_populates="checkpoints")
     histories = relationship("QuizHistory", back_populates="checkpoint", cascade="all, delete-orphan")
+    course = relationship("Course", back_populates="checkpoints")  # ✅ link to course
+

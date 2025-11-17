@@ -15,9 +15,8 @@ class JobRoleUpdate(JobRoleBase):
 
 class JobRoleOut(JobRoleBase):
     id: int
-    created_at: datetime
+    created_at: Optional[datetime] = None  # <-- make optional
     updated_at: Optional[datetime] = None
 
-    model_config = {
-        "from_attributes": True  # replaces orm_mode in Pydantic v2
-    }
+    class Config:
+        orm_mode = True  # Required for from_orm()

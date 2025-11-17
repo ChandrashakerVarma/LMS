@@ -1,55 +1,63 @@
-from datetime import datetime, timedelta, time
+from datetime import datetime
+from sqlalchemy.orm import Session
+from app.models.attendance_m import Attendance
+from app.models.salary_structure_m import SalaryStructure
+from app.utils.formula_engine import calculate_salary_with_formulas
 
-def calculate_attendance_status(
-    shift_start: time,
-    shift_end: time,
-    lag_minutes: int,
-    working_minutes: int,
-    punch_in: datetime,
-    punch_out: datetime,
-):
+def generate_attendance_based_salary(db: Session, user_id: int, month: str):
     """
-    Calculate attendance status based on shift timing, lag, and punch duration.
-    Supports overnight shifts (e.g., 10 PM to 6 AM next day).
+    Calculates salary automatically based on attendance.
+    Month format: 'YYYY-MM'
     """
 
-    # Convert timezone-aware datetimes to naive
-    if punch_in.tzinfo:
-        punch_in = punch_in.replace(tzinfo=None)
-    if punch_out.tzinfo:
-        punch_out = punch_out.replace(tzinfo=None)
+    attendances = db.query(Attendance).filter(
+        Attendance.user_id == user_id,
+        Attendance.punch_in.like(f"{month}%")
+    ).all()
 
-    # Determine shift start & end datetime based on punch_in date
-    shift_start_dt = datetime.combine(punch_in.date(), shift_start)
-    shift_end_dt = datetime.combine(punch_in.date(), shift_end)
+    if not attendances:
+        return None
 
-    # Handle overnight shifts
-    if shift_end_dt <= shift_start_dt:
-        shift_end_dt += timedelta(days=1)
+    salary_structure = db.query(SalaryStructure).filter(
+        SalaryStructure.user_id == user_id,
+        SalaryStructure.is_active == True
+    ).first()
 
-    # Lag window
-    early_start = shift_start_dt - timedelta(minutes=lag_minutes)
-    late_end = shift_end_dt + timedelta(minutes=lag_minutes)
+    if not salary_structure:
+        return None
 
-    # Clip punch_in/out to valid window
-    punch_in_clipped = max(punch_in, early_start)
-    punch_out_clipped = min(punch_out, late_end)
+    # Monthly gross from annual
+    basic = (salary_structure.basic_salary_annual or 0) / 12
+    allowances = (salary_structure.allowances_annual or 0) / 12
+    deductions = (salary_structure.deductions_annual or 0) / 12
+    bonus = (salary_structure.bonus_annual or 0) / 12
 
-    # Total worked minutes
-    total_worked_minutes = int((punch_out_clipped - punch_in_clipped).total_seconds() / 60)
+    gross_salary = basic + allowances + bonus - deductions
 
-    # Attendance rules
-    half_day_threshold = working_minutes // 2
-    quarter_day_threshold = half_day_threshold // 2
+    # Apply formulas dynamically
+    calculated = calculate_salary_with_formulas(db, gross_salary)
+    gross_salary = sum(calculated.values()) if calculated else gross_salary
 
-    if total_worked_minutes >= half_day_threshold:
-        status = "Full Day"
-    elif quarter_day_threshold <= total_worked_minutes < half_day_threshold:
-        status = "Half Day"
-    else:
-        status = "Absent"
+    # Count attendance stats
+    total_days = len(attendances)
+    present_days = sum(1 for a in attendances if a.status == "Full Day")
+    half_days = sum(1 for a in attendances if a.status == "Half Day")
+    absent_days = total_days - (present_days + half_days)
+
+    total_working_days = 30
+    per_day_salary = gross_salary / total_working_days
+    payable_days = present_days + (half_days * 0.5)
+    payable_salary = per_day_salary * payable_days
+    net_salary = round(payable_salary - deductions, 2)
 
     return {
-        "total_worked_minutes": total_worked_minutes,
-        "status": status
+        "user_id": user_id,
+        "month": month,
+        "total_days": total_days,
+        "present_days": present_days,
+        "half_days": half_days,
+        "absent_days": absent_days,
+        "gross_salary": round(gross_salary, 2),
+        "net_salary": net_salary,
+        "generated_on": datetime.now().date(),
     }

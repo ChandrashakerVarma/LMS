@@ -1,60 +1,74 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from app.database import get_db
-from app.models.video_m import Video  # Import the Video model
-from app.models.QuizCheckpoint_m import QuizCheckpoint
-from app.schema.quiz_checkpoint_schema import QuizCheckpointResponse, QuizCheckpointCreate
-from app.dependencies import require_admin  # Ensure this checks for admin rights
 from typing import List
+from app.database import get_db
+from app.models.video_m import Video
+from app.models.course_m import Course
+from app.models.QuizCheckpoint_m import QuizCheckpoint
+from app.schema.quiz_checkpoint_schema import QuizCheckpointResponse, QuizCheckpointCreate, QuizCheckpointUpdate
+from app.dependencies import require_admin
 
 router = APIRouter(prefix="/checkpoints", tags=["checkpoints"])
 
-# Helper function to validate timestamp
-def validate_checkpoint_timestamp(db: Session, video_id: int, timestamp: float):
-    video = db.query(Video).filter(Video.id == video_id).first()
+# Helper to validate timestamp
+def validate_checkpoint_timestamp(db: Session, course_id: int, video_id: int, timestamp: float):
+    course = db.query(Course).filter(Course.id == course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    video = db.query(Video).filter(Video.id == video_id, Video.course_id == course_id).first()
     if not video:
-        raise HTTPException(status_code=404, detail="Video not found")
+        raise HTTPException(status_code=404, detail="Video not found in this course")
+    
     if not (0 <= timestamp <= video.duration):
         raise HTTPException(status_code=400, detail="Checkpoint timestamp must be within video duration")
-    return video
+    
+    return course, video
 
-#  Create a new checkpoint (admin only)
+# Create checkpoint
 @router.post("/", response_model=QuizCheckpointResponse, status_code=status.HTTP_201_CREATED)
 def create_checkpoint(checkpoint: QuizCheckpointCreate, db: Session = Depends(get_db), current_user: dict = Depends(require_admin)):
-    validate_checkpoint_timestamp(db, checkpoint.video_id, checkpoint.timestamp)
+    validate_checkpoint_timestamp(db, checkpoint.course_id, checkpoint.video_id, checkpoint.timestamp)
     new_checkpoint = QuizCheckpoint(**checkpoint.dict())
     db.add(new_checkpoint)
     db.commit()
     db.refresh(new_checkpoint)
-    return new_checkpoint
+    return QuizCheckpointResponse.from_orm(new_checkpoint)  # ✅ Use from_orm
 
-#  List all checkpoints (admin only)
+# List checkpoints
 @router.get("/", response_model=List[QuizCheckpointResponse])
 def list_checkpoints(db: Session = Depends(get_db), current_user: dict = Depends(require_admin)):
-    return db.query(QuizCheckpoint).all()
+    checkpoints = db.query(QuizCheckpoint).all()
+    return [QuizCheckpointResponse.from_orm(c) for c in checkpoints]  # ✅ Convert each
 
-#  Get a single checkpoint by ID (admin only)
+# Get checkpoint by ID
 @router.get("/{checkpoint_id}", response_model=QuizCheckpointResponse)
 def get_checkpoint(checkpoint_id: int, db: Session = Depends(get_db), current_user: dict = Depends(require_admin)):
     checkpoint = db.query(QuizCheckpoint).filter(QuizCheckpoint.id == checkpoint_id).first()
     if not checkpoint:
         raise HTTPException(status_code=404, detail="Checkpoint not found")
-    return checkpoint
+    return QuizCheckpointResponse.from_orm(checkpoint)  # ✅ Use from_orm
 
-#  Update a checkpoint (admin only)
+# Update checkpoint
 @router.put("/{checkpoint_id}", response_model=QuizCheckpointResponse)
-def update_checkpoint(checkpoint_id: int, updated_data: QuizCheckpointCreate, db: Session = Depends(get_db), current_user: dict = Depends(require_admin)):
+def update_checkpoint(checkpoint_id: int, updated_data: QuizCheckpointUpdate, db: Session = Depends(get_db), current_user: dict = Depends(require_admin)):
     checkpoint = db.query(QuizCheckpoint).filter(QuizCheckpoint.id == checkpoint_id).first()
     if not checkpoint:
         raise HTTPException(status_code=404, detail="Checkpoint not found")
-    validate_checkpoint_timestamp(db, updated_data.video_id, updated_data.timestamp)
-    for key, value in updated_data.dict().items():
+    
+    course_id = updated_data.course_id or checkpoint.course_id
+    video_id = updated_data.video_id or checkpoint.video_id
+    timestamp = updated_data.timestamp or checkpoint.timestamp
+    validate_checkpoint_timestamp(db, course_id, video_id, timestamp)
+
+    for key, value in updated_data.dict(exclude_unset=True).items():
         setattr(checkpoint, key, value)
+    
     db.commit()
     db.refresh(checkpoint)
-    return checkpoint
+    return QuizCheckpointResponse.from_orm(checkpoint)  # ✅ Use from_orm
 
-#  Delete a checkpoint (admin only)
+# Delete checkpoint
 @router.delete("/{checkpoint_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_checkpoint(checkpoint_id: int, db: Session = Depends(get_db), current_user: dict = Depends(require_admin)):
     checkpoint = db.query(QuizCheckpoint).filter(QuizCheckpoint.id == checkpoint_id).first()

@@ -1,18 +1,14 @@
+# app/schema/attendance_schema.py
 from pydantic import BaseModel
+from datetime import datetime, date
 from typing import Optional
-from datetime import datetime
 
 
 class AttendanceBase(BaseModel):
     user_id: int
-    punch_id: str
-    first_punch: Optional[datetime] = None
-    last_punch: Optional[datetime] = None
-    shift_start: Optional[datetime] = None
-    shift_end: Optional[datetime] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    status: Optional[str] = None
+    shift_id: int
+    punch_in: datetime
+    punch_out: datetime
 
 
 class AttendanceCreate(AttendanceBase):
@@ -20,19 +16,17 @@ class AttendanceCreate(AttendanceBase):
 
 
 class AttendanceUpdate(BaseModel):
-    first_punch: Optional[datetime] = None
-    last_punch: Optional[datetime] = None
-    shift_start: Optional[datetime] = None
-    shift_end: Optional[datetime] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
+    punch_in: Optional[datetime] = None
+    punch_out: Optional[datetime] = None
     status: Optional[str] = None
 
 
-class AttendanceOut(AttendanceBase):
+class AttendanceResponse(AttendanceBase):
     id: int
-    created_at: datetime
-    updated_at: Optional[datetime] = None
+    attendance_date: date
+    total_worked_minutes: Optional[int]
+    status: str
+    created_at: Optional[datetime] = None
 
     class Config:
-        from_attributes = True
+        orm_mode = True

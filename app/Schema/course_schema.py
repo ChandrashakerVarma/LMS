@@ -3,21 +3,26 @@ from pydantic import BaseModel
 from typing import List, Optional
 from app.schema.video_schema import VideoResponse
 
+
 class CourseBase(BaseModel):
     title: str
     instructor: str
     level: Optional[str] = "beginner"
-    
     price: Optional[float] = 0.0
+    category_id: Optional[int] = None
+
 
 class CourseCreate(CourseBase):
     pass
 
+
 class CourseUpdate(BaseModel):
-    title: Optional[str]
-    instructor: Optional[str]
-    level: Optional[str]
-    price: Optional[float]
+    title: Optional[str] = None
+    instructor: Optional[str] = None
+    level: Optional[str] = None
+    price: Optional[float] = None
+    category_id: Optional[int] = None
+
 
 class CourseResponse(CourseBase):
     id: int
@@ -25,4 +30,4 @@ class CourseResponse(CourseBase):
     duration: Optional[float] = 0.0
 
     class Config:
-        from_attributes = True
+        orm_mode = True  # allows from_orm() conversion

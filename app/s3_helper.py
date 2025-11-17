@@ -22,7 +22,6 @@ s3_client = boto3.client(
     region_name=AWS_REGION,
     endpoint_url=f"https://s3.{AWS_REGION}.amazonaws.com"
 )
-
 def upload_file_to_s3(file_obj, folder, existing_key: str = None):
     """
     Uploads file to S3 and returns the file URL.
@@ -49,7 +48,11 @@ def upload_file_to_s3(file_obj, folder, existing_key: str = None):
             s3_key = f"{folder}/{uuid4()}.{file_extension}"
 
         # Upload (this will overwrite if key already exists)
-        s3_client.upload_fileobj(file_obj.file, BUCKET_NAME, s3_key)
+        s3_client.upload_fileobj(
+            file_obj.file,
+            BUCKET_NAME,
+            s3_key
+        )
 
         file_url = f"https://{BUCKET_NAME}.s3.{AWS_REGION}.amazonaws.com/{s3_key}"
         return file_url

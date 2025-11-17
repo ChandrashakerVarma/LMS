@@ -3,7 +3,6 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.database import Base
 
-
 class User(Base):
     __tablename__ = "users"
 
@@ -24,22 +23,25 @@ class User(Base):
     address = Column(String(255), nullable=True)
     designation = Column(String(100), nullable=True)
     inactive = Column(Boolean, default=False)
-
     biometric_id = Column(String(50), nullable=True)
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    role = relationship("Role", back_populates="users")
-    branch = relationship("Branch", back_populates="users", lazy="joined")
-    organization = relationship("Organization", back_populates="users", lazy="joined")
-    progress = relationship("Progress", back_populates="user")
-    enrollments = relationship("Enrollment", back_populates="user")
-    permissions = relationship("Permission", back_populates="users")
-    # Links to other models
-    leaves = relationship("LeaveMaster", back_populates="user", cascade="all, delete-orphan")
-    user_shifts = relationship("UserShift", back_populates="user", cascade="all, delete-orphan")
+    role = relationship("Role", back_populates="users", lazy="joined")
+    progress = relationship("Progress", back_populates="user", lazy="selectin")
+    branch = relationship("Branch", back_populates="users")
+    organization = relationship("Organization", back_populates="users")
+    enrollments = relationship("app.models.enrollment_m.Enrollment", back_populates="user", cascade="all, delete-orphan")
+    leave_records = relationship("LeaveMaster", back_populates="user", cascade="all, delete-orphan")
+    salary_structure = relationship("SalaryStructure", back_populates="user", cascade="all, delete-orphan", passive_deletes=True)
+    payrolls = relationship("Payroll", back_populates="user", cascade="all, delete-orphan")
+    payroll_attendances = relationship("PayrollAttendance", back_populates="user")
     attendances = relationship("Attendance", back_populates="user", cascade="all, delete-orphan")
+    permissions = relationship("Permission", back_populates="user", cascade="all, delete-orphan")
     job_postings = relationship("JobPosting", back_populates="user")
-    shift_change_requests = relationship("ShiftChangeRequest", back_populates="user")
+    shift_change_requests = relationship("ShiftChangeRequest", back_populates="user", cascade="all, delete-orphan")
+
+    # ✅ Correct UserShift relationship (keep only one)
+    user_shifts = relationship("UserShift", back_populates="user", cascade="all, delete-orphan")

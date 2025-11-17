@@ -11,18 +11,10 @@ class Organization(Base):
     description = Column(String(255), nullable=True)
 
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(),
-                        server_onupdate=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(),server_onupdate=func.now(), nullable=False)
 
 
     # Relationships
-    branches = relationship(
-        "Branch",
-        back_populates="organization",
-        cascade="all, delete-orphan",
-        # remove foreign_keys if it referenced branch_id
-
-    )
-
+    branches = relationship("Branch",back_populates="organization",cascade="all, delete-orphan")
     users = relationship("User", back_populates="organization", cascade="all, delete-orphan")
     courses = relationship("Course", back_populates="organization", cascade="all, delete-orphan")

@@ -1,6 +1,6 @@
-from pydantic import BaseModel, EmailStr, Field
-from typing import Optional
+from pydantic import BaseModel, EmailStr
 from datetime import date, datetime
+from typing import Optional
 
 
 class UserBase(BaseModel):
@@ -40,27 +40,35 @@ class UserUpdate(BaseModel):
 
 class UserResponse(UserBase):
     id: int
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    # ✅ Added these fields to match map_user_response
+    role_name: Optional[str] = None
+    branch_name: Optional[str] = None
+    organization_name: Optional[str] = None
 
     class Config:
-        from_attributes = True
+        from_attributes = True  # replaces orm_mode
 
 
+# ==========================================================
+# 🔹 AUTH SCHEMAS (for register & login)
+# ==========================================================
 
 class AuthRegister(BaseModel):
-    """Used in /auth/register"""
-    name: str
+    first_name: str
+    last_name: Optional[str] = None
     email: EmailStr
+    password: str
     role_id: Optional[int] = None
-    password: str = Field(..., min_length=6)
 
 
 class AuthRegisterResponse(BaseModel):
-    """Response for /auth/register"""
-    name: str
+    first_name: str
+    last_name: Optional[str] = None
     email: EmailStr
     role_id: Optional[int] = None
-
+    
     class Config:
         from_attributes = True
