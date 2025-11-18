@@ -40,7 +40,7 @@ class User(Base):
     payroll_attendances = relationship("PayrollAttendance", back_populates="user")
     attendances = relationship("Attendance", back_populates="user", cascade="all, delete-orphan")
     permissions = relationship("Permission", back_populates="user", cascade="all, delete-orphan")
-    job_postings = relationship("JobPosting", back_populates="user")
+    job_postings = relationship("JobPosting", back_populates="created_by")
     shift_change_requests = relationship("ShiftChangeRequest", back_populates="user", cascade="all, delete-orphan")
 
     # ✅ Correct UserShift relationship (keep only one)
