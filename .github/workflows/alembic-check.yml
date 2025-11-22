@@ -17,12 +17,13 @@ jobs:
         env:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: testdb
-          MYSQL_ROOT_HOST: "%"      # IMPORTANT FIX
+          MYSQL_ROOT_HOST: "%"
         options: >-
           --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=10
+          -v ${{ github.workspace }}/mysql-init:/docker-entrypoint-initdb.d
 
     steps:
       - name: Checkout repository
@@ -37,8 +38,19 @@ jobs:
         run: |
           pip install -r requirements.txt
 
+      - name: Wait for MySQL to be ready
+        run: |
+          for i in {1..30}; do
+            if mysqladmin ping -h 127.0.0.1 -proot --silent; then
+              echo "MySQL is up!"
+              break
+            fi
+            echo "Waiting for MySQL..."
+            sleep 2
+          done
+
       - name: Run Alembic Upgrade
         env:
-          DATABASE_URL: mysql+pymysql://root:root@mysql:3306/testdb
+          DATABASE_URL: mysql+pymysql://root:root@127.0.0.1:3306/testdb
         run: |
           alembic upgrade head
