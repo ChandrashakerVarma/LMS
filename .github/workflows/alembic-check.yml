@@ -37,15 +37,24 @@ jobs:
         run: |
           pip install -r requirements.txt
 
-      - name: Debug - List Files
-        run: ls -R .
+      - name: Wait for MySQL to be Ready
+        run: |
+          echo "Waiting for MySQL to start..."
+          for i in {1..30}; do
+            if mysqladmin ping -h "127.0.0.1" -u root -proot --silent; then
+              echo "MySQL is UP!"
+              break
+            fi
+            echo "MySQL not ready yet... ($i/30)"
+            sleep 2
+          done
 
       - name: Run Alembic Upgrade
         env:
           DB_USER: root
           DB_PASSWORD: root
           DB_NAME: lms
-          # 👇 Important: GitHub Actions MySQL service host
+          # Use service name for inside the container network
           GITHUB_DB_HOST: mysql
         run: |
           alembic upgrade head
