@@ -22,6 +22,11 @@ class Payroll(Base):
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
 
+    # Audit user tracking
+    created_by = Column(String(100), nullable=True)
+    modified_by = Column(String(100), nullable=True)
+
+
     # Relationships
     user = relationship("User", back_populates="payrolls")
     salary_structure = relationship("SalaryStructure", back_populates="payrolls")

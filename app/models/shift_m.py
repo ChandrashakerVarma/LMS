@@ -20,6 +20,10 @@ class Shift(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
+     # Audit user tracking
+    created_by = Column(String(100), nullable=True)
+    modified_by = Column(String(100), nullable=True)
+
     # Relationships
     user_shifts = relationship("UserShift", back_populates="shift", cascade="all, delete-orphan")
     permissions = relationship("Permission", back_populates="shift", cascade="all, delete-orphan")

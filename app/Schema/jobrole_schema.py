@@ -17,6 +17,8 @@ class JobRoleOut(JobRoleBase):
     id: int
     created_at: Optional[datetime] = None  # <-- make optional
     updated_at: Optional[datetime] = None
+    created_by: str | None = None
+    modified_by: str | None = None
 
     class Config:
         orm_mode = True  # Required for from_orm()

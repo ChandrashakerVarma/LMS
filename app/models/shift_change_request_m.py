@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, ForeignKey, String, Date
+from sqlalchemy import Column, Integer, ForeignKey, String, Date, DateTime, func
 from sqlalchemy.orm import relationship
 from app.database import Base
 
@@ -12,6 +12,13 @@ class ShiftChangeRequest(Base):
     request_date = Column(Date, nullable=False)
     reason = Column(String(255), nullable=True)
     status = Column(String(20), default="Pending")  # Approved / Rejected / Pending
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+   
+    # Audit user tracking
+    created_by = Column(String(100), nullable=True)
+    modified_by = Column(String(100), nullable=True)
 
     user = relationship("User", back_populates="shift_change_requests")
     

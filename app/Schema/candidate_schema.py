@@ -1,11 +1,10 @@
 from pydantic import BaseModel, EmailStr
-from datetime import date
+from datetime import date, datetime
 from typing import Optional
 
 
 # -------------------- BASE --------------------
 class CandidateBase(BaseModel):
-    workflow_id: int
     job_posting_id: int
     first_name: str
     last_name: str
@@ -35,6 +34,10 @@ class CandidateUpdate(BaseModel):
 class CandidateOut(CandidateBase):
     id: int
     status: str
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+    created_by: str | None = None
+    modified_by: str | None = None
 
     class Config:
         orm_mode = True

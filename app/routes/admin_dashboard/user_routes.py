@@ -18,7 +18,11 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # ---------------- CREATE ----------------
 @router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def create_user(payload: UserCreate, db: Session = Depends(get_db), current_user: dict = Depends(require_admin)):
+def create_user(
+    payload: UserCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_admin)
+):
     existing_user = db.query(User).filter(User.email == payload.email).first()
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -40,6 +44,10 @@ def create_user(payload: UserCreate, db: Session = Depends(get_db), current_user
         designation=payload.designation,
         inactive=payload.inactive,
         biometric_id=payload.biometric_id,
+
+        # ✅ Added for audit fields
+        created_by=current_user.email,
+        modified_by=current_user.email,
     )
 
     db.add(new_user)
@@ -50,7 +58,10 @@ def create_user(payload: UserCreate, db: Session = Depends(get_db), current_user
 
 # ---------------- READ ALL ----------------
 @router.get("/", response_model=List[UserResponse])
-def get_all_users(db: Session = Depends(get_db), current_user: dict = Depends(require_admin)):
+def get_all_users(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_admin)
+):
     users = db.query(User).options(
         joinedload(User.role),
         joinedload(User.branch),
@@ -75,10 +86,8 @@ def get_user_by_id(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # ✅ Make sure admin check is safe & case-insensitive
     role_name = (getattr(current_user.role, "name", "") or "").lower()
 
-    # ✅ Only admin or self can access
     if role_name != "admin" and current_user.id != user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
 
@@ -91,7 +100,7 @@ def update_user(
     user_id: int,
     payload: UserUpdate,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(get_current_user)
 ):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
@@ -99,12 +108,16 @@ def update_user(
 
     update_data = payload.dict(exclude_unset=True)
 
-    # Hash new password if provided
+    # Hash password if provided
     if "password" in update_data and update_data["password"]:
         update_data["hashed_password"] = pwd_context.hash(update_data.pop("password"))
 
+    # Apply updates
     for key, value in update_data.items():
         setattr(user, key, value)
+
+    # ✅ Set updated_by
+    user.modified_by = current_user.email
 
     db.commit()
     db.refresh(user)
@@ -127,9 +140,9 @@ def delete_user(
     return {"message": "User deleted successfully"}
 
 
-# ---------------- HELPER FUNCTION ----------------
+# ---------------- HELPER ----------------
 def map_user_response(user: User) -> UserResponse:
-    """Convert ORM object into API response"""
+    """Convert ORM object → Pydantic response"""
     return UserResponse(
         id=user.id,
         first_name=user.first_name,
@@ -145,8 +158,14 @@ def map_user_response(user: User) -> UserResponse:
         designation=user.designation,
         inactive=user.inactive,
         biometric_id=user.biometric_id,
+
         created_at=user.created_at,
         updated_at=user.updated_at,
+
+        # ✅ Include audit info
+        created_by=user.created_by,
+        modified_by=user.modified_by,
+
         role_name=user.role.name if user.role else None,
         branch_name=user.branch.name if user.branch else None,
         organization_name=user.organization.name if user.organization else None,

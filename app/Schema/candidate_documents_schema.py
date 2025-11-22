@@ -1,5 +1,6 @@
 from pydantic import BaseModel, HttpUrl
 from typing import Optional
+from datetime import datetime
 
 class CandidateDocumentBase(BaseModel):
     candidate_id: int
@@ -18,5 +19,10 @@ class CandidateDocumentOut(BaseModel):
     candidate_id: int
     document_type: str
     document_url: HttpUrl
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+    created_by: str | None = None
+    modified_by: str | None = None
+
 
     model_config = {"from_attributes": True}

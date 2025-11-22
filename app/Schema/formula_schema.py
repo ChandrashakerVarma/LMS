@@ -18,6 +18,7 @@ class FormulaCreate(FormulaBase):
 
 
 class FormulaUpdate(BaseModel):
+    component_code: Optional[str] = None
     component_name: Optional[str] = None
     formula_expression: Optional[str] = None  
     formula_type: Optional[str] = None
@@ -30,6 +31,8 @@ class FormulaResponse(FormulaBase):
     id: int
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
+    created_by: str | None = None
+    modified_by: str | None = None
 
     class Config:
         orm_mode = True

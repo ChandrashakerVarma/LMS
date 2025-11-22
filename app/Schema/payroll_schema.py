@@ -36,10 +36,12 @@ class PayrollResponse(BaseModel):
     gross_salary: float
     net_salary: float
     status: str
-    created_at: Optional[datetime]
-    updated_at: Optional[datetime]
     user_name: Optional[str] = None
     salary_structure_name: Optional[str] = None
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
+    created_by: str | None = None
+    modified_by: str | None = None
 
     class Config:
         orm_mode = True

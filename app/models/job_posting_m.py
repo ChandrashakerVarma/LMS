@@ -1,7 +1,6 @@
-from sqlalchemy import Column, Integer, String, Date, ForeignKey
+from sqlalchemy import Column, Integer, String, Date, ForeignKey, DateTime, func
 from sqlalchemy.orm import relationship
 from app.database import Base
-
 
 class JobPosting(Base):
     __tablename__ = "job_postings"
@@ -15,11 +14,13 @@ class JobPosting(Base):
     salary = Column(Integer)
     posting_date = Column(Date, nullable=False)
     closing_date = Column(Date)
-    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
-    # Relationships
+    # ---------------- Audit Fields ----------------
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    created_by = Column(String(100), nullable=True)
+    modified_by = Column(String(100), nullable=True)
+
+    # ---------------- Relationships ----------------
     jobrole = relationship("JobRole", back_populates="job_postings")
-    created_by = relationship("User", back_populates="job_postings")
-
-    workflow = relationship("Workflow", back_populates="job_posting", uselist=False)
     candidates = relationship("Candidate", back_populates="job_posting")

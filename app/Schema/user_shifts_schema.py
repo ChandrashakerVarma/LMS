@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from datetime import date
+from datetime import date,datetime
 from typing import Optional
 
 class UserShiftBase(BaseModel):
@@ -19,6 +19,11 @@ class UserShiftUpdate(BaseModel):
 
 class UserShiftOut(UserShiftBase):
     id: int
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
+    created_by: str | None = None
+    modified_by: str | None = None
+
 
     class Config:
         orm_mode = True

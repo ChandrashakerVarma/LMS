@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from datetime import datetime
 from pydantic import BaseModel
 
 from app.database import get_db
@@ -12,7 +13,8 @@ from app.models.user_m import User
 from app.schema.job_posting_schema import JobPostingCreate, JobPostingUpdate, JobPostingOut
 from app.dependencies import require_admin
 
-router = APIRouter(prefix="/job_postings", tags=["Job Postings"])
+router = APIRouter(prefix="/job-postings", tags=["Job Postings"])
+
 
 # -------------------- Pydantic Schema for Accepted Candidates --------------------
 class AcceptedCandidateOut(BaseModel):
@@ -31,15 +33,28 @@ class AcceptedCandidateOut(BaseModel):
 
 
 # ---------------- CREATE JOB POSTING ----------------
-@router.post("/", response_model=JobPostingOut)
+@router.post("/", response_model=JobPostingOut, status_code=status.HTTP_201_CREATED)
 def create_job_posting(
     data: JobPostingCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin)
 ):
+    # Prevent duplicate postings
+    existing_job = db.query(JobPosting).filter(
+        JobPosting.job_role_id == data.job_role_id,
+        JobPosting.location == data.location,
+        JobPosting.employment_type == data.employment_type
+    ).first()
+    if existing_job:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Job posting with the same role, location, and employment type already exists."
+        )
+
+    # Create the job posting
     job = JobPosting(
         **data.dict(),
-        created_by_id=current_user.id
+        created_by=current_user.first_name
     )
     db.add(job)
     db.commit()
@@ -63,7 +78,7 @@ def create_job_posting(
         db.add(note)
     db.commit()
 
-    return job
+    return JobPostingOut.from_orm(job)
 
 
 # ---------------- FILTER JOB POSTINGS ----------------
@@ -84,7 +99,7 @@ def filter_jobs(
         query = query.filter(JobPosting.salary >= min_salary)
     if employment_type:
         query = query.filter(JobPosting.employment_type == employment_type)
-    return query.all()
+    return [JobPostingOut.from_orm(p) for p in query.all()]
 
 
 # ---------------- ADMIN DASHBOARD ----------------
@@ -109,7 +124,8 @@ def admin_dashboard(
 # ---------------- GET ALL JOB POSTINGS ----------------
 @router.get("/", response_model=List[JobPostingOut])
 def get_all_job_postings(db: Session = Depends(get_db)):
-    return db.query(JobPosting).all()
+    postings = db.query(JobPosting).all()
+    return [JobPostingOut.from_orm(p) for p in postings]
 
 
 # ---------------- GET JOB POSTING BY ID ----------------
@@ -118,7 +134,7 @@ def get_job_posting(job_posting_id: int, db: Session = Depends(get_db)):
     posting = db.query(JobPosting).filter(JobPosting.id == job_posting_id).first()
     if not posting:
         raise HTTPException(status_code=404, detail="Job posting not found")
-    return posting
+    return JobPostingOut.from_orm(posting)
 
 
 # ---------------- UPDATE JOB POSTING ----------------
@@ -132,14 +148,17 @@ def update_job_posting(
     posting = db.query(JobPosting).filter(JobPosting.id == job_posting_id).first()
     if not posting:
         raise HTTPException(status_code=404, detail="Job posting not found")
-    if posting.created_by_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to update this posting")
 
     for key, value in updated.dict(exclude_unset=True).items():
         setattr(posting, key, value)
+
+    # Update audit fields
+    posting.modified_by = current_user.first_name
+    posting.updated_at = datetime.utcnow()
+
     db.commit()
     db.refresh(posting)
-    return posting
+    return JobPostingOut.from_orm(posting)
 
 
 # ---------------- DELETE JOB POSTING ----------------
@@ -152,37 +171,29 @@ def delete_job_posting(
     posting = db.query(JobPosting).filter(JobPosting.id == job_posting_id).first()
     if not posting:
         raise HTTPException(status_code=404, detail="Job posting not found")
-    if posting.created_by_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to delete this posting")
 
+    # Delete related workflows first
+    db.query(Workflow).filter(Workflow.posting_id == job_posting_id).delete()
+    db.commit()
+
+    # Then delete the job posting
     db.delete(posting)
     db.commit()
     return {"detail": "Job posting deleted successfully"}
-
 
 # ---------------- GET ALL ACCEPTED CANDIDATES (ADMIN) ----------------
 @router.get("/accepted-candidates", response_model=List[AcceptedCandidateOut])
 def get_accepted_candidates(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
-    job_posting_id: Optional[int] = None  # optional filter
+    job_posting_id: Optional[int] = None
 ):
-    """
-    Admin endpoint to list all candidates whose job posting workflow is accepted.
-    Can optionally filter by a specific job_posting_id.
-    """
     query = db.query(Candidate).join(Workflow, Candidate.workflow_id == Workflow.id).join(JobPosting)
-
     query = query.filter(Workflow.approval_status == ApprovalStatus.accepted)
     if job_posting_id:
         query = query.filter(Candidate.job_posting_id == job_posting_id)
 
     accepted_candidates = query.all()
-
-    if not accepted_candidates:
-        return []
-
-    # serialize candidate with related job posting info
     result = []
     for c in accepted_candidates:
         result.append({
@@ -196,5 +207,4 @@ def get_accepted_candidates(
             "location": c.job_posting.location,
             "status": c.status
         })
-
     return result

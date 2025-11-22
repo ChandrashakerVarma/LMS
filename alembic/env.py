@@ -24,29 +24,20 @@ from app.models import (
     QuizCheckpoint_m, QuizHistory_m, enrollment_m,
     shift_m, department_m, leavemaster_m, payroll_attendance_m,
     branch_m, category_m, organization_m, salary_structure_m, payroll_m,
-    formula_m, permission_m, attendance_m,
-    candidate_documents_m, candidate_m, job_posting_m, jobrole_m,
-    shift_change_request_m, user_shifts_m, workflow_m, notification_m
+    formula_m, permission_m, attendance_m, candidate_documents_m,
+    candidate_m, job_posting_m, jobrole_m, shift_change_request_m,
+    user_shifts_m, workflow_m, notification_m
 )
 
 target_metadata = Base.metadata
 
 # Read DB config
 def get_database_url():
-    db_user = os.getenv("DB_USER", "root")
-    db_pass = os.getenv("DB_PASSWORD", "root")
-    db_host = os.getenv("DB_HOST", "localhost")  # For local run
-    
-    # GitHub Actions host override
-    gh_host = os.getenv("GITHUB_DB_HOST")
-    if gh_host:
-        db_host = gh_host  # Use mysql service name
+    # ⭐ IMPORTANT FIX ⭐
+    # When running on GitHub Actions → DB_HOST must be "mysql"
+    db_host = os.getenv("GITHUB_DB_HOST") or os.getenv("DB_HOST")
 
-    db_name = os.getenv("DB_NAME", "lms")
-
-    url = f"mysql+pymysql://{db_user}:{db_pass}@{db_host}:3306/{db_name}"
-    print("🔗 Using DB URL:", url.replace(db_pass, "****"))  # Hide password
-    return url
+    return f"mysql+pymysql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{db_host}:3306/{os.getenv('DB_NAME')}"
 
 # Offline migrations
 def run_migrations_offline():

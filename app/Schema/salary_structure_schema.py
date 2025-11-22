@@ -4,7 +4,6 @@ from typing import Optional
 
 # ------------------ Base Schema ------------------
 class SalaryStructureBase(BaseModel):
-    user_id: int
     basic_salary_annual: float
     allowances_annual: Optional[float] = 0.0
     deductions_annual: Optional[float] = 0.0
@@ -33,6 +32,9 @@ class SalaryStructureResponse(SalaryStructureBase):
     total_annual: Optional[float] = 0.0
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+    created_by: str | None = None
+    modified_by: str | None = None
+
 
     class Config:
         orm_mode = True
