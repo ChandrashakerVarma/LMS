@@ -5,21 +5,20 @@ from sqlalchemy import create_engine, pool
 from alembic import context
 from dotenv import load_dotenv
 
-# Add project root to sys.path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 # Load environment variables
 load_dotenv()
 
-# Alembic Config object
+# Alembic config
 config = context.config
 
 # Logging
-if config.config_file_name is not None:
+if config.config_file_name:
     fileConfig(config.config_file_name)
 
 # Import Base and models
-from app.database import Base  # keep only one Base import
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from app.database import Base
 from app.models import (
     role_m, user_m, course_m, Progress_m, video_m,
     QuizCheckpoint_m, QuizHistory_m, enrollment_m,
@@ -30,10 +29,9 @@ from app.models import (
     user_shifts_m, workflow_m, notification_m
 )
 
-# Metadata for autogenerate
 target_metadata = Base.metadata
 
-# Get DB URL
+# Read DB config
 def get_database_url():
     # ⭐ IMPORTANT FIX ⭐
     # When running on GitHub Actions → DB_HOST must be "mysql"
@@ -42,10 +40,9 @@ def get_database_url():
     return f"mysql+pymysql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{db_host}:3306/{os.getenv('DB_NAME')}"
 
 # Offline migrations
-def run_migrations_offline() -> None:
-    url = get_database_url()
+def run_migrations_offline():
     context.configure(
-        url=url,
+        url=get_database_url(),
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -54,14 +51,17 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 # Online migrations
-def run_migrations_online() -> None:
-    connectable = create_engine(get_database_url(), poolclass=pool.NullPool)
+def run_migrations_online():
+    connectable = create_engine(
+        get_database_url(),
+        poolclass=pool.NullPool
+    )
     with connectable.connect() as connection:
         context.configure(connection=connection, target_metadata=target_metadata)
         with context.begin_transaction():
             context.run_migrations()
 
-# Run
+# Entry point
 if context.is_offline_mode():
     run_migrations_offline()
 else:
