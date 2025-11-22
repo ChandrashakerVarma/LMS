@@ -25,8 +25,9 @@ from app.models import (
     QuizCheckpoint_m, QuizHistory_m, enrollment_m,
     shift_m, department_m, leavemaster_m, payroll_attendance_m,
     branch_m, category_m, organization_m, salary_structure_m, payroll_m,
-    formula_m, permission_m, attendance_m,candidate_documents_m, candidate_m, job_posting_m, 
-    jobrole_m, shift_change_request_m, user_shifts_m, workflow_m,notification_m
+    formula_m, permission_m, attendance_m, candidate_documents_m,
+    candidate_m, job_posting_m, jobrole_m, shift_change_request_m,
+    user_shifts_m, workflow_m, notification_m
 )
 
 # Metadata for autogenerate
@@ -34,7 +35,11 @@ target_metadata = Base.metadata
 
 # Get DB URL
 def get_database_url():
-    return f"mysql+pymysql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:3306/{os.getenv('DB_NAME')}"
+    # ⭐ IMPORTANT FIX ⭐
+    # When running on GitHub Actions → DB_HOST must be "mysql"
+    db_host = os.getenv("GITHUB_DB_HOST") or os.getenv("DB_HOST")
+
+    return f"mysql+pymysql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{db_host}:3306/{os.getenv('DB_NAME')}"
 
 # Offline migrations
 def run_migrations_offline() -> None:
