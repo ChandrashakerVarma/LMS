@@ -21,5 +21,10 @@ class LeaveMaster(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+     # Audit user tracking
+    created_by = Column(String(100), nullable=True)
+    modified_by = Column(String(100), nullable=True)
+
+
     # Relationship to User
     user = relationship("User", back_populates="leave_records")

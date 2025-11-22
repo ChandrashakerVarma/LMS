@@ -28,6 +28,11 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    # Audit user tracking
+    created_by = Column(String(100), nullable=True)
+    modified_by = Column(String(100), nullable=True)
+
+
     # Relationships
     role = relationship("Role", back_populates="users", lazy="joined")
     progress = relationship("Progress", back_populates="user", lazy="selectin")
@@ -35,12 +40,10 @@ class User(Base):
     organization = relationship("Organization", back_populates="users")
     enrollments = relationship("app.models.enrollment_m.Enrollment", back_populates="user", cascade="all, delete-orphan")
     leave_records = relationship("LeaveMaster", back_populates="user", cascade="all, delete-orphan")
-    salary_structure = relationship("SalaryStructure", back_populates="user", cascade="all, delete-orphan", passive_deletes=True)
     payrolls = relationship("Payroll", back_populates="user", cascade="all, delete-orphan")
     payroll_attendances = relationship("PayrollAttendance", back_populates="user")
     attendances = relationship("Attendance", back_populates="user", cascade="all, delete-orphan")
     permissions = relationship("Permission", back_populates="user", cascade="all, delete-orphan")
-    job_postings = relationship("JobPosting", back_populates="created_by")
     shift_change_requests = relationship("ShiftChangeRequest", back_populates="user", cascade="all, delete-orphan")
 
     # ✅ Correct UserShift relationship (keep only one)

@@ -1,6 +1,6 @@
 # app/schema/permission_schema.py
 from pydantic import BaseModel
-from datetime import date
+from datetime import date, datetime
 from typing import Optional
 
 class PermissionBase(BaseModel):
@@ -20,6 +20,10 @@ class PermissionResponse(PermissionBase):
     user_id: int
     shift_id: int
     status: str
+    created_at: Optional[datetime] = None  # <-- make optional
+    updated_at: Optional[datetime] = None
+    created_by: str | None = None
+    modified_by: str | None = None
 
     class Config:
         orm_mode = True

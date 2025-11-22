@@ -1,16 +1,23 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
+
 from app.database import get_db
 from app.models.shift_m import Shift
 from app.schema.shift_schema import ShiftCreate, ShiftUpdate, ShiftOut
+from app.dependencies import get_current_user  # Auth Dependency
+from app.models.user_m import User
 
 router = APIRouter(prefix="/shifts", tags=["Shifts"])
 
 
 # ➕ Create Shift
 @router.post("/", response_model=ShiftOut)
-def create_shift(shift: ShiftCreate, db: Session = Depends(get_db)):
+def create_shift(
+    shift: ShiftCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     # Check duplicate shift name
     existing_shift = db.query(Shift).filter(Shift.shift_name == shift.shift_name).first()
     if existing_shift:
@@ -30,7 +37,8 @@ def create_shift(shift: ShiftCreate, db: Session = Depends(get_db)):
         shift_type=shift.shift_type,
         working_minutes=shift.working_minutes,
         lag_minutes=shift.lag_minutes,
-        status=shift.status
+        status=shift.status,
+        created_by=current_user.first_name  # ✅ FIXED
     )
 
     db.add(new_shift)
@@ -56,13 +64,20 @@ def get_shift(shift_id: int, db: Session = Depends(get_db)):
 
 # ✏️ Update Shift
 @router.put("/{shift_id}", response_model=ShiftOut)
-def update_shift(shift_id: int, updated_data: ShiftUpdate, db: Session = Depends(get_db)):
+def update_shift(
+    shift_id: int,
+    updated_data: ShiftUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     shift = db.query(Shift).filter(Shift.id == shift_id).first()
     if not shift:
         raise HTTPException(status_code=404, detail="Shift not found")
 
     for key, value in updated_data.dict(exclude_unset=True).items():
         setattr(shift, key, value)
+
+    shift.modified_by = current_user.first_name  # ✅ FIXED
 
     db.commit()
     db.refresh(shift)
@@ -71,11 +86,16 @@ def update_shift(shift_id: int, updated_data: ShiftUpdate, db: Session = Depends
 
 # ❌ Delete Shift
 @router.delete("/{shift_id}")
-def delete_shift(shift_id: int, db: Session = Depends(get_db)):
+def delete_shift(
+    shift_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     shift = db.query(Shift).filter(Shift.id == shift_id).first()
     if not shift:
         raise HTTPException(status_code=404, detail="Shift not found")
 
     db.delete(shift)
     db.commit()
-    return {"message": "Shift deleted successfully"}
+
+    return {"message": f"Shift deleted successfully by {current_user.first_name}"}

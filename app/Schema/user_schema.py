@@ -23,6 +23,7 @@ class UserCreate(UserBase):
     password: str
 
 
+
 class UserUpdate(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
@@ -36,12 +37,17 @@ class UserUpdate(BaseModel):
     designation: Optional[str] = None
     inactive: Optional[bool] = None
     biometric_id: Optional[str] = None
+    
 
 
 class UserResponse(UserBase):
     id: int
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+    created_by: str | None = None
+    modified_by: str | None = None
+
+
 
     # ✅ Added these fields to match map_user_response
     role_name: Optional[str] = None

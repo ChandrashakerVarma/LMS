@@ -15,5 +15,3 @@ class Workflow(Base):
     posting_id = Column(Integer, ForeignKey("job_postings.id"))
     approval_status = Column(Enum(ApprovalStatus), default=ApprovalStatus.pending)
 
-    job_posting = relationship("JobPosting", back_populates="workflow")
-    candidates = relationship("Candidate", back_populates="workflow")

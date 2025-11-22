@@ -27,6 +27,10 @@ class AttendanceResponse(AttendanceBase):
     total_worked_minutes: Optional[int]
     status: str
     created_at: Optional[datetime] = None
+    updated_at: datetime | None = None
+    created_by: str | None = None
+    modified_by: str | None = None
+
 
     class Config:
         orm_mode = True

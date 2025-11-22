@@ -1,7 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional, List
-from datetime import date
-
+from datetime import date, datetime
 
 # ---------------- JobRole ----------------
 class JobRoleOut(BaseModel):
@@ -11,7 +10,7 @@ class JobRoleOut(BaseModel):
     required_skills: Optional[str]
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
 # ---------------- Workflow ----------------
@@ -20,7 +19,7 @@ class WorkflowOut(BaseModel):
     approval_status: str
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
 # ---------------- Candidate ----------------
@@ -32,7 +31,7 @@ class CandidateOut(BaseModel):
     status: str
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
 # ---------------- Base ----------------
@@ -65,11 +64,13 @@ class JobPostingUpdate(BaseModel):
 # ---------------- Output ----------------
 class JobPostingOut(JobPostingBase):
     id: int
-    created_by_id: int
-
     jobrole: Optional[JobRoleOut]
     workflow: Optional[WorkflowOut]
     candidates: Optional[List[CandidateOut]]
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    created_by: Optional[str] = None
+    modified_by: Optional[str] = None
 
     class Config:
-        from_attributes = True
+        orm_mode = True

@@ -36,6 +36,8 @@ class LeaveMasterOut(LeaveMasterBase):
     id: int
     created_at: datetime
     updated_at: datetime
+    created_by: str | None = None
+    modified_by: str | None = None
 
     class Config:
         orm_mode = True
