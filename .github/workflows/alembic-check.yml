@@ -17,9 +17,8 @@ jobs:
         env:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: testdb
-          MYSQL_ROOT_HOST: '%'     # <-- FIX
+          MYSQL_ROOT_HOST: "%"      # IMPORTANT FIX
         options: >-
-          --default-authentication-plugin=mysql_native_password  # <-- FIX
           --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
           --health-interval=10s
           --health-timeout=5s
@@ -40,6 +39,6 @@ jobs:
 
       - name: Run Alembic Upgrade
         env:
-          DATABASE_URL: mysql+pymysql://root:root@mysql:3306/testdb  # <-- FIX
+          DATABASE_URL: mysql+pymysql://root:root@mysql:3306/testdb
         run: |
           alembic upgrade head
