@@ -22,7 +22,6 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=10
-          --default-authentication-plugin=mysql_native_password
 
     steps:
 
@@ -46,7 +45,7 @@ jobs:
           DB_USER: root
           DB_PASSWORD: root
           DB_NAME: lms
-          # 👇 Very important — connect to MySQL service in GitHub runner
+          # 👇 Important: GitHub Actions MySQL service host
           GITHUB_DB_HOST: mysql
         run: |
           alembic upgrade head
