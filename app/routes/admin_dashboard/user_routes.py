@@ -5,15 +5,20 @@ from passlib.context import CryptContext
 
 from app.database import get_db
 from app.models.user_m import User
-from app.models.role_m import Role
-from app.models.branch_m import Branch
-from app.models.organization_m import Organization
 from app.schema.user_schema import UserCreate, UserUpdate, UserResponse
-from app.dependencies import require_admin, get_current_user
+from app.dependencies import get_current_user
+from app.permission_dependencies import (
+    require_view_permission,
+    require_create_permission,
+    require_edit_permission,
+    require_delete_permission
+)
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+USERS_MENU_ID = 2    # ⭐ Update if needed
 
 
 # ---------------- CREATE ----------------
@@ -21,7 +26,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 def create_user(
     payload: UserCreate,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_create_permission(USERS_MENU_ID))  # ⭐ CREATE permission
 ):
     existing_user = db.query(User).filter(User.email == payload.email).first()
     if existing_user:
@@ -45,7 +50,6 @@ def create_user(
         inactive=payload.inactive,
         biometric_id=payload.biometric_id,
 
-        # ✅ Added for audit fields
         created_by=current_user.email,
         modified_by=current_user.email,
     )
@@ -60,7 +64,7 @@ def create_user(
 @router.get("/", response_model=List[UserResponse])
 def get_all_users(
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_view_permission(USERS_MENU_ID))  # ⭐ VIEW permission
 ):
     users = db.query(User).options(
         joinedload(User.role),
@@ -75,7 +79,7 @@ def get_all_users(
 def get_user_by_id(
     user_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_view_permission(USERS_MENU_ID))  # ⭐ VIEW permission
 ):
     user = db.query(User).options(
         joinedload(User.role),
@@ -86,8 +90,8 @@ def get_user_by_id(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
+    # Extra rule: Non-admins can only view themselves
     role_name = (getattr(current_user.role, "name", "") or "").lower()
-
     if role_name != "admin" and current_user.id != user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
 
@@ -100,7 +104,7 @@ def update_user(
     user_id: int,
     payload: UserUpdate,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_edit_permission(USERS_MENU_ID))  # ⭐ EDIT permission
 ):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
@@ -108,15 +112,12 @@ def update_user(
 
     update_data = payload.dict(exclude_unset=True)
 
-    # Hash password if provided
     if "password" in update_data and update_data["password"]:
         update_data["hashed_password"] = pwd_context.hash(update_data.pop("password"))
 
-    # Apply updates
     for key, value in update_data.items():
         setattr(user, key, value)
 
-    # ✅ Set updated_by
     user.modified_by = current_user.email
 
     db.commit()
@@ -129,7 +130,7 @@ def update_user(
 def delete_user(
     user_id: int,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_delete_permission(USERS_MENU_ID))  # ⭐ DELETE permission
 ):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
@@ -142,7 +143,6 @@ def delete_user(
 
 # ---------------- HELPER ----------------
 def map_user_response(user: User) -> UserResponse:
-    """Convert ORM object → Pydantic response"""
     return UserResponse(
         id=user.id,
         first_name=user.first_name,
@@ -158,14 +158,10 @@ def map_user_response(user: User) -> UserResponse:
         designation=user.designation,
         inactive=user.inactive,
         biometric_id=user.biometric_id,
-
         created_at=user.created_at,
         updated_at=user.updated_at,
-
-        # ✅ Include audit info
         created_by=user.created_by,
         modified_by=user.modified_by,
-
         role_name=user.role.name if user.role else None,
         branch_name=user.branch.name if user.branch else None,
         organization_name=user.organization.name if user.organization else None,

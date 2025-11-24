@@ -2,13 +2,24 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime
+
 from app.database import get_db
 from app.models.leavemaster_m import LeaveMaster
 from app.models.user_m import User
 from app.schema.leavemaster_schema import LeaveMasterCreate, LeaveMasterUpdate, LeaveMasterOut
-from app.dependencies import get_current_user  # Your authentication dependency
+from app.dependencies import get_current_user
+
+# ---- Permission imports (your required style) ----
+from app.permission_dependencies import (
+    require_view_permission,
+    require_create_permission,
+    require_edit_permission,
+    require_delete_permission
+)
 
 router = APIRouter(prefix="/leaves", tags=["Leave Master"])
+
+MENU_ID = 45   # Leave Master menu ID
 
 
 # ➕ Create Leave Record
@@ -16,24 +27,23 @@ router = APIRouter(prefix="/leaves", tags=["Leave Master"])
 def create_leave(
     leave: LeaveMasterCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_create_permission(MENU_ID))
 ):
-    # Check if user exists
     user = db.query(User).filter(User.id == leave.user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Check if leave already exists for the same user + holiday
     existing_leave = db.query(LeaveMaster).filter(
         LeaveMaster.user_id == leave.user_id,
         LeaveMaster.holiday == leave.holiday
     ).first()
+
     if existing_leave:
-        return existing_leave  # Return existing record
+        return existing_leave
 
     new_leave = LeaveMaster(
         **leave.dict(),
-        created_by=current_user.first_name  # Only set created_by
+        created_by=current_user.first_name
     )
     db.add(new_leave)
     db.commit()
@@ -45,7 +55,7 @@ def create_leave(
 @router.get("/", response_model=List[LeaveMasterOut])
 def get_all_leaves(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_view_permission(MENU_ID))
 ):
     leaves = db.query(LeaveMaster).all()
     return leaves
@@ -56,7 +66,7 @@ def get_all_leaves(
 def get_leave_by_id(
     leave_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_view_permission(MENU_ID))
 ):
     leave = db.query(LeaveMaster).filter(LeaveMaster.id == leave_id).first()
     if not leave:
@@ -70,7 +80,7 @@ def update_leave(
     leave_id: int,
     updated_data: LeaveMasterUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_edit_permission(MENU_ID))
 ):
     leave = db.query(LeaveMaster).filter(LeaveMaster.id == leave_id).first()
     if not leave:
@@ -79,9 +89,9 @@ def update_leave(
     for key, value in updated_data.dict(exclude_unset=True).items():
         setattr(leave, key, value)
 
-    leave.modified_by = current_user.first_name  # Only set modified_by
+    leave.modified_by = current_user.first_name
     leave.updated_at = datetime.utcnow()
-    
+
     db.commit()
     db.refresh(leave)
     return leave
@@ -92,11 +102,12 @@ def update_leave(
 def delete_leave(
     leave_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_delete_permission(MENU_ID))
 ):
     leave = db.query(LeaveMaster).filter(LeaveMaster.id == leave_id).first()
     if not leave:
         raise HTTPException(status_code=404, detail="Leave record not found")
+
     db.delete(leave)
     db.commit()
     return {"message": "Leave record deleted successfully"}

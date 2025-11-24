@@ -5,21 +5,30 @@ from typing import List
 from app.database import get_db
 from app.models.role_m import Role
 from app.schema.role_schema import RoleCreate, RoleUpdate, RoleResponse
-from app.dependencies import require_admin  # ✅ Only Admins can manage roles
+from app.dependencies import require_admin  # Admin access
+from app.permission_dependencies import (
+    require_view_permission,
+    require_create_permission,
+    require_edit_permission,
+    require_delete_permission
+)
 
 router = APIRouter(prefix="/roles", tags=["Roles"])
 
+MENU_ID = 4
 
-# 🟢 Create Role (Admin Only)
-@router.post("/", response_model=RoleResponse, status_code=status.HTTP_201_CREATED)
+# 🟢 Create Role (Admin + Create Permission)
+@router.post(
+    "/", 
+    response_model=RoleResponse, 
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_create_permission(MENU_ID))]
+)
 def create_role(
     data: RoleCreate,
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_admin)
 ):
-    """
-    Create a new role — Admin access only.
-    """
     existing_role = db.query(Role).filter(Role.name == data.name).first()
     if existing_role:
         raise HTTPException(
@@ -33,46 +42,49 @@ def create_role(
     return new_role
 
 
-# 🟡 Get All Roles (Admin Only)
-@router.get("/", response_model=List[RoleResponse])
+# 🟡 Get All Roles (Admin + View Permission)
+@router.get(
+    "/", 
+    response_model=List[RoleResponse],
+    dependencies=[Depends(require_view_permission(MENU_ID))]
+)
 def get_all_roles(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_admin)
 ):
-    """
-    Retrieve all roles — ordered by ID (ascending).
-    """
     roles = db.query(Role).order_by(Role.id.asc()).all()
     return roles
 
 
-# 🟠 Get Role by ID (Admin Only)
-@router.get("/{role_id}", response_model=RoleResponse)
+# 🟠 Get Role by ID (Admin + View Permission)
+@router.get(
+    "/{role_id}", 
+    response_model=RoleResponse,
+    dependencies=[Depends(require_view_permission(MENU_ID))]
+)
 def get_role_by_id(
     role_id: int,
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_admin)
 ):
-    """
-    Retrieve a single role by ID — Admin access only.
-    """
     role = db.query(Role).filter(Role.id == role_id).first()
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
     return role
 
 
-# 🔵 Update Role (Admin Only)
-@router.put("/{role_id}", response_model=RoleResponse)
+# 🔵 Update Role (Admin + Edit Permission)
+@router.put(
+    "/{role_id}", 
+    response_model=RoleResponse,
+    dependencies=[Depends(require_edit_permission(MENU_ID))]
+)
 def update_role(
     role_id: int,
     data: RoleUpdate,
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_admin)
 ):
-    """
-    Update role name — Admin access only.
-    """
     role = db.query(Role).filter(Role.id == role_id).first()
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
@@ -93,16 +105,17 @@ def update_role(
     return role
 
 
-# 🔴 Delete Role (Admin Only)
-@router.delete("/{role_id}", status_code=status.HTTP_204_NO_CONTENT)
+# 🔴 Delete Role (Admin + Delete Permission)
+@router.delete(
+    "/{role_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(require_delete_permission(MENU_ID))]
+)
 def delete_role(
     role_id: int,
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_admin)
 ):
-    """
-    Delete a role by ID — Admin access only.
-    """
     role = db.query(Role).filter(Role.id == role_id).first()
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")

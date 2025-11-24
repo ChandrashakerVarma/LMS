@@ -1,12 +1,22 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
+
 from app.database import get_db
 from app.models.department_m import Department
 from app.schema.department_schema import DepartmentCreate, DepartmentUpdate, DepartmentResponse
+
 from app.dependencies import get_current_user
+from app.permission_dependencies import (
+    require_view_permission,
+    require_create_permission,
+    require_edit_permission,
+    require_delete_permission
+)
 
 router = APIRouter(prefix="/departments", tags=["Departments"])
+
+MENU_ID = 9   # Department Module ID
 
 
 # ➕ Create Department
@@ -14,14 +24,14 @@ router = APIRouter(prefix="/departments", tags=["Departments"])
 def create_department(
     department: DepartmentCreate,
     db: Session = Depends(get_db),
-    current_user: any = Depends(get_current_user)   # 🔹 Replace with your actual auth dependency
+    current_user: any = Depends(require_create_permission(MENU_ID))
 ):
     new_dept = Department(
         name=department.name,
         code=department.code,
         description=department.description,
         status=department.status,
-        created_by=current_user.first_name  # 🔹 Save creator name
+        created_by=current_user.first_name
     )
 
     db.add(new_dept)
@@ -32,13 +42,20 @@ def create_department(
 
 # 📋 Get All Departments
 @router.get("/", response_model=List[DepartmentResponse])
-def get_all_departments(db: Session = Depends(get_db)):
+def get_all_departments(
+    db: Session = Depends(get_db),
+    current_user: any = Depends(require_view_permission(MENU_ID))
+):
     return db.query(Department).all()
 
 
 # 🔍 Get Department by ID
 @router.get("/{dept_id}", response_model=DepartmentResponse)
-def get_department(dept_id: int, db: Session = Depends(get_db)):
+def get_department(
+    dept_id: int,
+    db: Session = Depends(get_db),
+    current_user: any = Depends(require_view_permission(MENU_ID))
+):
     dept = db.query(Department).filter(Department.id == dept_id).first()
     if not dept:
         raise HTTPException(status_code=404, detail="Department not found")
@@ -51,18 +68,16 @@ def update_department(
     dept_id: int,
     update_data: DepartmentUpdate,
     db: Session = Depends(get_db),
-    current_user: any = Depends(get_current_user)  # 🔹 Logged-in user
+    current_user: any = Depends(require_edit_permission(MENU_ID))
 ):
     dept = db.query(Department).filter(Department.id == dept_id).first()
     if not dept:
         raise HTTPException(status_code=404, detail="Department not found")
 
-    # Update only provided fields
     for key, value in update_data.dict(exclude_unset=True).items():
         setattr(dept, key, value)
 
-    # Update modified_by with user first name
-    dept.modified_by = current_user.first_name  
+    dept.modified_by = current_user.first_name
 
     db.commit()
     db.refresh(dept)
@@ -71,7 +86,11 @@ def update_department(
 
 # ❌ Delete Department
 @router.delete("/{dept_id}")
-def delete_department(dept_id: int, db: Session = Depends(get_db)):
+def delete_department(
+    dept_id: int,
+    db: Session = Depends(get_db),
+    current_user: any = Depends(require_delete_permission(MENU_ID))
+):
     dept = db.query(Department).filter(Department.id == dept_id).first()
     if not dept:
         raise HTTPException(status_code=404, detail="Department not found")

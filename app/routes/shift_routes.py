@@ -5,14 +5,26 @@ from typing import List
 from app.database import get_db
 from app.models.shift_m import Shift
 from app.schema.shift_schema import ShiftCreate, ShiftUpdate, ShiftOut
-from app.dependencies import get_current_user  # Auth Dependency
+from app.dependencies import get_current_user
 from app.models.user_m import User
+
+# Permission dependencies
+from app.permission_dependencies import (
+    require_view_permission,
+    require_create_permission,
+    require_edit_permission,
+    require_delete_permission
+)
 
 router = APIRouter(prefix="/shifts", tags=["Shifts"])
 
 
 # ➕ Create Shift
-@router.post("/", response_model=ShiftOut)
+@router.post(
+    "/",
+    response_model=ShiftOut,
+    dependencies=[Depends(require_create_permission(41))]
+)
 def create_shift(
     shift: ShiftCreate,
     db: Session = Depends(get_db),
@@ -38,7 +50,7 @@ def create_shift(
         working_minutes=shift.working_minutes,
         lag_minutes=shift.lag_minutes,
         status=shift.status,
-        created_by=current_user.first_name  # ✅ FIXED
+        created_by=current_user.first_name
     )
 
     db.add(new_shift)
@@ -48,13 +60,21 @@ def create_shift(
 
 
 # 📋 Get All Shifts
-@router.get("/", response_model=List[ShiftOut])
+@router.get(
+    "/",
+    response_model=List[ShiftOut],
+    dependencies=[Depends(require_view_permission(41))]
+)
 def get_all_shifts(db: Session = Depends(get_db)):
     return db.query(Shift).all()
 
 
 # 🔍 Get Shift by ID
-@router.get("/{shift_id}", response_model=ShiftOut)
+@router.get(
+    "/{shift_id}",
+    response_model=ShiftOut,
+    dependencies=[Depends(require_view_permission(41))]
+)
 def get_shift(shift_id: int, db: Session = Depends(get_db)):
     shift = db.query(Shift).filter(Shift.id == shift_id).first()
     if not shift:
@@ -63,7 +83,11 @@ def get_shift(shift_id: int, db: Session = Depends(get_db)):
 
 
 # ✏️ Update Shift
-@router.put("/{shift_id}", response_model=ShiftOut)
+@router.put(
+    "/{shift_id}",
+    response_model=ShiftOut,
+    dependencies=[Depends(require_edit_permission(41))]
+)
 def update_shift(
     shift_id: int,
     updated_data: ShiftUpdate,
@@ -77,7 +101,7 @@ def update_shift(
     for key, value in updated_data.dict(exclude_unset=True).items():
         setattr(shift, key, value)
 
-    shift.modified_by = current_user.first_name  # ✅ FIXED
+    shift.modified_by = current_user.first_name
 
     db.commit()
     db.refresh(shift)
@@ -85,7 +109,10 @@ def update_shift(
 
 
 # ❌ Delete Shift
-@router.delete("/{shift_id}")
+@router.delete(
+    "/{shift_id}",
+    dependencies=[Depends(require_delete_permission(41))]
+)
 def delete_shift(
     shift_id: int,
     db: Session = Depends(get_db),

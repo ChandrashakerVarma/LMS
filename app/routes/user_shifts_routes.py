@@ -9,12 +9,26 @@ from app.models.shift_m import Shift
 from app.schema.user_shifts_schema import UserShiftCreate, UserShiftUpdate, UserShiftOut
 from app.dependencies import get_current_user
 
+# Permission imports
+from app.permission_dependencies import (
+    require_view_permission,
+    require_create_permission,
+    require_edit_permission,
+    require_delete_permission
+)
 
 router = APIRouter(prefix="/user_shifts", tags=["User Shifts"])
 
+# Menu ID for permission mapping
+MENU_ID = 42
 
-# ➕ Assign Shift to User
-@router.post("/", response_model=UserShiftOut)
+
+# ➕ Assign Shift to User (Create Permission)
+@router.post(
+    "/",
+    response_model=UserShiftOut,
+    dependencies=[Depends(require_create_permission(MENU_ID))]
+)
 def assign_shift(
     data: UserShiftCreate,
     db: Session = Depends(get_db),
@@ -39,14 +53,22 @@ def assign_shift(
     return new_assignment
 
 
-# 📋 Get All User Shifts
-@router.get("/", response_model=List[UserShiftOut])
+# 📋 Get All User Shifts (View Permission)
+@router.get(
+    "/",
+    response_model=List[UserShiftOut],
+    dependencies=[Depends(require_view_permission(MENU_ID))]
+)
 def get_all_user_shifts(db: Session = Depends(get_db)):
     return db.query(UserShift).all()
 
 
-# 🔍 Get User Shift by ID
-@router.get("/{assignment_id}", response_model=UserShiftOut)
+# 🔍 Get User Shift by ID (View Permission)
+@router.get(
+    "/{assignment_id}",
+    response_model=UserShiftOut,
+    dependencies=[Depends(require_view_permission(MENU_ID))]
+)
 def get_user_shift(assignment_id: int, db: Session = Depends(get_db)):
     assignment = db.query(UserShift).filter(UserShift.id == assignment_id).first()
     if not assignment:
@@ -54,8 +76,12 @@ def get_user_shift(assignment_id: int, db: Session = Depends(get_db)):
     return assignment
 
 
-# ✏️ Update User Shift
-@router.put("/{assignment_id}", response_model=UserShiftOut)
+# ✏️ Update User Shift (Edit Permission)
+@router.put(
+    "/{assignment_id}",
+    response_model=UserShiftOut,
+    dependencies=[Depends(require_edit_permission(MENU_ID))]
+)
 def update_user_shift(
     assignment_id: int,
     data: UserShiftUpdate,
@@ -66,9 +92,7 @@ def update_user_shift(
     if not assignment:
         raise HTTPException(status_code=404, detail="User shift not found")
 
-    update_data = data.dict(exclude_unset=True)
-
-    for key, value in update_data.items():
+    for key, value in data.dict(exclude_unset=True).items():
         setattr(assignment, key, value)
 
     assignment.modified_by = current_user.first_name
@@ -78,8 +102,11 @@ def update_user_shift(
     return assignment
 
 
-# ❌ Delete User Shift
-@router.delete("/{assignment_id}")
+# ❌ Delete User Shift (Delete Permission)
+@router.delete(
+    "/{assignment_id}",
+    dependencies=[Depends(require_delete_permission(MENU_ID))]
+)
 def delete_user_shift(
     assignment_id: int,
     db: Session = Depends(get_db),
@@ -91,6 +118,7 @@ def delete_user_shift(
 
     db.delete(assignment)
     db.commit()
+
     return {
         "message": "User shift deleted successfully",
         "deleted_by": current_user.first_name

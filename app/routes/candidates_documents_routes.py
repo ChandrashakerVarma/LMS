@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
+
 from app.database import get_db
 from app.models.candidate_documents_m import CandidateDocument
 from app.models.candidate_m import Candidate
@@ -11,11 +12,20 @@ from app.schema.candidate_documents_schema import (
 )
 from app.dependencies import get_current_user
 
+from app.permission_dependencies import (
+    require_view_permission,
+    require_create_permission,
+    require_edit_permission,
+    require_delete_permission,
+)
+
 router = APIRouter(prefix="/candidate-documents", tags=["Candidate Documents"])
+
+# Correct menu ID from seeder
+CANDIDATE_DOCS_MENU_ID = 65
 
 
 def serialize(doc: CandidateDocument):
-    """Convert SQLAlchemy object → dict for Pydantic."""
     return {
         "id": doc.id,
         "candidate_id": doc.candidate_id,
@@ -27,7 +37,15 @@ def serialize(doc: CandidateDocument):
         "modified_by": doc.modified_by,
     }
 
-@router.post("/", response_model=CandidateDocumentOut)
+
+# -------------------------
+# ➕ CREATE DOCUMENT
+# -------------------------
+@router.post(
+    "/", 
+    response_model=CandidateDocumentOut,
+    dependencies=[Depends(require_create_permission(CANDIDATE_DOCS_MENU_ID))]
+)
 def create_document(
     doc_data: CandidateDocumentCreate,
     db: Session = Depends(get_db),
@@ -50,7 +68,6 @@ def create_document(
             detail="Document type already exists for this candidate"
         )
 
-    # Create
     new_doc = CandidateDocument(
         **doc_data.dict(),
         created_by=current_user.first_name,
@@ -62,19 +79,43 @@ def create_document(
     db.refresh(new_doc)
     return serialize(new_doc)
 
-@router.get("/", response_model=List[CandidateDocumentOut])
+
+# -------------------------
+# 📜 GET ALL DOCUMENTS
+# -------------------------
+@router.get(
+    "/", 
+    response_model=List[CandidateDocumentOut],
+    dependencies=[Depends(require_view_permission(CANDIDATE_DOCS_MENU_ID))]
+)
 def get_all_documents(db: Session = Depends(get_db)):
     docs = db.query(CandidateDocument).all()
     return [serialize(doc) for doc in docs]
 
-@router.get("/candidate/{candidate_id}", response_model=List[CandidateDocumentOut])
+
+# -------------------------
+# 📄 GET DOCUMENTS BY CANDIDATE
+# -------------------------
+@router.get(
+    "/candidate/{candidate_id}",
+    response_model=List[CandidateDocumentOut],
+    dependencies=[Depends(require_view_permission(CANDIDATE_DOCS_MENU_ID))]
+)
 def get_documents_by_candidate(candidate_id: int, db: Session = Depends(get_db)):
     docs = db.query(CandidateDocument).filter(
         CandidateDocument.candidate_id == candidate_id
     ).all()
     return [serialize(doc) for doc in docs]
 
-@router.put("/{document_id}", response_model=CandidateDocumentOut)
+
+# -------------------------
+# ✏️ UPDATE DOCUMENT
+# -------------------------
+@router.put(
+    "/{document_id}",
+    response_model=CandidateDocumentOut,
+    dependencies=[Depends(require_edit_permission(CANDIDATE_DOCS_MENU_ID))]
+)
 def update_document(
     document_id: int,
     update_data: CandidateDocumentUpdate,
@@ -108,7 +149,14 @@ def update_document(
     db.refresh(doc)
     return serialize(doc)
 
-@router.delete("/{document_id}")
+
+# -------------------------
+# ❌ DELETE DOCUMENT
+# -------------------------
+@router.delete(
+    "/{document_id}",
+    dependencies=[Depends(require_delete_permission(CANDIDATE_DOCS_MENU_ID))]
+)
 def delete_document(
     document_id: int,
     db: Session = Depends(get_db),

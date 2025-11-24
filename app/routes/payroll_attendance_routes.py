@@ -6,19 +6,33 @@ from app.database import get_db
 from app.models.payroll_attendance_m import PayrollAttendance
 from app.models.attendance_m import Attendance
 from app.models.salary_structure_m import SalaryStructure
-from app.schema.payroll_attendance_schema import PayrollAttendanceBase, PayrollAttendanceCreate, PayrollAttendanceResponse, PayrollAttendanceUpdate
-from app.utils.payroll_attendance_utils import generate_attendance_based_salary
+from app.schema.payroll_attendance_schema import (
+    PayrollAttendanceBase,
+    PayrollAttendanceCreate,
+    PayrollAttendanceResponse,
+    PayrollAttendanceUpdate,
+)
+
+# 🔹 Permission imports (as you asked)
+from app.permission_dependencies import (
+    require_view_permission,
+    require_create_permission,
+    require_edit_permission,
+    require_delete_permission,
+)
 
 router = APIRouter(prefix="/payroll-attendance", tags=["Payroll - Attendance Based"])
 
+MENU_ID = 50   # payroll_attendance menu id
 
-# ✅ Automatically Generate Payroll from Attendance + SalaryStructure
-@router.post("/", response_model=PayrollAttendanceResponse)
+
+# ✅ Create Payroll Attendance
+@router.post(
+    "/", 
+    response_model=PayrollAttendanceResponse,
+    dependencies=[Depends(require_create_permission(MENU_ID))]
+)
 def create_payroll_attendance(user_id: int, month: str, db: Session = Depends(get_db)):
-    """
-    Automatically generate payroll based on user's attendance and salary structure.
-    """
-    # --- Check for existing payroll ---
     existing = (
         db.query(PayrollAttendance)
         .filter(PayrollAttendance.user_id == user_id, PayrollAttendance.month == month)
@@ -27,7 +41,6 @@ def create_payroll_attendance(user_id: int, month: str, db: Session = Depends(ge
     if existing:
         raise HTTPException(status_code=400, detail="Payroll already exists for this user and month")
 
-    # --- Fetch salary structure ---
     salary_structure = (
         db.query(SalaryStructure)
         .filter(SalaryStructure.is_active == True)
@@ -35,25 +48,23 @@ def create_payroll_attendance(user_id: int, month: str, db: Session = Depends(ge
         .first()
     )
     if not salary_structure:
-        raise HTTPException(status_code=404, detail="Salary structure not found for this user")
+        raise HTTPException(status_code=404, detail="Salary structure not found")
 
-    # --- Fetch attendance records ---
     attendance_records = (
         db.query(Attendance)
         .filter(Attendance.user_id == user_id, Attendance.date.like(f"{month}%"))
         .all()
     )
-    if not attendance_records:
-        raise HTTPException(status_code=404, detail="Attendance records not found for this month")
 
-    # --- Calculate attendance summary ---
+    if not attendance_records:
+        raise HTTPException(status_code=404, detail="Attendance records not found")
+
     total_days = len(attendance_records)
     present_days = sum(1 for a in attendance_records if a.status == "Present")
     half_days = sum(1 for a in attendance_records if a.status == "Half Day")
     absent_days = total_days - (present_days + half_days)
 
-    # --- Calculate salary ---
-    daily_salary = salary_structure.total_annual / 12 / total_days  # monthly days based
+    daily_salary = salary_structure.total_annual / 12 / total_days
     gross_salary = daily_salary * (present_days + 0.5 * half_days)
     net_salary = round(gross_salary, 2)
 
@@ -77,13 +88,21 @@ def create_payroll_attendance(user_id: int, month: str, db: Session = Depends(ge
 
 
 # ✅ Get All Payrolls
-@router.get("/", response_model=List[PayrollAttendanceResponse])
+@router.get(
+    "/", 
+    response_model=List[PayrollAttendanceResponse],
+    dependencies=[Depends(require_view_permission(MENU_ID))]
+)
 def get_all_payrolls(db: Session = Depends(get_db)):
     return db.query(PayrollAttendance).all()
 
 
-# ✅ Get Payroll by ID
-@router.get("/{payroll_id}", response_model=PayrollAttendanceResponse)
+# ✅ Get payroll by ID
+@router.get(
+    "/{payroll_id}",
+    response_model=PayrollAttendanceResponse,
+    dependencies=[Depends(require_view_permission(MENU_ID))]
+)
 def get_payroll_by_id(payroll_id: int, db: Session = Depends(get_db)):
     payroll = db.query(PayrollAttendance).filter(PayrollAttendance.id == payroll_id).first()
     if not payroll:
@@ -91,8 +110,12 @@ def get_payroll_by_id(payroll_id: int, db: Session = Depends(get_db)):
     return payroll
 
 
-# ✅ Update Payroll (status or net salary)
-@router.put("/{payroll_id}", response_model=PayrollAttendanceResponse)
+# ✅ Update Payroll
+@router.put(
+    "/{payroll_id}",
+    response_model=PayrollAttendanceResponse,
+    dependencies=[Depends(require_edit_permission(MENU_ID))]
+)
 def update_payroll(payroll_id: int, update_data: PayrollAttendanceUpdate, db: Session = Depends(get_db)):
     payroll = db.query(PayrollAttendance).filter(PayrollAttendance.id == payroll_id).first()
     if not payroll:
@@ -107,8 +130,11 @@ def update_payroll(payroll_id: int, update_data: PayrollAttendanceUpdate, db: Se
     return payroll
 
 
-# ✅ Delete Payroll Record
-@router.delete("/{payroll_id}")
+# ✅ Delete Payroll
+@router.delete(
+    "/{payroll_id}",
+    dependencies=[Depends(require_delete_permission(MENU_ID))]
+)
 def delete_payroll(payroll_id: int, db: Session = Depends(get_db)):
     payroll = db.query(PayrollAttendance).filter(PayrollAttendance.id == payroll_id).first()
     if not payroll:

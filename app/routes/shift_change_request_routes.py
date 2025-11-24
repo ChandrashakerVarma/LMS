@@ -12,17 +12,29 @@ from app.schema.shift_change_request_schema import (
 from app.models.user_m import User
 from app.dependencies import get_current_user
 
+from app.permission_dependencies import (
+    require_view_permission,
+    require_create_permission,
+    require_edit_permission,
+    require_delete_permission
+)
+
 router = APIRouter(prefix="/shift-change-requests", tags=["Shift Change Requests"])
+
+MENU_ID = 43
 
 
 # CREATE SHIFT CHANGE REQUEST
-@router.post("/", response_model=ShiftChangeRequestOut)
+@router.post(
+    "/",
+    response_model=ShiftChangeRequestOut,
+    dependencies=[Depends(require_create_permission(MENU_ID))]
+)
 def create_request(
     request_data: ShiftChangeRequestCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    # ---- CHECK IF REQUEST ALREADY EXISTS ----
     existing = (
         db.query(ShiftChangeRequest)
         .filter(
@@ -36,11 +48,9 @@ def create_request(
     if existing:
         raise HTTPException(status_code=400, detail="Shift change request already exists for this date.")
 
-    # Remove user_id from payload (avoid duplicate)
     data = request_data.dict()
     data.pop("user_id", None)
 
-    # ---- CREATE NEW REQUEST ----
     new_request = ShiftChangeRequest(
         **data,
         user_id=current_user.id,
@@ -56,13 +66,21 @@ def create_request(
 
 
 # GET ALL
-@router.get("/", response_model=List[ShiftChangeRequestOut])
+@router.get(
+    "/",
+    response_model=List[ShiftChangeRequestOut],
+    dependencies=[Depends(require_view_permission(MENU_ID))]
+)
 def get_all_requests(db: Session = Depends(get_db)):
     return db.query(ShiftChangeRequest).all()
 
 
 # GET ONE
-@router.get("/{request_id}", response_model=ShiftChangeRequestOut)
+@router.get(
+    "/{request_id}",
+    response_model=ShiftChangeRequestOut,
+    dependencies=[Depends(require_view_permission(MENU_ID))]
+)
 def get_request(request_id: int, db: Session = Depends(get_db)):
     req = (
         db.query(ShiftChangeRequest)
@@ -75,7 +93,11 @@ def get_request(request_id: int, db: Session = Depends(get_db)):
 
 
 # UPDATE
-@router.put("/{request_id}", response_model=ShiftChangeRequestOut)
+@router.put(
+    "/{request_id}",
+    response_model=ShiftChangeRequestOut,
+    dependencies=[Depends(require_edit_permission(MENU_ID))]
+)
 def update_request(
     request_id: int,
     update_data: ShiftChangeRequestUpdate,
@@ -103,7 +125,10 @@ def update_request(
 
 
 # DELETE
-@router.delete("/{request_id}")
+@router.delete(
+    "/{request_id}",
+    dependencies=[Depends(require_delete_permission(MENU_ID))]
+)
 def delete_request(
     request_id: int,
     db: Session = Depends(get_db),

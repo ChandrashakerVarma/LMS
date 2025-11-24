@@ -1,13 +1,23 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 from typing import List
+
 from app.database import get_db
 from app.models.category_m import Category
 from app.schema.category_schema import CategoryResponse, CategoryCreate, CategoryUpdate
 from app.schema.course_schema import CourseResponse
-from app.dependencies import require_admin, get_current_user
+
+from app.permission_dependencies import (
+    require_view_permission,
+    require_create_permission,
+    require_edit_permission,
+    require_delete_permission,
+)
 
 router = APIRouter(prefix="/categories", tags=["categories"])
+
+MENU_ID = 33   # Category Module ID
+
 
 # ----------------------
 # Create a category
@@ -16,7 +26,7 @@ router = APIRouter(prefix="/categories", tags=["categories"])
 def create_category(
     category: CategoryCreate,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_admin)
+    current_user = Depends(require_create_permission(MENU_ID))
 ):
     existing = db.query(Category).filter(Category.name == category.name).first()
     if existing:
@@ -28,35 +38,49 @@ def create_category(
     db.refresh(new_category)
 
     cat_data = CategoryResponse.from_orm(new_category)
-    cat_data.courses = []  # no courses yet
+    cat_data.courses = []
     return cat_data
 
+
 # ----------------------
-# List all categories with courses
+# List all categories (Read)
 # ----------------------
 @router.get("/", response_model=List[CategoryResponse])
-def categories_list(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+def categories_list(
+    db: Session = Depends(get_db),
+    current_user = Depends(require_view_permission(MENU_ID))
+):
     categories = db.query(Category).options(joinedload(Category.courses)).all()
-    
+
     result = []
     for cat in categories:
         cat_data = CategoryResponse.from_orm(cat)
         cat_data.courses = [CourseResponse.from_orm(course) for course in cat.courses]
         result.append(cat_data)
+
     return result
 
+
 # ----------------------
-# Get a single category
+# Get a single category (Read)
 # ----------------------
 @router.get("/{category_id}", response_model=CategoryResponse)
-def get_category(category_id: int, db: Session = Depends(get_db)):
-    category = db.query(Category).options(joinedload(Category.courses)).filter(Category.id == category_id).first()
+def get_category(
+    category_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(require_view_permission(MENU_ID))
+):
+    category = db.query(Category).options(joinedload(Category.courses)).filter(
+        Category.id == category_id
+    ).first()
+
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
-    
+
     cat_data = CategoryResponse.from_orm(category)
     cat_data.courses = [CourseResponse.from_orm(course) for course in category.courses]
     return cat_data
+
 
 # ----------------------
 # Update a category
@@ -66,22 +90,24 @@ def update_category(
     category_id: int,
     payload: CategoryUpdate,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_admin)
+    current_user = Depends(require_edit_permission(MENU_ID))
 ):
     category = db.query(Category).filter(Category.id == category_id).first()
+
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
 
     update_data = payload.dict(exclude_unset=True)
     for key, value in update_data.items():
         setattr(category, key, value)
-    
+
     db.commit()
     db.refresh(category)
 
     cat_data = CategoryResponse.from_orm(category)
     cat_data.courses = [CourseResponse.from_orm(course) for course in category.courses]
     return cat_data
+
 
 # ----------------------
 # Delete a category
@@ -90,12 +116,14 @@ def update_category(
 def delete_category(
     category_id: int,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_admin)
+    current_user = Depends(require_delete_permission(MENU_ID))
 ):
     category = db.query(Category).filter(Category.id == category_id).first()
+
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
-    
+
     db.delete(category)
     db.commit()
+
     return {"message": "Category deleted successfully"}

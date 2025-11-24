@@ -11,12 +11,26 @@ from app.schema.payroll_schema import (
 )
 from app.dependencies import get_current_user
 
+# 🚨 PERMISSIONS
+from app.permission_dependencies import (
+    require_view_permission,
+    require_create_permission,
+    require_edit_permission,
+    require_delete_permission
+)
+
+MENU_ID = 49  # Payroll menu id
 
 router = APIRouter(prefix="/payrolls", tags=["Payroll"])
 
 
 # ------------------------------ CREATE PAYROLL ------------------------------
-@router.post("/", response_model=PayrollResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/", 
+    response_model=PayrollResponse, 
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_create_permission(MENU_ID))]
+)
 def create_payroll(
     data: PayrollCreate,
     db: Session = Depends(get_db),
@@ -67,16 +81,18 @@ def create_payroll(
 
 
 # ------------------------------ GET ALL PAYROLLS ------------------------------
-@router.get("/", response_model=list[PayrollResponse])
+@router.get(
+    "/", 
+    response_model=list[PayrollResponse],
+    dependencies=[Depends(require_view_permission(MENU_ID))]
+)
 def get_payrolls(db: Session = Depends(get_db)):
     data = db.query(Payroll).all()
 
-    # Attach user and salary structure references
     for p in data:
         if p.user:
             p.user_name = f"{p.user.first_name} {p.user.last_name or ''}".strip()
 
-        # Salary structure has no name field
         if p.salary_structure:
             p.salary_structure_name = f"Structure ID {p.salary_structure.id}"
 
@@ -84,7 +100,11 @@ def get_payrolls(db: Session = Depends(get_db)):
 
 
 # ------------------------------ GET PAYROLL BY ID ------------------------------
-@router.get("/{payroll_id}", response_model=PayrollResponse)
+@router.get(
+    "/{payroll_id}", 
+    response_model=PayrollResponse,
+    dependencies=[Depends(require_view_permission(MENU_ID))]
+)
 def get_payroll(payroll_id: int, db: Session = Depends(get_db)):
     p = db.query(Payroll).filter(Payroll.id == payroll_id).first()
     if not p:
@@ -100,7 +120,11 @@ def get_payroll(payroll_id: int, db: Session = Depends(get_db)):
 
 
 # ------------------------------ UPDATE PAYROLL ------------------------------
-@router.put("/{payroll_id}", response_model=PayrollResponse)
+@router.put(
+    "/{payroll_id}", 
+    response_model=PayrollResponse,
+    dependencies=[Depends(require_edit_permission(MENU_ID))]
+)
 def update_payroll(
     payroll_id: int,
     data: PayrollUpdate,
@@ -146,7 +170,11 @@ def update_payroll(
 
 
 # ------------------------------ DELETE PAYROLL ------------------------------
-@router.delete("/{payroll_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{payroll_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(require_delete_permission(MENU_ID))]
+)
 def delete_payroll(payroll_id: int, db: Session = Depends(get_db)):
     payroll = db.query(Payroll).filter(Payroll.id == payroll_id).first()
     if not payroll:

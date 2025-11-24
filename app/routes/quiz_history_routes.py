@@ -8,11 +8,30 @@ from app.models.video_m import Video
 from app.schema.quiz_history_schema import QuizHistoryCreate, QuizHistoryMessageResponse, QuizHistoryResponse
 from app.dependencies import get_current_user
 
+# ✅ Permission imports
+from app.permission_dependencies import (
+    require_view_permission,
+    require_create_permission,
+    require_edit_permission,
+    require_delete_permission
+)
+
 router = APIRouter(prefix="/quiz-history", tags=["quiz_history"])
 
+MENU_ID = 36
+
 # ---------------- CREATE ----------------
-@router.post("/", response_model=QuizHistoryMessageResponse, status_code=status.HTTP_201_CREATED)
-def create_quiz_history(data: QuizHistoryCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+@router.post(
+    "/", 
+    response_model=QuizHistoryMessageResponse, 
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_create_permission(MENU_ID))]
+)
+def create_quiz_history(
+    data: QuizHistoryCreate, 
+    db: Session = Depends(get_db), 
+    current_user=Depends(get_current_user)
+):
     # Validate checkpoint
     checkpoint = db.query(QuizCheckpoint).filter(QuizCheckpoint.id == data.checkpoint_id).first()
     if not checkpoint:
@@ -27,7 +46,7 @@ def create_quiz_history(data: QuizHistoryCreate, db: Session = Depends(get_db), 
         user_id=data.user_id,
         checkpoint_id=data.checkpoint_id,
         course_id=data.course_id,
-        video_id=data.video_id,  # ✅ video link
+        video_id=data.video_id,
         answer=data.answer,
         result=data.result,
         question=data.question,
@@ -51,12 +70,20 @@ def create_quiz_history(data: QuizHistoryCreate, db: Session = Depends(get_db), 
     )
 
 # ---------------- READ (all) ----------------
-@router.get("/", response_model=List[QuizHistoryResponse])
+@router.get(
+    "/", 
+    response_model=List[QuizHistoryResponse],
+    dependencies=[Depends(require_view_permission(MENU_ID))]
+)
 def get_all_quiz_histories(db: Session = Depends(get_db)):
     return db.query(QuizHistory).all()
 
 # ---------------- READ (by user) ----------------
-@router.get("/user/{user_id}", response_model=List[QuizHistoryResponse])
+@router.get(
+    "/user/{user_id}", 
+    response_model=List[QuizHistoryResponse],
+    dependencies=[Depends(require_view_permission(MENU_ID))]
+)
 def get_user_quiz_history(user_id: int, db: Session = Depends(get_db)):
     histories = db.query(QuizHistory).filter(QuizHistory.user_id == user_id).all()
     if not histories:
@@ -64,7 +91,11 @@ def get_user_quiz_history(user_id: int, db: Session = Depends(get_db)):
     return histories
 
 # ---------------- READ (by ID) ----------------
-@router.get("/{history_id}", response_model=QuizHistoryResponse)
+@router.get(
+    "/{history_id}", 
+    response_model=QuizHistoryResponse,
+    dependencies=[Depends(require_view_permission(MENU_ID))]
+)
 def get_quiz_history(history_id: int, db: Session = Depends(get_db)):
     history = db.query(QuizHistory).filter(QuizHistory.id == history_id).first()
     if not history:
@@ -72,17 +103,20 @@ def get_quiz_history(history_id: int, db: Session = Depends(get_db)):
     return history
 
 # ---------------- UPDATE ----------------
-@router.put("/{history_id}", response_model=QuizHistoryMessageResponse)
+@router.put(
+    "/{history_id}", 
+    response_model=QuizHistoryMessageResponse,
+    dependencies=[Depends(require_edit_permission(MENU_ID))]
+)
 def update_quiz_history(history_id: int, update_data: QuizHistoryCreate, db: Session = Depends(get_db)):
     history = db.query(QuizHistory).filter(QuizHistory.id == history_id).first()
     if not history:
         raise HTTPException(status_code=404, detail="Quiz history not found")
 
-    # Update fields
     history.user_id = update_data.user_id
     history.checkpoint_id = update_data.checkpoint_id
     history.course_id = update_data.course_id
-    history.video_id = update_data.video_id  # ✅ video
+    history.video_id = update_data.video_id
     history.answer = update_data.answer
     history.result = update_data.result
     history.question = update_data.question
@@ -104,7 +138,11 @@ def update_quiz_history(history_id: int, update_data: QuizHistoryCreate, db: Ses
     )
 
 # ---------------- DELETE ----------------
-@router.delete("/{history_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{history_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(require_delete_permission(MENU_ID))]
+)
 def delete_quiz_history(history_id: int, db: Session = Depends(get_db)):
     history = db.query(QuizHistory).filter(QuizHistory.id == history_id).first()
     if not history:
