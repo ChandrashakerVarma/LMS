@@ -11,7 +11,14 @@ from app.models.candidate_m import Candidate
 from app.models.notification_m import Notification
 from app.models.user_m import User
 from app.schema.job_posting_schema import JobPostingCreate, JobPostingUpdate, JobPostingOut
-from app.dependencies import require_admin
+
+# Import new permission dependencies
+from app.permission_dependencies import (
+    require_view_permission,
+    require_create_permission,
+    require_edit_permission,
+    require_delete_permission
+)
 
 router = APIRouter(prefix="/job-postings", tags=["Job Postings"])
 
@@ -37,21 +44,20 @@ class AcceptedCandidateOut(BaseModel):
 def create_job_posting(
     data: JobPostingCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_create_permission(61))
 ):
-    # Prevent duplicate postings
     existing_job = db.query(JobPosting).filter(
         JobPosting.job_role_id == data.job_role_id,
         JobPosting.location == data.location,
         JobPosting.employment_type == data.employment_type
     ).first()
+
     if existing_job:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Job posting with the same role, location, and employment type already exists."
         )
 
-    # Create the job posting
     job = JobPosting(
         **data.dict(),
         created_by=current_user.first_name
@@ -60,7 +66,6 @@ def create_job_posting(
     db.commit()
     db.refresh(job)
 
-    # Create workflow
     workflow = Workflow(
         posting_id=job.id,
         approval_status=ApprovalStatus.pending
@@ -68,7 +73,6 @@ def create_job_posting(
     db.add(workflow)
     db.commit()
 
-    # Notify candidates
     candidates = db.query(Candidate).all()
     for c in candidates:
         note = Notification(
@@ -76,6 +80,7 @@ def create_job_posting(
             message=f"New Job Posted: Role ID {job.job_role_id} at {job.location}"
         )
         db.add(note)
+
     db.commit()
 
     return JobPostingOut.from_orm(job)
@@ -88,9 +93,11 @@ def filter_jobs(
     role_id: Optional[int] = None,
     min_salary: Optional[int] = None,
     employment_type: Optional[str] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_view_permission(61))
 ):
     query = db.query(JobPosting)
+
     if location:
         query = query.filter(JobPosting.location.ilike(f"%{location}%"))
     if role_id:
@@ -99,6 +106,7 @@ def filter_jobs(
         query = query.filter(JobPosting.salary >= min_salary)
     if employment_type:
         query = query.filter(JobPosting.employment_type == employment_type)
+
     return [JobPostingOut.from_orm(p) for p in query.all()]
 
 
@@ -106,7 +114,7 @@ def filter_jobs(
 @router.get("/admin/dashboard")
 def admin_dashboard(
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_view_permission(61))
 ):
     total_jobs = db.query(JobPosting).count()
     total_candidates = db.query(Candidate).count()
@@ -123,17 +131,26 @@ def admin_dashboard(
 
 # ---------------- GET ALL JOB POSTINGS ----------------
 @router.get("/", response_model=List[JobPostingOut])
-def get_all_job_postings(db: Session = Depends(get_db)):
+def get_all_job_postings(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_view_permission(61))
+):
     postings = db.query(JobPosting).all()
     return [JobPostingOut.from_orm(p) for p in postings]
 
 
 # ---------------- GET JOB POSTING BY ID ----------------
 @router.get("/{job_posting_id}", response_model=JobPostingOut)
-def get_job_posting(job_posting_id: int, db: Session = Depends(get_db)):
+def get_job_posting(
+    job_posting_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_view_permission(61))
+):
     posting = db.query(JobPosting).filter(JobPosting.id == job_posting_id).first()
+
     if not posting:
         raise HTTPException(status_code=404, detail="Job posting not found")
+
     return JobPostingOut.from_orm(posting)
 
 
@@ -143,16 +160,16 @@ def update_job_posting(
     job_posting_id: int,
     updated: JobPostingUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_edit_permission(61))
 ):
     posting = db.query(JobPosting).filter(JobPosting.id == job_posting_id).first()
+
     if not posting:
         raise HTTPException(status_code=404, detail="Job posting not found")
 
     for key, value in updated.dict(exclude_unset=True).items():
         setattr(posting, key, value)
 
-    # Update audit fields
     posting.modified_by = current_user.first_name
     posting.updated_at = datetime.utcnow()
 
@@ -166,34 +183,37 @@ def update_job_posting(
 def delete_job_posting(
     job_posting_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_delete_permission(61))
 ):
     posting = db.query(JobPosting).filter(JobPosting.id == job_posting_id).first()
+
     if not posting:
         raise HTTPException(status_code=404, detail="Job posting not found")
 
-    # Delete related workflows first
     db.query(Workflow).filter(Workflow.posting_id == job_posting_id).delete()
     db.commit()
 
-    # Then delete the job posting
     db.delete(posting)
     db.commit()
+
     return {"detail": "Job posting deleted successfully"}
 
-# ---------------- GET ALL ACCEPTED CANDIDATES (ADMIN) ----------------
+
+# ---------------- GET ALL ACCEPTED CANDIDATES ----------------
 @router.get("/accepted-candidates", response_model=List[AcceptedCandidateOut])
 def get_accepted_candidates(
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_view_permission(61)),
     job_posting_id: Optional[int] = None
 ):
     query = db.query(Candidate).join(Workflow, Candidate.workflow_id == Workflow.id).join(JobPosting)
     query = query.filter(Workflow.approval_status == ApprovalStatus.accepted)
+
     if job_posting_id:
         query = query.filter(Candidate.job_posting_id == job_posting_id)
 
     accepted_candidates = query.all()
+
     result = []
     for c in accepted_candidates:
         result.append({
@@ -207,4 +227,5 @@ def get_accepted_candidates(
             "location": c.job_posting.location,
             "status": c.status
         })
+
     return result

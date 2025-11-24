@@ -23,3 +23,5 @@ from app.models.shift_change_request_m import ShiftChangeRequest
 from app.models.user_shifts_m import UserShift
 from app.models.workflow_m import Workflow
 from app.models.notification_m import Notification
+from app.models.menu_m import *
+from app.models.role_right_m import *

@@ -9,16 +9,29 @@ from app.schema.salary_structure_schema import (
     SalaryStructureResponse,
 )
 from app.dependencies import require_admin
+from app.permission_dependencies import (
+    require_view_permission,
+    require_create_permission,
+    require_edit_permission,
+    require_delete_permission
+)
 
 router = APIRouter(prefix="/salary-structures", tags=["Salary Structure"])
 
+MENU_ID = 47
+
 
 # ------------------ Create Salary Structure ------------------
-@router.post("/", response_model=SalaryStructureResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/", 
+    response_model=SalaryStructureResponse, 
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_create_permission(MENU_ID))]
+)
 def create_salary_structure(
     data: SalaryStructureCreate,
     db: Session = Depends(get_db),
-    current_user = Depends(require_admin),
+    current_user=Depends(require_admin),
 ):
     total_annual = (
         data.basic_salary_annual
@@ -30,7 +43,7 @@ def create_salary_structure(
     new_salary_structure = SalaryStructure(
         **data.dict(),
         total_annual=total_annual,
-        created_by=current_user.first_name  # FIXED
+        created_by=current_user.first_name
     )
 
     db.add(new_salary_structure)
@@ -40,13 +53,21 @@ def create_salary_structure(
 
 
 # ------------------ Get All Salary Structures ------------------
-@router.get("/", response_model=List[SalaryStructureResponse])
+@router.get(
+    "/", 
+    response_model=List[SalaryStructureResponse],
+    dependencies=[Depends(require_view_permission(MENU_ID))]
+)
 def get_salary_structures(db: Session = Depends(get_db)):
     return db.query(SalaryStructure).all()
 
 
 # ------------------ Get Salary Structure by ID ------------------
-@router.get("/{salary_structure_id}", response_model=SalaryStructureResponse)
+@router.get(
+    "/{salary_structure_id}", 
+    response_model=SalaryStructureResponse,
+    dependencies=[Depends(require_view_permission(MENU_ID))]
+)
 def get_salary_structure(salary_structure_id: int, db: Session = Depends(get_db)):
     structure = db.query(SalaryStructure).filter(SalaryStructure.id == salary_structure_id).first()
     if not structure:
@@ -55,12 +76,16 @@ def get_salary_structure(salary_structure_id: int, db: Session = Depends(get_db)
 
 
 # ------------------ Update Salary Structure ------------------
-@router.put("/{salary_structure_id}", response_model=SalaryStructureResponse)
+@router.put(
+    "/{salary_structure_id}", 
+    response_model=SalaryStructureResponse,
+    dependencies=[Depends(require_edit_permission(MENU_ID))]
+)
 def update_salary_structure(
     salary_structure_id: int,
     data: SalaryStructureUpdate,
     db: Session = Depends(get_db),
-    current_user = Depends(require_admin),
+    current_user=Depends(require_admin),
 ):
     structure = db.query(SalaryStructure).filter(SalaryStructure.id == salary_structure_id).first()
     if not structure:
@@ -69,7 +94,6 @@ def update_salary_structure(
     for key, value in data.dict(exclude_unset=True).items():
         setattr(structure, key, value)
 
-    # Recalculate total_annual
     structure.total_annual = (
         (structure.basic_salary_annual or 0)
         + (structure.allowances_annual or 0)
@@ -77,7 +101,7 @@ def update_salary_structure(
         - (structure.deductions_annual or 0)
     )
 
-    structure.modified_by = current_user.first_name  # FIXED
+    structure.modified_by = current_user.first_name
 
     db.commit()
     db.refresh(structure)
@@ -85,11 +109,15 @@ def update_salary_structure(
 
 
 # ------------------ Delete Salary Structure ------------------
-@router.delete("/{salary_structure_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{salary_structure_id}", 
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(require_delete_permission(MENU_ID))]
+)
 def delete_salary_structure(
     salary_structure_id: int,
     db: Session = Depends(get_db),
-    current_user = Depends(require_admin),
+    current_user=Depends(require_admin),
 ):
     structure = db.query(SalaryStructure).filter(SalaryStructure.id == salary_structure_id).first()
     if not structure:

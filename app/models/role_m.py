@@ -10,3 +10,4 @@ class Role(Base):
     
     users = relationship("User", back_populates="role")
     # job_postings = relationship("JobPosting", back_populates="role")
+    role_rights = relationship("RoleRight", back_populates="role", cascade="all, delete-orphan")
