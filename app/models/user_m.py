@@ -24,7 +24,7 @@ class User(Base):
     designation = Column(String(100), nullable=True)
     inactive = Column(Boolean, default=False)
     biometric_id = Column(String(50), nullable=True)
-
+    shift_roster_id = Column(Integer, ForeignKey("shift_rosters.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -48,3 +48,6 @@ class User(Base):
 
     # ✅ Correct UserShift relationship (keep only one)
     user_shifts = relationship("UserShift", back_populates="user", cascade="all, delete-orphan")
+    # job_postings = relationship("JobPosting", back_populates="created_by")
+    # created_shifts = relationship("Shift", back_populates="created_manager")
+    shift_roster = relationship("ShiftRoster", back_populates="users")

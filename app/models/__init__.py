@@ -25,3 +25,6 @@ from app.models.workflow_m import Workflow
 from app.models.notification_m import Notification
 from app.models.menu_m import *
 from app.models.role_right_m import *
+from app.models.shift_roster_m import *
+from app.models.week_day_m import *
+from app.models.shift_roster_detail_m import *
