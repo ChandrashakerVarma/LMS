@@ -26,11 +26,11 @@ def register(user: AuthRegister, db: Session = Depends(get_db)):
 
     # ✅ Create new user (no 'name' field — use first_name / last_name)
     new_user = User(
-        first_name=user.first_name,
-        last_name=user.last_name,
-        email=user.email,
-        hashed_password=hash_password(user.password),
-        role_id=user.role_id
+    first_name=user.first_name,
+    last_name=user.last_name,
+    email=user.email.lower(),
+    hashed_password=hash_password(user.password),
+    role_id=user.role_id
     )
 
     db.add(new_user)

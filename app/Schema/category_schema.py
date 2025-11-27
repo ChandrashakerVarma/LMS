@@ -27,9 +27,10 @@ class CategoryResponse(CategoryBase):
     courses: Optional[List["CourseResponse"]] = []  # forward ref
 
     class Config:
-        orm_mode = True  # ✅ Pydantic v1 compatible
+        from_attributes = True  # Pydantic v2
 
-
-# ✅ Add this at the bottom (after all class definitions)
+# Import the referenced model AFTER defining CategoryResponse
 from app.schema.course_schema import CourseResponse
-CategoryResponse.update_forward_refs(CourseResponse=CourseResponse)
+
+# Rebuild models to resolve forward references (Pydantic v2)
+CategoryResponse.model_rebuild()

@@ -9,7 +9,7 @@ class NotificationCreate(NotificationBase):
     pass
 
 
-class NotificationOut(NotificationBase):
+class NotificationResponse(NotificationBase):
     id: int
 
     class Config:

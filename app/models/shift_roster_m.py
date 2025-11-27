@@ -14,6 +14,6 @@ class ShiftRoster(Base):
     # Audit user tracking
     created_by = Column(String(100), nullable=True)
     modified_by = Column(String(100), nullable=True)
-    # Reverse relationship
+
     shift_roster_details = relationship("ShiftRosterDetail", back_populates="shift_roster")
     users = relationship("User", back_populates="shift_roster")

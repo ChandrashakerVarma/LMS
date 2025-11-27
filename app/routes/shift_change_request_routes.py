@@ -7,7 +7,7 @@ from app.models.shift_change_request_m import ShiftChangeRequest
 from app.schema.shift_change_request_schema import (
     ShiftChangeRequestCreate,
     ShiftChangeRequestUpdate,
-    ShiftChangeRequestOut
+    ShiftChangeRequestResponse
 )
 from app.models.user_m import User
 from app.dependencies import get_current_user
@@ -27,7 +27,7 @@ MENU_ID = 43
 # CREATE SHIFT CHANGE REQUEST
 @router.post(
     "/",
-    response_model=ShiftChangeRequestOut,
+    response_model=ShiftChangeRequestResponse,
     dependencies=[Depends(require_create_permission(MENU_ID))]
 )
 def create_request(
@@ -68,7 +68,7 @@ def create_request(
 # GET ALL
 @router.get(
     "/",
-    response_model=List[ShiftChangeRequestOut],
+    response_model=List[ShiftChangeRequestResponse],
     dependencies=[Depends(require_view_permission(MENU_ID))]
 )
 def get_all_requests(db: Session = Depends(get_db)):
@@ -78,7 +78,7 @@ def get_all_requests(db: Session = Depends(get_db)):
 # GET ONE
 @router.get(
     "/{request_id}",
-    response_model=ShiftChangeRequestOut,
+    response_model=ShiftChangeRequestResponse,
     dependencies=[Depends(require_view_permission(MENU_ID))]
 )
 def get_request(request_id: int, db: Session = Depends(get_db)):
@@ -95,7 +95,7 @@ def get_request(request_id: int, db: Session = Depends(get_db)):
 # UPDATE
 @router.put(
     "/{request_id}",
-    response_model=ShiftChangeRequestOut,
+    response_model=ShiftChangeRequestResponse,
     dependencies=[Depends(require_edit_permission(MENU_ID))]
 )
 def update_request(

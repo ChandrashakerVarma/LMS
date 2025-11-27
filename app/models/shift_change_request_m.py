@@ -1,6 +1,13 @@
+from enum import Enum
 from sqlalchemy import Column, Integer, ForeignKey, String, Date, DateTime, func
 from sqlalchemy.orm import relationship
 from app.database import Base
+
+# ---------- STATUS ENUM ----------
+class RequestStatus(str, Enum):
+    Pending = "Pending"
+    Approved = "Approved"
+    Rejected = "Rejected"
 
 class ShiftChangeRequest(Base):
     __tablename__ = "shift_change_requests"

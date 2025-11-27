@@ -3,8 +3,8 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
 
-class JobRole(Base):
-    __tablename__ = "job_roles"
+class JobDescription(Base):
+    __tablename__ = "job_descriptions"
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(255), nullable=False)
@@ -14,9 +14,7 @@ class JobRole(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-     # Audit user tracking
     created_by = Column(String(100), nullable=True)
     modified_by = Column(String(100), nullable=True)
 
-
-    job_postings = relationship("JobPosting", back_populates="jobrole")
+    job_postings = relationship("JobPosting", back_populates="job_description")
