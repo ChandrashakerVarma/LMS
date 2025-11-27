@@ -6,7 +6,7 @@ from datetime import datetime
 from app.database import get_db
 from app.models.leavemaster_m import LeaveMaster
 from app.models.user_m import User
-from app.schema.leavemaster_schema import LeaveMasterCreate, LeaveMasterUpdate, LeaveMasterOut
+from app.schema.leavemaster_schema import LeaveMasterCreate, LeaveMasterUpdate, LeaveMasterResponse
 from app.dependencies import get_current_user
 
 # ---- Permission imports (your required style) ----
@@ -23,7 +23,7 @@ MENU_ID = 45   # Leave Master menu ID
 
 
 # ➕ Create Leave Record
-@router.post("/", response_model=LeaveMasterOut)
+@router.post("/", response_model=LeaveMasterResponse)
 def create_leave(
     leave: LeaveMasterCreate,
     db: Session = Depends(get_db),
@@ -52,7 +52,7 @@ def create_leave(
 
 
 # 📋 Get All Leaves
-@router.get("/", response_model=List[LeaveMasterOut])
+@router.get("/", response_model=List[LeaveMasterResponse])
 def get_all_leaves(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_view_permission(MENU_ID))
@@ -62,7 +62,7 @@ def get_all_leaves(
 
 
 # 🔍 Get Leave by ID
-@router.get("/{leave_id}", response_model=LeaveMasterOut)
+@router.get("/{leave_id}", response_model=LeaveMasterResponse)
 def get_leave_by_id(
     leave_id: int,
     db: Session = Depends(get_db),
@@ -75,7 +75,7 @@ def get_leave_by_id(
 
 
 # ✏️ Update Leave Record
-@router.put("/{leave_id}", response_model=LeaveMasterOut)
+@router.put("/{leave_id}", response_model=LeaveMasterResponse)
 def update_leave(
     leave_id: int,
     updated_data: LeaveMasterUpdate,

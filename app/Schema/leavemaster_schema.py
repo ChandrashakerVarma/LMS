@@ -32,7 +32,7 @@ class LeaveMasterUpdate(BaseModel):
     end_date: Optional[date] = None
 
 
-class LeaveMasterOut(LeaveMasterBase):
+class LeaveMasterResponse(LeaveMasterBase):
     id: int
     created_at: datetime
     updated_at: datetime

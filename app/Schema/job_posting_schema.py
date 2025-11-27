@@ -1,76 +1,81 @@
-from pydantic import BaseModel
-from typing import Optional, List
+# app/schema/job_posting_schema.py
+
+from pydantic import BaseModel, Field
 from datetime import date, datetime
-
-# ---------------- JobRole ----------------
-class JobRoleOut(BaseModel):
-    id: int
-    title: str
-    description: Optional[str]
-    required_skills: Optional[str]
-
-    class Config:
-        orm_mode = True
+from typing import Optional
+from enum import Enum
 
 
-# ---------------- Workflow ----------------
-class WorkflowOut(BaseModel):
-    id: int
-    approval_status: str
-
-    class Config:
-        orm_mode = True
+class ApprovalStatus(str, Enum):
+    pending = "pending"
+    accepted = "accepted"
+    rejected = "rejected"
 
 
-# ---------------- Candidate ----------------
-class CandidateOut(BaseModel):
-    id: int
-    first_name: str
-    last_name: str
-    email: str
-    status: str
-
-    class Config:
-        orm_mode = True
-
-
-# ---------------- Base ----------------
+# ------------------------------------------
+# BASE SCHEMA
+# ------------------------------------------
 class JobPostingBase(BaseModel):
-    job_role_id: int
+    job_description_id: int
     number_of_positions: int
     employment_type: str
     location: str
-    salary: Optional[int]
+    salary: Optional[int] = None
     posting_date: date
-    closing_date: Optional[date]
+    closing_date: Optional[date] = None
 
 
-# ---------------- Create ----------------
+# ------------------------------------------
+# CREATE
+# ------------------------------------------
 class JobPostingCreate(JobPostingBase):
     pass
 
 
-# ---------------- Update ----------------
+# ------------------------------------------
+# UPDATE
+# ------------------------------------------
 class JobPostingUpdate(BaseModel):
-    job_role_id: Optional[int]
-    number_of_positions: Optional[int]
-    employment_type: Optional[str]
-    location: Optional[str]
-    salary: Optional[int]
-    posting_date: Optional[date]
-    closing_date: Optional[date]
+    number_of_positions: Optional[int] = None
+    employment_type: Optional[str] = None
+    location: Optional[str] = None
+    salary: Optional[int] = None
+    posting_date: Optional[date] = None
+    closing_date: Optional[date] = None
+    approval_status: Optional[ApprovalStatus] = None
 
 
-# ---------------- Output ----------------
-class JobPostingOut(JobPostingBase):
+# ------------------------------------------
+# RESPONSE
+# ------------------------------------------
+class JobPostingResponse(JobPostingBase):
     id: int
-    jobrole: Optional[JobRoleOut]
-    workflow: Optional[WorkflowOut]
-    candidates: Optional[List[CandidateOut]]
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
-    created_by: Optional[str] = None
-    modified_by: Optional[str] = None
+    approval_status: ApprovalStatus
+    created_by_id: int
+    created_by_name: Optional[str]
+    modified_by: Optional[str]
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
 
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
+
+
+# ------------------------------------------
+# ACCEPTED CANDIDATE RESPONSE
+# ------------------------------------------
+class AcceptedCandidateResponse(BaseModel):
+    candidate_id: int
+    first_name: str
+    last_name: str
+    email: str
+    phone_number: str
+    job_posting_id: int
+    job_role_id: int
+    location: str
+    status: str
+
+    model_config = {
+        "from_attributes": True
+    }
