@@ -5,9 +5,16 @@ from app.schema.user_schema import UserCreate, UserResponse,UserBase,UserUpdate
 from app.models.user_m import User
 from app.utils.utils import hash_password
 from app.dependencies import require_admin
+from app.permission_dependencies import (
+    require_view_permission,
+    require_create_permission,
+    require_edit_permission,
+    require_delete_permission
+)
+
 
 router = APIRouter(prefix="/users", tags=["Users"])
-
+USERS_MENU_ID = 2
 # ---------- CREATE User ----------
 
 @router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
@@ -94,3 +101,61 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
     db.delete(user)
     db.commit()
     return {"message": "User deleted successfully"}
+
+
+
+# =====================================================
+# ASSIGN SHIFT ROSTER → ALL USERS OF ROLE
+# =====================================================
+@router.put("/assign-shift/{role_id}/{shift_roster_id}")
+def assign_shift_to_role(
+    role_id: int,
+    shift_roster_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(require_edit_permission(USERS_MENU_ID))
+):
+    users = db.query(User).filter(User.role_id == role_id).all()
+
+    if not users:
+        raise HTTPException(404, detail="No users found with this role")
+
+    for user in users:
+        user.shift_roster_id = shift_roster_id
+        user.modified_by = current_user["first_name"]
+
+    db.commit()
+
+    return {
+        "message": "Shift roster assigned to all users of the role",
+        "role_id": role_id,
+        "shift_roster_id": shift_roster_id,
+        "total_updated_users": len(users)
+    }
+
+
+# =====================================================
+# ASSIGN SHIFT ROSTER → SINGLE USER
+# =====================================================
+@router.patch("/update-shift/{user_id}/{shift_roster_id}")
+def update_user_shift_roster(
+    user_id: int,
+    shift_roster_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(require_edit_permission(USERS_MENU_ID))
+):
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(404, detail="User not found")
+
+    user.shift_roster_id = shift_roster_id
+    user.modified_by = current_user["first_name"]
+
+    db.commit()
+    db.refresh(user)
+
+    return {
+        "message": "Shift roster updated for the user",
+        "user_id": user_id,
+        "shift_roster_id": shift_roster_id
+    }

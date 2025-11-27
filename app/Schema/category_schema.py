@@ -24,7 +24,7 @@ class CategoryResponse(CategoryBase):
     courses: Optional[List["CourseResponse"]] = []  # forward ref
 
     class Config:
-        orm_mode = True  # Pydantic v1
+        from_attributes = True  # Pydantic v1
         
 
 # Import the referenced model AFTER defining CategoryResponse
