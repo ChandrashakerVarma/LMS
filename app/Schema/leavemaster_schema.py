@@ -32,12 +32,14 @@ class LeaveMasterUpdate(BaseModel):
     end_date: Optional[date] = None
 
 
-class LeaveMasterOut(LeaveMasterBase):
+class LeaveMasterResponse(LeaveMasterBase):
     id: int
     created_at: datetime
     updated_at: datetime
     created_by: str | None = None
     modified_by: str | None = None
 
-    class Config:
-        orm_mode = True
+    model_config = {
+    "from_attributes": True
+}
+

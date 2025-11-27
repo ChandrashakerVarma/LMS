@@ -6,14 +6,16 @@ from app.routes import categorys_routes, formula_routes, permission_routes, atte
 from app.database import engine, Base
 from app.models import user_m, role_m, course_m, video_m, QuizCheckpoint_m, Progress_m, QuizHistory_m, enrollment_m,shift_m, department_m, leavemaster_m
 from app.models import organization_m, branch_m, category_m, salary_structure_m, payroll_m, formula_m, permission_m, attendance_m, payroll_attendance_m
-from app.models import job_posting_m, jobrole_m, workflow_m, candidate_m, candidate_documents_m,menu_m, role_right_m
+from app.models import job_posting_m, candidate_m, candidate_documents_m,menu_m, role_right_m
 from app.seeders.role_seeder import seed_roles
 from app.seeders.menu_seeder import seed_menus
 from app.seeders.role_right_seeder import seed_role_rights
 from app.seeders.week_day_seeders import seed_weekdays
 from app.routes import shift_routes,department_routes
 from app.routes import leavemaster_routes, salary_structure_routes, payroll_routes, payroll_attendance_routes, user_shifts_routes, shift_change_request_routes
-from app.routes import job_posting_routes, jobrole_routes, workflow_routes, candidate_routes, candidates_documents_routes,shift_roster_detail_routes,shift_roster_routes
+from app.routes import job_posting_routes,candidate_routes,candidates_documents_routes,shift_roster_detail_routes,shift_roster_routes
+from app.models import job_description_m, notification_m
+from app.routes import job_description_routes,notification_routes
 
  
 app = FastAPI()
@@ -41,10 +43,10 @@ app.include_router(progress_routes.router)
 app.include_router(department_routes.router)
 
 app.include_router(job_posting_routes.router)
-app.include_router(jobrole_routes.router)
-app.include_router(workflow_routes.router)
+app.include_router(job_description_routes.router)
 app.include_router(candidate_routes.router)
 app.include_router(candidates_documents_routes.router)
+app.include_router(notification_routes.router)
 
 app.include_router(shift_routes.router)
 app.include_router(user_shifts_routes.router)

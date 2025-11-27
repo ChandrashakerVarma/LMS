@@ -33,5 +33,7 @@ class PayrollAttendanceResponse(PayrollAttendanceBase):
     id: int
     generated_on: Optional[date]
 
-    class Config:
-        orm_mode = True
+    model_config = {
+    "from_attributes": True
+}
+

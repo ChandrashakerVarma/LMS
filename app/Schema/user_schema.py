@@ -1,17 +1,11 @@
-from pydantic import BaseModel, EmailStr
-from datetime import date, datetime
+from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
-
-
-# ==========================================================
-# 🔹 BASE SCHEMA
-# ==========================================================
+from datetime import date, datetime
 
 class UserBase(BaseModel):
     first_name: str
     last_name: Optional[str] = None
     email: EmailStr
-
     role_id: int
     branch_id: Optional[int] = None
     organization_id: Optional[int] = None
@@ -22,30 +16,21 @@ class UserBase(BaseModel):
 
     address: Optional[str] = None
     designation: Optional[str] = None
-
     inactive: Optional[bool] = False
     biometric_id: Optional[str] = None
-
-    # ✅ NEW FIELD
     shift_roster_id: Optional[int] = None
+    department_id: Optional[int] = None
 
+    
 
-# ==========================================================
-# 🔹 CREATE SCHEMA
-# ==========================================================
 
 class UserCreate(UserBase):
-    password: str
+    password: str = Field(..., min_length=6)
 
-
-# ==========================================================
-# 🔹 UPDATE SCHEMA
-# ==========================================================
 
 class UserUpdate(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
-
     role_id: Optional[int] = None
     branch_id: Optional[int] = None
     organization_id: Optional[int] = None
@@ -56,41 +41,22 @@ class UserUpdate(BaseModel):
 
     address: Optional[str] = None
     designation: Optional[str] = None
-
     inactive: Optional[bool] = None
     biometric_id: Optional[str] = None
-
-    # ✅ NEW FIELD (allow update)
     shift_roster_id: Optional[int] = None
+    department_id: Optional[int] = None
 
 
-# ==========================================================
-# 🔹 RESPONSE SCHEMA
-# ==========================================================
 
 class UserResponse(UserBase):
     id: int
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
 
-    created_by: Optional[str] = None
-    modified_by: Optional[str] = None
+    model_config = {
+    "from_attributes": True
+}
 
-    # 🔹 Additional fields for UI
-    role_name: Optional[str] = None
-    branch_name: Optional[str] = None
-    organization_name: Optional[str] = None
-
-    # 🔹 NEW: Return selected shift roster name
-    shift_roster_name: Optional[str] = None
-
-    class Config:
-        from_attributes = True  # (orm_mode replacement)
-
-
-# ==========================================================
-# 🔹 AUTH SCHEMAS
-# ==========================================================
 
 class AuthRegister(BaseModel):
     first_name: str

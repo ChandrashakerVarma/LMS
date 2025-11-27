@@ -19,4 +19,6 @@ class Department(Base):
     created_by = Column(String(100), nullable=True)
     modified_by = Column(String(100), nullable=True)
 
+    
+    users = relationship("User", back_populates="department")
 
