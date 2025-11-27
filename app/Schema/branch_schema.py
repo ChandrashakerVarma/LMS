@@ -21,5 +21,7 @@ class BranchResponse(BranchBase):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
-    class Config:
-        orm_mode = True  # ✅ Needed for from_orm()
+    model_config = {
+    "from_attributes": True
+}
+ # ✅ Needed for from_orm()

@@ -27,12 +27,13 @@ class QuizHistoryMessageResponse(BaseModel):
     question: Optional[str] = None
     completed_at: datetime
 
-    class Config:
-        from_attributes = True
+    
 
 class QuizHistoryResponse(QuizHistoryBase):
     id: int
     completed_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = {
+    "from_attributes": True
+}
+

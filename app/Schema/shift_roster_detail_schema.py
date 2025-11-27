@@ -18,5 +18,7 @@ class ShiftRosterDetailResponse(BaseModel):
     week_day_id: int
     shift_id: int
 
-    class Config:
-        orm_mode = True
+    model_config = {
+    "from_attributes": True
+}
+

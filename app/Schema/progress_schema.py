@@ -18,5 +18,7 @@ class ProgressResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        orm_mode = True  # ✅ Use this for Pydantic v1
+    model_config = {
+    "from_attributes": True
+}
+  # ✅ Use this for Pydantic v1

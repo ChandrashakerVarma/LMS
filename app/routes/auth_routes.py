@@ -29,9 +29,10 @@ def register(user: AuthRegister, db: Session = Depends(get_db)):
     first_name=user.first_name,
     last_name=user.last_name,
     email=user.email.lower(),
-    hashed_password=hash_password(user.password),
+    hashed_password=hash_password(user.password),  # must use truncated version
     role_id=user.role_id
-    )
+)
+
 
     db.add(new_user)
     db.commit()

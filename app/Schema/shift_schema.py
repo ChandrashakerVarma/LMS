@@ -40,5 +40,7 @@ class ShiftResponse(ShiftBase):
     id: int
     created_by: int
 
-    class Config:
-        orm_mode = True
+    model_config = {
+    "from_attributes": True
+}
+

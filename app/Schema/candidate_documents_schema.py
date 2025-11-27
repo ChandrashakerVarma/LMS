@@ -16,5 +16,7 @@ class CandidateDocumentUpdate(BaseModel):
 class CandidateDocumentResponse(CandidateDocumentBase):
     id: int
 
-    class Config:
-        orm_mode = True
+    model_config = {
+    "from_attributes": True
+}
+

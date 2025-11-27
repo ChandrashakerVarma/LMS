@@ -21,8 +21,7 @@ class UserBase(BaseModel):
     shift_roster_id: Optional[int] = None
     department_id: Optional[int] = None
 
-    class Config:
-        from_attributes = True
+    
 
 
 class UserCreate(UserBase):
@@ -47,8 +46,6 @@ class UserUpdate(BaseModel):
     shift_roster_id: Optional[int] = None
     department_id: Optional[int] = None
 
-    class Config:
-        from_attributes = True
 
 
 class UserResponse(UserBase):
@@ -56,27 +53,24 @@ class UserResponse(UserBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {
+    "from_attributes": True
+}
 
-
-# ------------------ AUTH ------------------
-from pydantic import BaseModel, EmailStr
 
 class AuthRegister(BaseModel):
     first_name: str
-    last_name: str
+    last_name: Optional[str] = None
     email: EmailStr
     password: str
-    role_id: int | None = None
+    role_id: Optional[int] = None
 
 
 class AuthRegisterResponse(BaseModel):
     first_name: str
-    last_name: str
+    last_name: Optional[str] = None
     email: EmailStr
-    role_id: int | None
-
+    role_id: Optional[int] = None
+    
     class Config:
-        from_attributes = True   # Pydantic v2
-
+        from_attributes = True

@@ -23,8 +23,10 @@ class ShiftChangeRequestUpdate(BaseModel):
     status: Optional[RequestStatus] = None
     reason: Optional[str] = None
 
-    class Config:
-        use_enum_values = True
+    model_config = {
+    "from_attributes": True
+}
+
 
 class ShiftChangeRequestResponse(ShiftChangeRequestBase):
     id: int

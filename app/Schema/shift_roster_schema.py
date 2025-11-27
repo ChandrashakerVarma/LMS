@@ -17,5 +17,7 @@ class ShiftRosterUpdate(BaseModel):
 class ShiftRosterResponse(ShiftRosterBase):
     id: int
 
-    class Config:
-        orm_mode = True
+    model_config = {
+    "from_attributes": True
+}
+

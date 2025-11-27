@@ -5,7 +5,6 @@ from sqlalchemy import create_engine, pool
 from alembic import context
 from dotenv import load_dotenv
 
-
 # Load environment variables
 load_dotenv()
 
@@ -27,7 +26,7 @@ from app.models import (
     branch_m, category_m, organization_m, salary_structure_m, payroll_m,
     formula_m, permission_m, attendance_m, candidate_documents_m,
     candidate_m, job_posting_m, shift_change_request_m,shift_roster_detail_m,
-    user_shifts_m,notification_m,menu_m,role_right_m,shift_roster_m,week_day_m
+    user_shifts_m,notification_m,menu_m,role_right_m,shift_roster_m,week_day_m,job_description_m
 )
 
 target_metadata = Base.metadata
