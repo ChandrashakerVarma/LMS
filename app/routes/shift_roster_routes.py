@@ -4,7 +4,7 @@ from typing import List
 
 from app.database import get_db
 from app.models.shift_roster_m import ShiftRoster
-from app.schema.shift_roster_schema import (
+from app.Schema.shift_roster_schema import (
     ShiftRosterCreate, ShiftRosterUpdate, ShiftRosterResponse
 )
 from app.dependencies import get_current_user

@@ -3,7 +3,7 @@ from typing import Optional, List, TYPE_CHECKING
 from datetime import datetime
 
 if TYPE_CHECKING:
-    from app.schema.course_schema import CourseResponse
+    from app.Schema.course_schema import CourseResponse
 
 
 class CategoryBase(BaseModel):
@@ -31,5 +31,5 @@ class CategoryResponse(CategoryBase):
 
 
 # ✅ Add this at the bottom (after all class definitions)
-from app.schema.course_schema import CourseResponse
+from app.Schema.course_schema import CourseResponse
 CategoryResponse.update_forward_refs(CourseResponse=CourseResponse)

@@ -4,8 +4,8 @@ from typing import List
 
 from app.database import get_db
 from app.models.category_m import Category
-from app.schema.category_schema import CategoryResponse, CategoryCreate, CategoryUpdate
-from app.schema.course_schema import CourseResponse
+from app.Schema.category_schema import CategoryResponse, CategoryCreate, CategoryUpdate
+from app.Schema.course_schema import CourseResponse
 
 from app.permission_dependencies import (
     require_view_permission,

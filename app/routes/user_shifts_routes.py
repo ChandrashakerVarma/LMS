@@ -8,7 +8,7 @@ from datetime import datetime
 from app.models.user_shifts_m import UserShift
 from app.models.user_m import User
 from app.models.shift_roster_detail_m import ShiftRosterDetail
-from app.schema.user_shifts_schema import (
+from app.Schema.user_shifts_schema import (
     UserShiftCreate,
     UserShiftUpdate,
     UserShiftOut

@@ -7,7 +7,7 @@ from app.database import get_db
 from app.models.permission_m import Permission
 from app.models.user_m import User
 from app.models.shift_m import Shift
-from app.schema.permission_schema import (
+from app.Schema.permission_schema import (
     PermissionCreate,
     PermissionUpdate,
     PermissionResponse

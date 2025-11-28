@@ -6,7 +6,7 @@ from datetime import datetime
 from app.database import get_db
 from app.models.leavemaster_m import LeaveMaster
 from app.models.user_m import User
-from app.schema.leavemaster_schema import LeaveMasterCreate, LeaveMasterUpdate, LeaveMasterOut
+from app.Schema.leavemaster_schema import LeaveMasterCreate, LeaveMasterUpdate, LeaveMasterOut
 from app.dependencies import get_current_user
 
 # ---- Permission imports (your required style) ----

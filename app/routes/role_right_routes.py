@@ -6,7 +6,7 @@ from app.database import get_db
 from app.models.role_right_m import RoleRight
 from app.models.role_m import Role
 from app.models.menu_m import Menu
-from app.schema.role_right_schema import (
+from app.Schema.role_right_schema import (
     RoleRightCreate, 
     RoleRightUpdate, 
     RoleRightResponse,

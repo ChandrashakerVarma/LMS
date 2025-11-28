@@ -4,7 +4,7 @@ from typing import List
 
 from app.database import get_db
 from app.models.notification_m import Notification
-from app.schema.notification_schema import NotificationCreate, NotificationOut
+from app.Schema.notification_schema import NotificationCreate, NotificationOut
 
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
 
@@ -72,7 +72,7 @@ from typing import List
 
 from app.database import get_db
 from app.models.notification_m import Notification
-from app.schema.notification_schema import NotificationCreate, NotificationOut
+from app.Schema.notification_schema import NotificationCreate, NotificationOut
 
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
 

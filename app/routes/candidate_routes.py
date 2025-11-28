@@ -4,7 +4,7 @@ from typing import List
 
 from app.database import get_db
 from app.models.candidate_m import Candidate
-from app.schema.candidate_schema import CandidateCreate, CandidateOut, CandidateUpdate
+from app.Schema.candidate_schema import CandidateCreate, CandidateOut, CandidateUpdate
 
 from app.dependencies import get_current_user
 from app.permission_dependencies import (

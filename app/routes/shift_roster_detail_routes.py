@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.models.shift_roster_detail_m import ShiftRosterDetail
-from app.schema.shift_roster_detail_schema import (
+from app.Schema.shift_roster_detail_schema import (
     ShiftRosterDetailCreate,
     ShiftRosterDetailUpdate,
     ShiftRosterDetailResponse

@@ -9,7 +9,7 @@ from app.database import get_db
 from app.models.attendance_m import Attendance
 from app.models.shift_m import Shift
 from app.models.user_m import User
-from app.schema.attendance_schema import AttendanceCreate, AttendanceUpdate, AttendanceResponse
+from app.Schema.attendance_schema import AttendanceCreate, AttendanceUpdate, AttendanceResponse
 from app.utils.attendance_utils import calculate_attendance_status
 from app.dependencies import get_current_user
 

@@ -5,7 +5,7 @@ from typing import List
 from app.database import get_db
 from app.models.candidate_documents_m import CandidateDocument
 from app.models.candidate_m import Candidate
-from app.schema.candidate_documents_schema import (
+from app.Schema.candidate_documents_schema import (
     CandidateDocumentCreate,
     CandidateDocumentUpdate,
     CandidateDocumentOut

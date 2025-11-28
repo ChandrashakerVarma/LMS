@@ -25,15 +25,17 @@ class User(Base):
     inactive = Column(Boolean, default=False)
     biometric_id = Column(String(50), nullable=True)
     shift_roster_id = Column(Integer, ForeignKey("shift_rosters.id"), nullable=True)
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Audit user tracking
     created_by = Column(String(100), nullable=True)
     modified_by = Column(String(100), nullable=True)
 
+    # ==========================
+    # RELATIONSHIPS
+    # ==========================
 
-    # Relationships
     role = relationship("Role", back_populates="users", lazy="joined")
     progress = relationship("Progress", back_populates="user", lazy="selectin")
     branch = relationship("Branch", back_populates="users")
@@ -45,9 +47,8 @@ class User(Base):
     attendances = relationship("Attendance", back_populates="user", cascade="all, delete-orphan")
     permissions = relationship("Permission", back_populates="user", cascade="all, delete-orphan")
     shift_change_requests = relationship("ShiftChangeRequest", back_populates="user", cascade="all, delete-orphan")
-
-    # ✅ Correct UserShift relationship (keep only one)
     user_shifts = relationship("UserShift", back_populates="user", cascade="all, delete-orphan")
-    # job_postings = relationship("JobPosting", back_populates="created_by")
-    # created_shifts = relationship("Shift", back_populates="created_manager")
     shift_roster = relationship("ShiftRoster", back_populates="users")
+
+    # ✅ FACE RECOGNITION RELATIONSHIP (Correctly Indented)
+    faces = relationship("UserFace", back_populates="user", cascade="all, delete-orphan")

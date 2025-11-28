@@ -1,4 +1,4 @@
-# app/schema/department_schema.py
+# app.Schema/department_schema.py
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime

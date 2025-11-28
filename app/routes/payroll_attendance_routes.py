@@ -6,7 +6,7 @@ from app.database import get_db
 from app.models.payroll_attendance_m import PayrollAttendance
 from app.models.attendance_m import Attendance
 from app.models.salary_structure_m import SalaryStructure
-from app.schema.payroll_attendance_schema import (
+from app.Schema.payroll_attendance_schema import (
     PayrollAttendanceBase,
     PayrollAttendanceCreate,
     PayrollAttendanceResponse,

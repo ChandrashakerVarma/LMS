@@ -56,3 +56,85 @@ def calculate_attendance_status(
         "total_worked_minutes": total_worked_minutes,
         "status": status
     }
+# ------------------------------
+# AI FACE + GEO LOCATION POLICY
+# ------------------------------
+
+from app.models.attendance_location_policy_m import AttendanceLocationPolicy
+from app.utils.geo_utils import haversine_distance
+
+
+def resolve_location_policy(db, user_id, branch_id=None, organization_id=None):
+    """
+    Priority order: User > Branch > Organization
+    """
+    # User-specific policy
+    policy = (
+        db.query(AttendanceLocationPolicy)
+        .filter(
+            AttendanceLocationPolicy.user_id == user_id,
+            AttendanceLocationPolicy.is_active.is_(True),
+        )
+        .first()
+    )
+
+    # Branch policy
+    if not policy and branch_id:
+        policy = (
+            db.query(AttendanceLocationPolicy)
+            .filter(
+                AttendanceLocationPolicy.branch_id == branch_id,
+                AttendanceLocationPolicy.is_active.is_(True),
+            )
+            .first()
+        )
+
+    # Organization policy
+    if not policy and organization_id:
+        policy = (
+            db.query(AttendanceLocationPolicy)
+            .filter(
+                AttendanceLocationPolicy.organization_id == organization_id,
+                AttendanceLocationPolicy.is_active.is_(True),
+            )
+            .first()
+        )
+
+    return policy
+
+
+def check_location(db, user_id, branch_id, organization_id, lat, long):
+    """
+    Returns:
+        ("INSIDE", True)
+        ("OUTSIDE", False)
+        ("WFA", True)
+    """
+
+    policy = resolve_location_policy(db, user_id, branch_id, organization_id)
+
+    # If no policy → allow attendance normally
+    if not policy:
+        return "INSIDE", True
+
+    # Work From Anywhere
+    if policy.mode == "WFA":
+        return "WFA", True
+
+    # No restriction
+    if policy.mode == "ANYWHERE":
+        return "INSIDE", True
+
+    # Geo-fencing mode
+    if policy.mode == "GEO_FENCE":
+        if policy.allowed_lat is None or policy.allowed_long is None:
+            return "OUTSIDE", False
+
+        distance = haversine_distance(lat, long, policy.allowed_lat, policy.allowed_long)
+
+        if distance <= (policy.radius_meters or 200):
+            return "INSIDE", True
+        else:
+            return "OUTSIDE", False
+
+    return "INSIDE", True

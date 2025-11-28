@@ -1,7 +1,7 @@
 from pydantic import BaseModel, HttpUrl
 from typing import List, Optional
 from datetime import datetime
-from app.schema.quiz_checkpoint_schema import QuizCheckpointResponse  # Import checkpoints
+from app.Schema.quiz_checkpoint_schema import QuizCheckpointResponse  # Import checkpoints
 
 class VideoBase(BaseModel):
     title: Optional[str]

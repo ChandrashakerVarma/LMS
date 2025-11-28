@@ -6,7 +6,7 @@ from datetime import datetime
 from app.database import get_db
 from app.models.course_m import Course
 from app.models.Progress_m import Progress
-from app.schema.progress_schema import ProgressResponse
+from app.Schema.progress_schema import ProgressResponse
 from app.dependencies import get_current_user
 
 # 🔐 Permission checks

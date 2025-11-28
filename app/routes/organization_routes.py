@@ -4,7 +4,7 @@ from typing import List
 
 from app.database import get_db
 from app.models.organization_m import Organization
-from app.schema.organization_schema import (
+from app.Schema.organization_schema import (
     OrganizationCreate,
     OrganizationUpdate,
     OrganizationResponse,

@@ -28,3 +28,5 @@ from app.models.role_right_m import *
 from app.models.shift_roster_m import *
 from app.models.week_day_m import *
 from app.models.shift_roster_detail_m import *
+from .user_face_m import UserFace
+from .attendance_location_policy_m import AttendanceLocationPolicy

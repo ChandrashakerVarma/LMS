@@ -6,7 +6,7 @@ from typing import List
 
 from app.database import get_db
 from app.models.course_m import Course
-from app.schema.course_schema import CourseCreate, CourseResponse, CourseUpdate
+from app.Schema.course_schema import CourseCreate, CourseResponse, CourseUpdate
 
 from app.permission_dependencies import (
     require_view_permission,

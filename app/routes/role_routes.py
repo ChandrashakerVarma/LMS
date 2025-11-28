@@ -4,7 +4,7 @@ from typing import List
 
 from app.database import get_db
 from app.models.role_m import Role
-from app.schema.role_schema import RoleCreate, RoleUpdate, RoleResponse
+from app.Schema.role_schema import RoleCreate, RoleUpdate, RoleResponse
 from app.dependencies import require_admin  # Admin access
 from app.permission_dependencies import (
     require_view_permission,

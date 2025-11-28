@@ -6,7 +6,7 @@ from typing import List
 from app.database import get_db
 from app.models.video_m import Video
 from app.models.course_m import Course
-from app.schema.video_schema import VideoCreate, VideoResponse, VideoUpdate
+from app.Schema.video_schema import VideoCreate, VideoResponse, VideoUpdate
 from app.dependencies import get_current_user, require_admin
 
 # Permission dependencies

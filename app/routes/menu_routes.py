@@ -4,7 +4,7 @@ from typing import List
 
 from app.database import get_db
 from app.models.menu_m import Menu
-from app.schema.menu_schema import MenuCreate, MenuUpdate, MenuResponse, MenuTreeResponse
+from app.Schema.menu_schema import MenuCreate, MenuUpdate, MenuResponse, MenuTreeResponse
 from app.dependencies import require_admin, get_current_user
 from app.models.user_m import User
 

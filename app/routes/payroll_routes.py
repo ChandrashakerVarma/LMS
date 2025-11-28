@@ -4,7 +4,7 @@ from app.database import get_db
 from app.models.payroll_m import Payroll
 from app.models.user_m import User
 from app.models.salary_structure_m import SalaryStructure
-from app.schema.payroll_schema import (
+from app.Schema.payroll_schema import (
     PayrollCreate,
     PayrollUpdate,
     PayrollResponse

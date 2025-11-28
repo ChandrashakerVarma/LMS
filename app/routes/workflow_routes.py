@@ -4,7 +4,7 @@ from typing import List
 
 from app.database import get_db
 from app.models.workflow_m import Workflow
-from app.schema.workflow_schema import WorkflowCreate, WorkflowUpdate, WorkflowResponse
+from app.Schema.workflow_schema import WorkflowCreate, WorkflowUpdate, WorkflowResponse
 
 # ✅ Import specific permission checks
 from app.permission_dependencies import (

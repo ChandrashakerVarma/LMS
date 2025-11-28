@@ -1,7 +1,7 @@
-# app/schema/course_schema.py
+# app.Schema/course_schema.py
 from pydantic import BaseModel
 from typing import List, Optional
-from app.schema.video_schema import VideoResponse
+from app.Schema.video_schema import VideoResponse
 
 
 class CourseBase(BaseModel):

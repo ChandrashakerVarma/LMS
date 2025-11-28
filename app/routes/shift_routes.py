@@ -4,7 +4,7 @@ from typing import List
 
 from app.database import get_db
 from app.models.shift_m import Shift
-from app.schema.shift_schema import ShiftCreate, ShiftUpdate, ShiftOut
+from app.Schema.shift_schema import ShiftCreate, ShiftUpdate, ShiftOut
 from app.models.user_m import User
 from app.dependencies import get_current_user
 

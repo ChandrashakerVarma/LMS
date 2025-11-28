@@ -1,4 +1,4 @@
-# app/schema/permission_schema.py
+# app.Schema/permission_schema.py
 from pydantic import BaseModel
 from datetime import date, datetime
 from typing import Optional

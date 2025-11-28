@@ -4,7 +4,7 @@ from typing import List
 
 from app.database import get_db
 from app.models.jobrole_m import JobRole
-from app.schema.jobrole_schema import JobRoleCreate, JobRoleOut, JobRoleUpdate
+from app.Schema.jobrole_schema import JobRoleCreate, JobRoleOut, JobRoleUpdate
 from app.dependencies import require_admin, get_current_user
 
 # ------------- PERMISSION IMPORTS (Your required style) -------------

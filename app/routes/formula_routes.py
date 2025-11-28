@@ -4,7 +4,7 @@ from typing import List
 
 from app.database import get_db
 from app.models.formula_m import Formula
-from app.schema.formula_schema import FormulaCreate, FormulaUpdate, FormulaResponse
+from app.Schema.formula_schema import FormulaCreate, FormulaUpdate, FormulaResponse
 
 from app.permission_dependencies import (
     require_view_permission,

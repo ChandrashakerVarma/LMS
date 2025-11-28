@@ -10,7 +10,7 @@ from app.models.workflow_m import Workflow, ApprovalStatus
 from app.models.candidate_m import Candidate
 from app.models.notification_m import Notification
 from app.models.user_m import User
-from app.schema.job_posting_schema import JobPostingCreate, JobPostingUpdate, JobPostingOut
+from app.Schema.job_posting_schema import JobPostingCreate, JobPostingUpdate, JobPostingOut
 
 # Import new permission dependencies
 from app.permission_dependencies import (
