@@ -31,6 +31,7 @@ class AttendanceResponse(AttendanceBase):
     created_by: str | None = None
     modified_by: str | None = None
 
+    model_config = {
+    "from_attributes": True
+}
 
-    class Config:
-        orm_mode = True

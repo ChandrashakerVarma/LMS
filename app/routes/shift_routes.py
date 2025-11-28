@@ -4,7 +4,11 @@ from typing import List
 
 from app.database import get_db
 from app.models.shift_m import Shift
+<<<<<<< HEAD
 from app.Schema.shift_schema import ShiftCreate, ShiftUpdate, ShiftOut
+=======
+from app.schema.shift_schema import ShiftCreate, ShiftUpdate, ShiftResponse
+>>>>>>> origin/main
 from app.models.user_m import User
 from app.dependencies import get_current_user
 
@@ -22,7 +26,7 @@ router = APIRouter(prefix="/shifts", tags=["Shifts"])
 # ---------------------- CREATE SHIFT ----------------------
 @router.post(
     "/",
-    response_model=ShiftOut,
+    response_model=ShiftResponse,
     dependencies=[Depends(require_create_permission(41))]
 )
 def create_shift(
@@ -52,7 +56,7 @@ def create_shift(
 # ---------------------- GET ALL SHIFTS ----------------------
 @router.get(
     "/",
-    response_model=List[ShiftOut],
+    response_model=List[ShiftResponse],
     dependencies=[Depends(require_view_permission(41))]
 )
 def get_all_shifts(
@@ -65,7 +69,7 @@ def get_all_shifts(
 # ---------------------- GET SHIFT BY ID ----------------------
 @router.get(
     "/{shift_id}",
-    response_model=ShiftOut,
+    response_model=ShiftResponse,
     dependencies=[Depends(require_view_permission(41))]
 )
 def get_shift(
@@ -82,7 +86,7 @@ def get_shift(
 # ---------------------- UPDATE SHIFT ----------------------
 @router.put(
     "/{shift_id}",
-    response_model=ShiftOut,
+    response_model=ShiftResponse,
     dependencies=[Depends(require_edit_permission(41))]
 )
 def update_shift(

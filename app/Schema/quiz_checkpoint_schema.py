@@ -32,5 +32,7 @@ class QuizCheckpointResponse(BaseModel):
     correct_answer: str
     required: bool
 
-    class Config:
-        orm_mode = True  # ✅ Fix for from_orm
+    model_config = {
+    "from_attributes": True
+}
+  # ✅ Fix for from_orm

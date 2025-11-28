@@ -1,7 +1,6 @@
 from pydantic import BaseModel, EmailStr
-from datetime import date, datetime
+from datetime import date
 from typing import Optional
-
 
 # -------------------- BASE --------------------
 class CandidateBase(BaseModel):
@@ -31,13 +30,11 @@ class CandidateUpdate(BaseModel):
 
 
 # -------------------- OUTPUT --------------------
-class CandidateOut(CandidateBase):
+class CandidateResponse(BaseModel):
     id: int
-    status: str
-    created_at: datetime | None = None
-    updated_at: datetime | None = None
-    created_by: str | None = None
-    modified_by: str | None = None
+    name: str
 
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
+

@@ -17,11 +17,10 @@ from app.models.payroll_attendance_m import PayrollAttendance
 from app.models.candidate_documents_m import CandidateDocument
 from app.models.candidate_m import Candidate
 from app.models.job_posting_m import JobPosting
-from app.models.jobrole_m import JobRole
+from app.models.job_description_m import JobDescription
 from app.models.leavemaster_m import LeaveMaster
 from app.models.shift_change_request_m import ShiftChangeRequest
 from app.models.user_shifts_m import UserShift
-from app.models.workflow_m import Workflow
 from app.models.notification_m import Notification
 from app.models.menu_m import *
 from app.models.role_right_m import *

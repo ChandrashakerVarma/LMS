@@ -38,8 +38,9 @@ class MenuTreeResponse(MenuResponse):
     # Correct forward reference usage
     children: List["MenuTreeResponse"] = Field(default_factory=list)
 
-    class Config:
-        from_attributes = True
+    model_config = {
+    "from_attributes": True
+}
 
 
 MenuTreeResponse.update_forward_refs()

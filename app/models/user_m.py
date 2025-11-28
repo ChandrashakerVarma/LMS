@@ -15,7 +15,7 @@ class User(Base):
     role_id = Column(Integer, ForeignKey("roles.id"), nullable=False)
     branch_id = Column(Integer, ForeignKey("branches.id"), nullable=True)
     organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=True)
-
+    department_id = Column(Integer, ForeignKey("departments.id"), nullable=True)
     date_of_birth = Column(Date, nullable=True)
     joining_date = Column(Date, nullable=True)
     relieving_date = Column(Date, nullable=True)
@@ -47,8 +47,18 @@ class User(Base):
     attendances = relationship("Attendance", back_populates="user", cascade="all, delete-orphan")
     permissions = relationship("Permission", back_populates="user", cascade="all, delete-orphan")
     shift_change_requests = relationship("ShiftChangeRequest", back_populates="user", cascade="all, delete-orphan")
+<<<<<<< HEAD
     user_shifts = relationship("UserShift", back_populates="user", cascade="all, delete-orphan")
     shift_roster = relationship("ShiftRoster", back_populates="users")
 
     # ✅ FACE RECOGNITION RELATIONSHIP (Correctly Indented)
     faces = relationship("UserFace", back_populates="user", cascade="all, delete-orphan")
+=======
+    department = relationship("Department", back_populates="users")
+    # ✅ Correct UserShift relationship (keep only one)
+    user_shifts = relationship("UserShift", back_populates="user", cascade="all, delete-orphan")
+    job_postings = relationship("JobPosting", back_populates="created_by")
+    created_shifts = relationship("Shift", back_populates="created_manager")
+    shift_roster = relationship("ShiftRoster", back_populates="users")
+
+>>>>>>> origin/main

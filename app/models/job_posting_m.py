@@ -1,13 +1,22 @@
-from sqlalchemy import Column, Integer, String, Date, ForeignKey, DateTime, func
+# app/models/job_posting_m.py
+
+from sqlalchemy import Column, Integer, String, Date, ForeignKey, DateTime, func, Enum
 from sqlalchemy.orm import relationship
+from enum import Enum as PyEnum
 from app.database import Base
+
+
+class ApprovalStatus(str, PyEnum):
+    pending = "pending"
+    accepted = "accepted"
+    rejected = "rejected"
+
 
 class JobPosting(Base):
     __tablename__ = "job_postings"
 
     id = Column(Integer, primary_key=True, index=True)
-    job_role_id = Column(Integer, ForeignKey("job_roles.id"), nullable=False)
-
+    job_description_id = Column(Integer, ForeignKey("job_descriptions.id"), nullable=False)
     number_of_positions = Column(Integer, nullable=False)
     employment_type = Column(String(50), nullable=False)
     location = Column(String(100), nullable=False)
@@ -15,12 +24,20 @@ class JobPosting(Base):
     posting_date = Column(Date, nullable=False)
     closing_date = Column(Date)
 
-    # ---------------- Audit Fields ----------------
+    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    created_by = Column(String(100), nullable=True)
-    modified_by = Column(String(100), nullable=True)
 
-    # ---------------- Relationships ----------------
-    jobrole = relationship("JobRole", back_populates="job_postings")
+    created_by_name = Column(String(100))
+    modified_by = Column(String(100))
+
+    approval_status = Column(
+        Enum(ApprovalStatus),
+        default=ApprovalStatus.pending,
+        nullable=False
+    )
+
+    # RELATIONSHIPS
+    job_description = relationship("JobDescription", back_populates="job_postings")
+    created_by = relationship("User")
     candidates = relationship("Candidate", back_populates="job_posting")

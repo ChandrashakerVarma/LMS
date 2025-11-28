@@ -40,8 +40,10 @@ class RoleRightWithMenuResponse(BaseModel):
     can_edit: bool
     can_delete: bool
     
-    class Config:
-        from_attributes = True
+    model_config = {
+    "from_attributes": True
+}
+
 
 class BulkRoleRightCreate(BaseModel):
     role_id: int

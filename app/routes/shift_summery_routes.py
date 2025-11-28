@@ -229,4 +229,8 @@ def delete_monthly_roster(
         "year": year,
         "total_deleted_records": total_deleted,
         "affected_users": len(users)
+<<<<<<< HEAD
     }
+=======
+    }
+>>>>>>> origin/main

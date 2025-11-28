@@ -1,10 +1,13 @@
 from pydantic import BaseModel
-from typing import Optional, List, TYPE_CHECKING
+from typing import Optional, List
 from datetime import datetime
 
+<<<<<<< HEAD
 if TYPE_CHECKING:
     from app.Schema.course_schema import CourseResponse
 
+=======
+>>>>>>> origin/main
 
 class CategoryBase(BaseModel):
     name: str
@@ -27,9 +30,18 @@ class CategoryResponse(CategoryBase):
     courses: Optional[List["CourseResponse"]] = []  # forward ref
 
     class Config:
-        orm_mode = True  # ✅ Pydantic v1 compatible
+        from_attributes = True  # Pydantic v1
+        
 
+<<<<<<< HEAD
 
 # ✅ Add this at the bottom (after all class definitions)
 from app.Schema.course_schema import CourseResponse
 CategoryResponse.update_forward_refs(CourseResponse=CourseResponse)
+=======
+# Import the referenced model AFTER defining CategoryResponse
+from app.schema.course_schema import CourseResponse
+
+# Resolve forward references for Pydantic v1
+CategoryResponse.update_forward_refs()
+>>>>>>> origin/main

@@ -36,5 +36,7 @@ class SalaryStructureResponse(SalaryStructureBase):
     modified_by: str | None = None
 
 
-    class Config:
-        orm_mode = True
+    model_config = {
+    "from_attributes": True
+}
+

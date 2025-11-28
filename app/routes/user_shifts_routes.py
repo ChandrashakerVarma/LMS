@@ -11,7 +11,7 @@ from app.models.shift_roster_detail_m import ShiftRosterDetail
 from app.Schema.user_shifts_schema import (
     UserShiftCreate,
     UserShiftUpdate,
-    UserShiftOut
+    UserShiftResponse
 )
 
 from app.dependencies import get_current_user
@@ -33,7 +33,7 @@ MENU_ID = 42
 # ➕ Assign Shift Automatically From Roster (CREATE PERMISSION)
 @router.post(
     "/",
-    response_model=UserShiftOut,
+    response_model=UserShiftResponse,
     dependencies=[Depends(require_create_permission(MENU_ID))]
 )
 def assign_shift(
@@ -87,7 +87,7 @@ def assign_shift(
 # 📋 Get All User Shifts (VIEW PERMISSION)
 @router.get(
     "/",
-    response_model=List[UserShiftOut],
+    response_model=List[UserShiftResponse],
     dependencies=[Depends(require_view_permission(MENU_ID))]
 )
 def get_all_user_shifts(db: Session = Depends(get_db)):
@@ -97,7 +97,7 @@ def get_all_user_shifts(db: Session = Depends(get_db)):
 # 🔍 Get Single User Shift (VIEW PERMISSION)
 @router.get(
     "/{assignment_id}",
-    response_model=UserShiftOut,
+    response_model=UserShiftResponse,
     dependencies=[Depends(require_view_permission(MENU_ID))]
 )
 def get_user_shift(assignment_id: int, db: Session = Depends(get_db)):
@@ -110,7 +110,7 @@ def get_user_shift(assignment_id: int, db: Session = Depends(get_db)):
 # ✏️ Update User Shift (EDIT PERMISSION) – Auto Recalculate Shift If Date Changes
 @router.put(
     "/{assignment_id}",
-    response_model=UserShiftOut,
+    response_model=UserShiftResponse,
     dependencies=[Depends(require_edit_permission(MENU_ID))]
 )
 def update_user_shift(
@@ -176,7 +176,6 @@ def delete_user_shift(assignment_id: int, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == data.user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
     shift = db.query(Shift).filter(Shift.id == data.shift_id).first()
     if not shift:
         raise HTTPException(status_code=404, detail="Shift not found")
@@ -195,7 +194,7 @@ def delete_user_shift(assignment_id: int, db: Session = Depends(get_db)):
 # 📋 Get All User Shifts (View Permission)
 @router.get(
     "/",
-    response_model=List[UserShiftOut],
+    response_model=List[UserShiftResponse],
     dependencies=[Depends(require_view_permission(MENU_ID))]
 )
 def get_all_user_shifts(db: Session = Depends(get_db)):
@@ -205,7 +204,7 @@ def get_all_user_shifts(db: Session = Depends(get_db)):
 # 🔍 Get User Shift by ID (View Permission)
 @router.get(
     "/{assignment_id}",
-    response_model=UserShiftOut,
+    response_model=UserShiftResponse,
     dependencies=[Depends(require_view_permission(MENU_ID))]
 )
 def get_user_shift(assignment_id: int, db: Session = Depends(get_db)):
@@ -218,7 +217,7 @@ def get_user_shift(assignment_id: int, db: Session = Depends(get_db)):
 # ✏️ Update User Shift (Edit Permission)
 @router.put(
     "/{assignment_id}",
-    response_model=UserShiftOut,
+    response_model=UserShiftResponse,
     dependencies=[Depends(require_edit_permission(MENU_ID))]
 )
 def update_user_shift(

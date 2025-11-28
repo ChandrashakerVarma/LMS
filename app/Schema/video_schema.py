@@ -23,5 +23,7 @@ class VideoResponse(VideoBase):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
-    class Config:
-        orm_mode = True  # ✅ must have for .from_orm()
+    model_config = {
+    "from_attributes": True
+}
+ # ✅ must have for .from_orm()

@@ -1,32 +1,32 @@
+# app/schema/shift_change_request_schema.py
 from pydantic import BaseModel
 from typing import Optional
-from datetime import date, datetime
-
+from datetime import date
+from app.models.shift_change_request_m import RequestStatus
 
 class ShiftChangeRequestBase(BaseModel):
+    user_id: int
     old_shift_id: Optional[int] = None
     new_shift_id: int
     request_date: date
     reason: Optional[str] = None
-    status: Optional[str] = "Pending"
+    status: Optional[RequestStatus] = RequestStatus.Pending
 
+    class Config:
+        from_attributes = True
+        use_enum_values = True  # Serialize Enum as string
 
 class ShiftChangeRequestCreate(ShiftChangeRequestBase):
     pass
 
-
 class ShiftChangeRequestUpdate(BaseModel):
-    status: Optional[str] = None
+    status: Optional[RequestStatus] = None
     reason: Optional[str] = None
 
+    model_config = {
+    "from_attributes": True
+}
 
-class ShiftChangeRequestOut(ShiftChangeRequestBase):
+
+class ShiftChangeRequestResponse(ShiftChangeRequestBase):
     id: int
-    user_id: int
-    created_at: datetime | None = None
-    updated_at: datetime | None = None
-    created_by: str | None = None
-    modified_by: str | None = None
-
-    class Config:
-        from_attributes = True

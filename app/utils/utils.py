@@ -12,14 +12,21 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 
-# Hashing
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    # Truncate password to 72 bytes for bcrypt
+    max_bytes = 72
+    truncated = password.encode("utf-8")[:max_bytes].decode("utf-8", "ignore")
+    return pwd_context.hash(truncated)
 
-def verify_password(plain, hashed) -> bool:
-    return pwd_context.verify(plain, hashed)
+
+def verify_password(plain: str, hashed: str) -> bool:
+    # Truncate input the same way before verifying
+    max_bytes = 72
+    truncated = plain.encode("utf-8")[:max_bytes].decode("utf-8", "ignore")
+    return pwd_context.verify(truncated, hashed)
 
 # JWT Token creation and decoding
 def create_access_token(data: dict, expires_delta: timedelta = None):

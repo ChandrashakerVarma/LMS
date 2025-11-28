@@ -11,5 +11,7 @@ class EnrollmentResponse(BaseModel):
     course_id: int
     enrolled_at: datetime
 
-    class Config:
-        orm_mode = True  # ✅ Required for .from_orm() to work
+    model_config = {
+    "from_attributes": True
+}
+  # ✅ Required for .from_orm() to work

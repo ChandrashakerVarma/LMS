@@ -29,5 +29,7 @@ class CourseResponse(CourseBase):
     videos: List[VideoResponse] = []
     duration: Optional[float] = 0.0
 
-    class Config:
-        orm_mode = True  # allows from_orm() conversion
+    model_config = {
+    "from_attributes": True
+}
+  # allows from_orm() conversion
