@@ -7,7 +7,7 @@ from app.database import get_db
 from app.models.video_m import Video
 from app.models.course_m import Course
 from app.schema.video_schema import VideoCreate, VideoResponse, VideoUpdate
-from app.dependencies import get_current_user, require_admin
+from app.dependencies import get_current_user, require_org_admin
 
 # Permission dependencies
 from app.permission_dependencies import (
@@ -32,7 +32,7 @@ MENU_ID = 32
 def create_video(
     video: VideoCreate, 
     db: Session = Depends(get_db), 
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_org_admin)
 ):
     course = db.query(Course).filter(Course.id == video.course_id).first()
     if not course:
@@ -88,7 +88,7 @@ def update_video(
     video_id: int, 
     payload: VideoUpdate, 
     db: Session = Depends(get_db), 
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_org_admin)
 ):
     video = db.query(Video).filter(Video.id == video_id).first()
     if not video:
@@ -122,7 +122,7 @@ def update_video(
 def delete_video(
     video_id: int, 
     db: Session = Depends(get_db), 
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_org_admin)
 ):
     video = db.query(Video).filter(Video.id == video_id).first()
     if not video:

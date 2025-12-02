@@ -5,7 +5,7 @@ from typing import List
 from app.database import get_db
 from app.models.role_m import Role
 from app.schema.role_schema import RoleCreate, RoleUpdate, RoleResponse
-from app.dependencies import require_admin  # Admin access
+from app.dependencies import require_org_admin  # Admin access
 from app.permission_dependencies import (
     require_view_permission,
     require_create_permission,
@@ -27,7 +27,7 @@ MENU_ID = 4
 def create_role(
     data: RoleCreate,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_org_admin)
 ):
     existing_role = db.query(Role).filter(Role.name == data.name).first()
     if existing_role:
@@ -50,7 +50,7 @@ def create_role(
 )
 def get_all_roles(
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_org_admin)
 ):
     roles = db.query(Role).order_by(Role.id.asc()).all()
     return roles
@@ -65,7 +65,7 @@ def get_all_roles(
 def get_role_by_id(
     role_id: int,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_org_admin)
 ):
     role = db.query(Role).filter(Role.id == role_id).first()
     if not role:
@@ -83,7 +83,7 @@ def update_role(
     role_id: int,
     data: RoleUpdate,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_org_admin)
 ):
     role = db.query(Role).filter(Role.id == role_id).first()
     if not role:
@@ -114,7 +114,7 @@ def update_role(
 def delete_role(
     role_id: int,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_org_admin)
 ):
     role = db.query(Role).filter(Role.id == role_id).first()
     if not role:
