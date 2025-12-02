@@ -1,6 +1,7 @@
 # app/routes/job_posting_routes.py
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.params import Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
@@ -79,23 +80,6 @@ def get_all_job_postings(
 
 
 # ------------------------------------------------------
-# GET SINGLE POSTING
-# ------------------------------------------------------
-@router.get("/{job_posting_id}", response_model=JobPostingResponse)
-def get_job_posting(
-    job_posting_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_view_permission(MENU_ID))
-):
-    posting = db.query(JobPosting).filter(JobPosting.id == job_posting_id).first()
-
-    if not posting:
-        raise HTTPException(status_code=404, detail="Job posting not found")
-
-    return JobPostingResponse.model_validate(posting)
-
-
-# ------------------------------------------------------
 # UPDATE POSTING
 # ------------------------------------------------------
 @router.put("/{job_posting_id}", response_model=JobPostingResponse)
@@ -168,28 +152,50 @@ def filter_jobs(
     postings = query.all()
     return [JobPostingResponse.model_validate(p) for p in postings]
 
-
 # ------------------------------------------------------
 # ADMIN DASHBOARD
-# ------------------------------------------------------
-@router.get("/admin/dashboard")
+@router.get("/dashboard")
 def admin_dashboard(
+    job_posting_id: Optional[int] = Query(default=None, description="Optional Job Posting ID to filter stats"),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_view_permission(MENU_ID))
 ):
-    total_jobs = db.query(JobPosting).count()
-    total_candidates = db.query(Candidate).count()
-    accepted_jobs = db.query(JobPosting).filter(JobPosting.approval_status == ApprovalStatus.accepted).count()
-    pending_jobs = db.query(JobPosting).filter(JobPosting.approval_status == ApprovalStatus.pending).count()
+    if job_posting_id:
+        jobs = db.query(JobPosting).filter(JobPosting.id == job_posting_id).all()
+    else:
+        jobs = db.query(JobPosting).all()
 
-    applied_candidates = db.query(Candidate).filter(Candidate.status == "Applied").count()
-    rejected_candidates = db.query(Candidate).filter(Candidate.status == "Rejected").count()
+    dashboard_data = []
+    for job in jobs:
+        candidates = db.query(Candidate).filter(Candidate.job_posting_id == job.id)
+        dashboard_data.append({
+            "job_id": job.id,
+            "role": job.job_description.title if job.job_description else "",
+            "location": job.location,
+            "approval_status": job.approval_status,
+            "total_candidates": candidates.count(),
+            "pending_candidates": candidates.filter(Candidate.status == "Pending").count(),
+            "accepted_candidates": candidates.filter(Candidate.status == "Accepted").count(),
+            "rejected_candidates": candidates.filter(Candidate.status == "Rejected").count()
+        })
 
-    return {
-        "total_jobs": total_jobs,
-        "total_candidates": total_candidates,
-        "accepted_jobs": accepted_jobs,
-        "pending_jobs": pending_jobs,
-        "applied_candidates": applied_candidates,
-        "rejected_candidates": rejected_candidates,
-    }
+    return dashboard_data
+
+
+
+# ------------------------------------------------------
+# GET SINGLE POSTING
+# ------------------------------------------------------
+@router.get("/{job_posting_id}", response_model=JobPostingResponse)
+def get_job_posting(
+    job_posting_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_view_permission(MENU_ID))
+):
+    posting = db.query(JobPosting).filter(JobPosting.id == job_posting_id).first()
+
+    if not posting:
+        raise HTTPException(status_code=404, detail="Job posting not found")
+
+    return JobPostingResponse.model_validate(posting)
+

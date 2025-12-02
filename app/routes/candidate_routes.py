@@ -1,116 +1,136 @@
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, UploadFile, File, Form
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 
 from app.database import get_db
 from app.models.candidate_m import Candidate
-from app.models.notification_m import Notification
-from app.models.user_m import User
-from app.models.job_posting_m import JobPosting
-from app.schema.candidate_schema import CandidateCreate, CandidateResponse, CandidateUpdate
+from app.schema.candidate_schema import CandidateResponse, CandidateUpdate
 from app.s3_helper import upload_file_to_s3
-from app.utils.email_templates_utils import render_email
 from app.utils.email_ses import send_email_ses
+from app.utils.email_templates_utils import render_email
+from app.permission_dependencies import require_edit_permission
 
 router = APIRouter(prefix="/candidates", tags=["Candidates"])
 
-
-# -------------------------------------
-# Apply for a job
-# -------------------------------------
-
+# ---------------------------------------------------------
+# APPLY FOR A JOB  (Create Candidate)
+# ---------------------------------------------------------
 @router.post("/", response_model=CandidateResponse)
-def apply_candidate(payload: CandidateCreate, db: Session = Depends(get_db)):
+async def apply_candidate(
+    first_name: str = Form(...),
+    last_name: str = Form(...),
+    email: str = Form(...),
+    phone: str = Form(...),
+    job_posting_id: int = Form(...),
+    resume: Optional[UploadFile] = File(None),
+    db: Session = Depends(get_db)
+):
+    resume_url = None
+    # Upload resume if provided
+    if resume:
+        resume_url = upload_file_to_s3(resume, folder="candidate_resumes")
 
-    candidate = Candidate(**payload.dict())
+    # Create candidate entry
+    candidate = Candidate(
+        first_name=first_name,
+        last_name=last_name,
+        email=email,
+        phone_number=phone,
+        job_posting_id=job_posting_id,
+        applied_date=datetime.utcnow().date(),
+        resume_url=resume_url
+    )
+
     db.add(candidate)
     db.commit()
     db.refresh(candidate)
 
-    # Fetch job
-    job = db.query(JobPosting).filter(JobPosting.id == candidate.job_posting_id).first()
-    if not job:
-        raise HTTPException(status_code=404, detail="Job posting not found")
-
-    # Admin who created the job
-    admin_user = db.query(User).filter(User.email == job.created_by).first()
-    if not admin_user:
-        raise HTTPException(status_code=404, detail="Job creator admin not found")
-
-    # Notification to admin
-    notification = Notification(
-        candidate_id=candidate.id,
-        user_id=admin_user.id,
-        message=f"New candidate {candidate.first_name} {candidate.last_name} applied for job '{job.job_description.title}'."
-    )
-    db.add(notification)
-    db.commit()
-
     return candidate
 
 
-# -------------------------------------
-# Get all candidates
-# -------------------------------------
-
+# ---------------------------------------------------------
+# GET ALL CANDIDATES
+# ---------------------------------------------------------
 @router.get("/", response_model=List[CandidateResponse])
-def get_candidates(db: Session = Depends(get_db)):
+def get_all_candidates(db: Session = Depends(get_db)):
     return db.query(Candidate).all()
 
 
-# -------------------------------------
-# Get candidate by ID
-# -------------------------------------
-
+# ---------------------------------------------------------
+# GET CANDIDATE BY ID
+# ---------------------------------------------------------
 @router.get("/{candidate_id}", response_model=CandidateResponse)
 def get_candidate(candidate_id: int, db: Session = Depends(get_db)):
     candidate = db.query(Candidate).filter(Candidate.id == candidate_id).first()
     if not candidate:
         raise HTTPException(status_code=404, detail="Candidate not found")
     return candidate
-# -------------------------------------
-# Update candidate
-# -------------------------------------
+
+
+# ---------------------------------------------------------
+# UPDATE CANDIDATE
+# ---------------------------------------------------------
+
 @router.put("/{candidate_id}", response_model=CandidateResponse)
 async def update_candidate(
     candidate_id: int,
-    first_name: str = Form(None),
-    last_name: str = Form(None),
-    interview_datetime: datetime = Form(None),
-    status: str = Form(None),
-    resume: UploadFile = File(None),
-    background_tasks: BackgroundTasks = None,
-    db: Session = Depends(get_db),
+    first_name: Optional[str] = Form(None),
+    last_name: Optional[str] = Form(None),
+    email: Optional[str] = Form(None),
+    phone: Optional[str] = Form(None),
+    job_posting_id: Optional[int] = Form(None),
+    resume: Optional[UploadFile] = File(None),
+    db: Session = Depends(get_db)
 ):
     candidate = db.query(Candidate).filter(Candidate.id == candidate_id).first()
     if not candidate:
         raise HTTPException(status_code=404, detail="Candidate not found")
 
+    # Upload new resume if provided
+    if resume:
+        resume_url = upload_file_to_s3(resume, folder="candidate_resumes")
+        candidate.resume_url = resume_url
+
+    # Update remaining fields only if provided
     if first_name:
         candidate.first_name = first_name
     if last_name:
         candidate.last_name = last_name
-    if interview_datetime:
-        candidate.interview_datetime = interview_datetime
-    if status:
-        candidate.status = status
-    if resume:
-        candidate.resume_url = upload_file_to_s3(resume, folder="candidate_resumes")
+    if email:
+        candidate.email = email
+    if phone:
+        candidate.phone_number = phone
+    if job_posting_id:
+        candidate.job_posting_id = job_posting_id
 
     db.commit()
     db.refresh(candidate)
-
     return candidate
-# ---------------------------------------------------------
-# Update candidate status and send email if accepted
-#------------------------------------------------------------
-from app.permission_dependencies import require_edit_permission
 
+
+
+# ---------------------------------------------------------
+# DELETE CANDIDATE
+# ---------------------------------------------------------
+@router.delete("/{candidate_id}")
+def delete_candidate(candidate_id: int, db: Session = Depends(get_db)):
+    candidate = db.query(Candidate).filter(Candidate.id == candidate_id).first()
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+
+    db.delete(candidate)
+    db.commit()
+    return {"message": "Candidate deleted successfully"}
+
+
+# ---------------------------------------------------------
+# UPDATE CANDIDATE STATUS AND SEND EMAIL
+# ---------------------------------------------------------
 @router.put(
     "/{candidate_id}/status/{new_status}",
     response_model=CandidateResponse,
-    dependencies=[Depends(require_edit_permission)]   # ⬅️ Only admins/editors can access
+    dependencies=[Depends(require_edit_permission)]
 )
 async def update_candidate_status(
     candidate_id: int,
@@ -129,21 +149,18 @@ async def update_candidate_status(
     db.commit()
     db.refresh(candidate)
 
-    # ────────────────────────────────
-    # SEND EMAIL WHEN ACCEPTED
-    # ────────────────────────────────
-    if new_status == "Accepted":
-        job_posting = candidate.job_posting
-        job_title = job_posting.job_description.title
+    job_posting = candidate.job_posting
+    job_title = job_posting.job_description.title if job_posting and job_posting.job_description else "Job"
 
+    if new_status == "Accepted":
         html_body = render_email(
             "accepted_email.html",
             {
                 "candidate_name": f"{candidate.first_name} {candidate.last_name}",
                 "job_title": job_title,
-                "location": job_posting.location,
+                "location": job_posting.location if job_posting else None,
                 "interview_datetime": None,
-                "organization_name": "Your organization Name",
+                "organization_name": "Your Organization Name",
                 "organization_logo": None,
             },
         )
@@ -154,23 +171,16 @@ async def update_candidate_status(
             to_email=candidate.email
         )
 
-    # ────────────────────────────────
-    # SEND EMAIL WHEN REJECTED
-    # ────────────────────────────────
-    if new_status == "Rejected":
-        job_posting = candidate.job_posting
-        job_title = job_posting.job_description.title
-
+    elif new_status == "Rejected":
         html_body = render_email(
             "rejected_email.html",
             {
                 "candidate_name": f"{candidate.first_name} {candidate.last_name}",
                 "job_title": job_title,
-                "organization_name": "Your organization Name",
+                "organization_name": "Your Organization Name",
                 "organization_logo": None,
             },
         )
-
         background_tasks.add_task(
             send_email_ses,
             subject=f"Update on Your Application for {job_title}",

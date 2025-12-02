@@ -90,15 +90,18 @@ def get_documents_by_candidate(candidate_id: int, db: Session = Depends(get_db))
         raise HTTPException(status_code=404, detail="No documents found")
     return docs
 
+# -------------------------------------------
 # Update Document
+# -------------------------------------------
 @router.put(
     "/{document_id}",
     response_model=CandidateDocumentResponse,
     dependencies=[Depends(require_edit_permission(MENU_ID))]
 )
-def update_document(
+async def update_document(
     document_id: int,
-    data: CandidateDocumentUpdate,
+    document_type: str = Form(None),
+    file: UploadFile = File(None),
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
@@ -106,15 +109,21 @@ def update_document(
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
-    if data.document_type:
-        doc.document_type = data.document_type
-    if data.document_url:
-        doc.document_url = data.document_url
+    # If new file uploaded → upload to S3
+    if file:
+        new_document_url = upload_file_to_s3(file, folder="candidate_docs")
+        doc.document_url = new_document_url
+
+    # Update only if provided
+    if document_type:
+        doc.document_type = document_type
 
     doc.modified_by = f"{current_user.first_name} {current_user.last_name}"
+
     db.commit()
     db.refresh(doc)
     return doc
+
 
 # Delete Document
 @router.delete(

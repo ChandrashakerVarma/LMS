@@ -27,7 +27,7 @@ class JobPosting(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     created_by = Column(String(100), nullable=True)
     modified_by = Column(String(100), nullable=True)
-    approval_status = Column(Enum(ApprovalStatus),default=ApprovalStatus.pending,nullable=False)
+    approval_status = Column(Enum(ApprovalStatus),default=ApprovalStatus.accepted,nullable=False)
 
     # RELATIONSHIPS
     job_description = relationship("JobDescription", back_populates="job_postings")
