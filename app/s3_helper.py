@@ -1,63 +1,38 @@
+# app/utils/s3_utils.py
+
 import boto3
-import os
 from uuid import uuid4
-from dotenv import load_dotenv
 from fastapi import HTTPException
-
-load_dotenv()
-
-# Validate environment variables
-AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-AWS_REGION = os.getenv("AWS_REGION")
-BUCKET_NAME = os.getenv("AWS_S3_BUCKET")
-
-if not all([AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, BUCKET_NAME]):
-    raise ValueError("Missing required AWS environment variables: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, or AWS_S3_BUCKET")
+from app.config import settings
 
 s3_client = boto3.client(
     "s3",
-    aws_access_key_id=AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-    region_name=AWS_REGION,
-    endpoint_url=f"https://s3.{AWS_REGION}.amazonaws.com"
+    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+    region_name=settings.AWS_REGION,
 )
-def upload_file_to_s3(file_obj, folder, existing_key: str = None):
-    """
-    Uploads file to S3 and returns the file URL.
-    If existing_key is provided, overwrite the same file.
-    """
+def upload_file_to_s3(file, folder):
     try:
-        # Validate file extension
-        allowed_extensions = ["pdf", "jpg", "jpeg", "png"]
-        file_extension = file_obj.filename.split(".")[-1].lower()
-        if file_extension not in allowed_extensions:
-            raise HTTPException(status_code=400, detail=f"Invalid file type. Allowed: {', '.join(allowed_extensions)}")
+        if not file.filename or "." not in file.filename:
+            raise HTTPException(status_code=400, detail="File must have an extension")
 
-        # Validate file size (max 25MB)
-        file_obj.file.seek(0, 2)
-        file_size = file_obj.file.tell()
-        if file_size > 25 * 1024 * 1024:
-            raise HTTPException(status_code=400, detail="File size exceeds 25MB limit")
-        file_obj.file.seek(0)
+        ext = file.filename.split(".")[-1].lower()
+        allowed = ["pdf", "jpg", "jpeg", "png"]
+        if ext not in allowed:
+            raise HTTPException(status_code=400, detail="Invalid file type")
 
-        # Use same key if provided, else generate new
-        if existing_key:
-            s3_key = existing_key
-        else:
-            s3_key = f"{folder}/{uuid4()}.{file_extension}"
+        key = f"{folder}/{uuid4()}.{ext}"
+        s3_client.upload_fileobj(file.file, settings.AWS_BUCKET_NAME, key)
 
-        # Upload (this will overwrite if key already exists)
-        s3_client.upload_fileobj(
-            file_obj.file,
-            BUCKET_NAME,
-            s3_key
-        )
+        # Optional: Pre-signed URL for private bucket
+        # file_url = s3_client.generate_presigned_url(
+        #     'get_object',
+        #     Params={'Bucket': settings.BUCKET_NAME, 'Key': key},
+        #     ExpiresIn=3600
+        # )
 
-        file_url = f"https://{BUCKET_NAME}.s3.{AWS_REGION}.amazonaws.com/{s3_key}"
+        file_url = f"https://{settings.AWS_BUCKET_NAME}.s3.{settings.AWS_REGION}.amazonaws.com/{key}"
         return file_url
 
-    except boto3.exceptions.S3UploadFailedError as e:
-        raise HTTPException(status_code=500, detail=f"S3 upload failed: {str(e)}")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to upload to S3: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"S3 upload error: {str(e)}")

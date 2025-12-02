@@ -1,8 +1,9 @@
 from pydantic import BaseModel, EmailStr
-from datetime import date
+from datetime import datetime, date
 from typing import Optional
 
-# -------------------- BASE --------------------
+
+# ----------- BASE -----------
 class CandidateBase(BaseModel):
     job_posting_id: int
     first_name: str
@@ -13,12 +14,12 @@ class CandidateBase(BaseModel):
     resume_url: Optional[str] = None
 
 
-# -------------------- CREATE --------------------
+# ----------- CREATE -----------
 class CandidateCreate(CandidateBase):
     pass
 
 
-# -------------------- UPDATE --------------------
+# ----------- UPDATE -----------
 class CandidateUpdate(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
@@ -26,15 +27,22 @@ class CandidateUpdate(BaseModel):
     phone_number: Optional[str] = None
     applied_date: Optional[date] = None
     resume_url: Optional[str] = None
-    status: Optional[str] = None   # Pending / Approved / Rejected
+    status: Optional[str] = None
 
 
-# -------------------- OUTPUT --------------------
+# ----------- RESPONSE -----------
 class CandidateResponse(BaseModel):
     id: int
-    name: str
+    job_posting_id: int
+    first_name: str
+    last_name: str
+    email: EmailStr
+    phone_number: str
+    applied_date: date
+    resume_url: Optional[str]
+    status: Optional[str] = None
 
+    
     model_config = {
-        "from_attributes": True
+        "from_attributes": True  # was orm_mode in v1
     }
-

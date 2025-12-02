@@ -23,21 +23,12 @@ class JobPosting(Base):
     salary = Column(Integer)
     posting_date = Column(Date, nullable=False)
     closing_date = Column(Date)
-
-    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-
-    created_by_name = Column(String(100))
-    modified_by = Column(String(100))
-
-    approval_status = Column(
-        Enum(ApprovalStatus),
-        default=ApprovalStatus.pending,
-        nullable=False
-    )
+    created_by = Column(String(100), nullable=True)
+    modified_by = Column(String(100), nullable=True)
+    approval_status = Column(Enum(ApprovalStatus),default=ApprovalStatus.pending,nullable=False)
 
     # RELATIONSHIPS
     job_description = relationship("JobDescription", back_populates="job_postings")
-    created_by = relationship("User")
     candidates = relationship("Candidate", back_populates="job_posting")

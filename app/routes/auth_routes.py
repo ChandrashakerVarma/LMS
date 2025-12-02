@@ -74,3 +74,4 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
             "role_name": role_name
         }
     }
+

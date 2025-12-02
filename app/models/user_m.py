@@ -18,7 +18,7 @@ class User(Base):
     department_id = Column(Integer, ForeignKey("departments.id"), nullable=True)
     date_of_birth = Column(Date, nullable=True)
     joining_date = Column(Date, nullable=True)
-    relieving_date = Column(Date, nullable=True)
+    relieving_date = Column(Date, nullable=True)  # optional, only when employee leaves
 
     address = Column(String(255), nullable=True)
     designation = Column(String(100), nullable=True)
@@ -28,10 +28,9 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Audit user tracking
+    # Audit
     created_by = Column(String(100), nullable=True)
     modified_by = Column(String(100), nullable=True)
-
 
     # Relationships
     role = relationship("Role", back_populates="users", lazy="joined")
@@ -46,9 +45,8 @@ class User(Base):
     permissions = relationship("Permission", back_populates="user", cascade="all, delete-orphan")
     shift_change_requests = relationship("ShiftChangeRequest", back_populates="user", cascade="all, delete-orphan")
     department = relationship("Department", back_populates="users")
-    # ✅ Correct UserShift relationship (keep only one)
     user_shifts = relationship("UserShift", back_populates="user", cascade="all, delete-orphan")
-    job_postings = relationship("JobPosting", back_populates="created_by")
+    # job_postings = relationship("JobPosting", back_populates="created_by")
     created_shifts = relationship("Shift", back_populates="created_manager")
     shift_roster = relationship("ShiftRoster", back_populates="users")
-
+    notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")

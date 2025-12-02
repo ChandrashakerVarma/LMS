@@ -30,3 +30,4 @@ class Candidate(Base):
     job_posting = relationship("JobPosting", back_populates="candidates")
     documents = relationship("CandidateDocument", back_populates="candidate", cascade="all, delete-orphan")
     notifications = relationship("Notification", back_populates="candidate")
+    
