@@ -27,6 +27,7 @@ class User(Base):
     shift_roster_id = Column(Integer, ForeignKey("shift_rosters.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    is_org_admin = Column(Boolean, default=False)# First user of org = admin
 
     # Audit user tracking
     created_by = Column(String(100), nullable=True)

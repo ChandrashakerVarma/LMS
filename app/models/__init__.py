@@ -27,3 +27,8 @@ from app.models.role_right_m import *
 from app.models.shift_roster_m import *
 from app.models.week_day_m import *
 from app.models.shift_roster_detail_m import *
+from app.models.subscription_plans_m import *
+from app.models.add_on_m import *
+from app.models.organization_add_on_m import *
+from app.models.payment_m import *
+

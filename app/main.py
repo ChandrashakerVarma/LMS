@@ -11,6 +11,7 @@ from app.seeders.role_seeder import seed_roles
 from app.seeders.menu_seeder import seed_menus
 from app.seeders.role_right_seeder import seed_role_rights
 from app.seeders.week_day_seeders import seed_weekdays
+from app.seeders.super_admin import seed_super_admin
 from app.routes import shift_routes,department_routes
 from app.routes import leavemaster_routes, salary_structure_routes, payroll_routes, payroll_attendance_routes, user_shifts_routes, shift_change_request_routes
 from app.routes import job_posting_routes,candidate_routes,candidates_documents_routes,shift_roster_detail_routes,shift_roster_routes
@@ -67,4 +68,5 @@ Base.metadata.create_all(bind=engine)
 seed_roles()
 seed_menus()
 seed_role_rights()
+seed_super_admin()
 seed_weekdays()

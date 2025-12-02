@@ -5,7 +5,7 @@ from app.database import get_db
 from app.models.user_m import User
 from app.models.shift_roster_detail_m import ShiftRosterDetail
 from app.models.user_shifts_m import UserShift
-from app.dependencies import require_admin
+from app.dependencies import require_org_admin
 
 router = APIRouter(prefix="/shift-summary", tags=["Shift Summary"])
 

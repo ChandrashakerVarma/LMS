@@ -13,7 +13,7 @@ from app.schema.role_right_schema import (
     RoleRightWithMenuResponse,
     BulkRoleRightRequest
 )
-from app.dependencies import require_admin, get_current_user
+from app.dependencies import require_org_admin, get_current_user
 from app.models.user_m import User
 
 router = APIRouter(prefix="/role-rights", tags=["Role Rights"])
@@ -23,7 +23,7 @@ router = APIRouter(prefix="/role-rights", tags=["Role Rights"])
 def create_role_right(
     payload: RoleRightCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_org_admin)
 ):
     # Check if role exists
     role = db.query(Role).filter(Role.id == payload.role_id).first()
@@ -68,7 +68,7 @@ def create_role_right(
 def bulk_upsert_role_rights(
     payload: BulkRoleRightRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_org_admin)
 ):
     # Check if role exists
     role = db.query(Role).filter(Role.id == payload.role_id).first()
@@ -124,7 +124,7 @@ def bulk_upsert_role_rights(
 @router.get("/", response_model=List[RoleRightResponse])
 def get_all_role_rights(
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_org_admin)
 ):
     role_rights = db.query(RoleRight).all()
     return role_rights
@@ -184,7 +184,7 @@ def update_role_right(
     role_right_id: int,
     payload: RoleRightUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_org_admin)
 ):
     role_right = db.query(RoleRight).filter(RoleRight.id == role_right_id).first()
     if not role_right:
@@ -206,7 +206,7 @@ def update_role_right(
 def delete_role_right(
     role_right_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_org_admin)
 ):
     role_right = db.query(RoleRight).filter(RoleRight.id == role_right_id).first()
     if not role_right:
