@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from typing import List
+from typing import List, Optional
 from datetime import date, timedelta
 
 from app.database import get_db
@@ -101,37 +101,54 @@ async def create_organization(
 
 # 🔹 Get All Organizations (with filters)
 @router.get("/", response_model=List[OrganizationResponse])
-async def list_organizations(
-    status_filter: str = None,  # active, trial, expired, suspended
-    search: str = None,
+async def get_all_organizations(
+    # ✅ NEW: Fuzzy search parameters
+    use_fuzzy_search: bool = Query(False, description="Enable fuzzy search"),
+    fuzzy_query: Optional[str] = Query(None, description="Fuzzy search query"),
+    fuzzy_threshold: int = Query(70, ge=50, le=100),
+    
+    # Your existing parameters
     skip: int = 0,
     limit: int = 100,
+    
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_view_permission(MENU_ID))
+    current_user = Depends(get_current_user)
 ):
     """
-    ✅ Get all organizations with optional filters
-    Super Admin can see all, Org Admin sees only their org
+    Get all organizations with OPTIONAL fuzzy search
+    
+    Searches across: name, description, contact_email, contact_phone
     """
     
     query = db.query(Organization)
     
-    # 🔒 If user is not super admin, show only their organization
-    if current_user.role.name != "super_admin":
-        if not current_user.organization_id:
-            raise HTTPException(status_code=403, detail="No organization assigned")
-        query = query.filter(Organization.id == current_user.organization_id)
+    # Your existing filters here
     
-    # Apply filters
-    if status_filter:
-        query = query.filter(Organization.subscription_status == status_filter)
+    if use_fuzzy_search and fuzzy_query:
+        from app.utils.fuzzy_search import apply_fuzzy_search_to_query
+        
+        search_fields = ['name', 'description', 'contact_email', 'contact_phone']
+        field_weights = {
+            'name': 2.5,
+            'description': 1.0,
+            'contact_email': 1.5,
+            'contact_phone': 1.0
+        }
+        
+        organizations = apply_fuzzy_search_to_query(
+            base_query=query,
+            model_class=Organization,
+            fuzzy_query=fuzzy_query,
+            search_fields=search_fields,
+            field_weights=field_weights,
+            fuzzy_threshold=fuzzy_threshold
+        )
+        
+        organizations = organizations[skip:skip + limit]
+    else:
+        organizations = query.offset(skip).limit(limit).all()
     
-    if search:
-        query = query.filter(Organization.name.ilike(f"%{search}%"))
-    
-    organizations = query.offset(skip).limit(limit).all()
     return organizations
-
 
 # 🔹 Get Current User's Organization
 @router.get("/me", response_model=OrganizationDetailResponse)

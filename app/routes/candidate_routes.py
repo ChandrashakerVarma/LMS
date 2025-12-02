@@ -1,5 +1,6 @@
 # app/routes/candidates_routes.py
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
@@ -92,15 +93,56 @@ def apply_for_job(payload: CandidateCreate, background_tasks: BackgroundTasks, d
 
 
 # -------------------- Get All Candidates --------------------
+# ✅ ENHANCED: GET ALL CANDIDATES with Optional Fuzzy Search
 @router.get(
     "/",
     response_model=List[CandidateResponse],
     dependencies=[Depends(require_view_permission(CANDIDATES_MENU_ID))]
 )
-def get_all_candidates(db: Session = Depends(get_db)):
-    candidates = db.query(Candidate).all()
+def get_all_candidates(
+    # ✅ NEW: Optional fuzzy search parameters
+    use_fuzzy_search: bool = Query(False, description="Enable fuzzy search"),
+    fuzzy_query: Optional[str] = Query(None, description="Fuzzy search query"),
+    fuzzy_threshold: int = Query(70, ge=50, le=100, description="Match threshold"),
+    
+    db: Session = Depends(get_db)
+):
+    """
+    Get all candidates with OPTIONAL fuzzy search
+    
+    Examples:
+    - GET /candidates/ → Normal (unchanged)
+    - GET /candidates/?use_fuzzy_search=true&fuzzy_query=johndoe → Fuzzy search
+    """
+    
+    # Build base query
+    query = db.query(Candidate)
+    
+    # ✅ DECISION: Use fuzzy search OR standard query
+    if use_fuzzy_search and fuzzy_query:
+        from app.utils.fuzzy_search import apply_fuzzy_search_to_query
+        
+        search_fields = ['first_name', 'last_name', 'email', 'phone_number']
+        field_weights = {
+            'first_name': 2.0,
+            'last_name': 2.0,
+            'email': 1.5,
+            'phone_number': 1.0
+        }
+        
+        candidates = apply_fuzzy_search_to_query(
+            base_query=query,
+            model_class=Candidate,
+            fuzzy_query=fuzzy_query,
+            search_fields=search_fields,
+            field_weights=field_weights,
+            fuzzy_threshold=fuzzy_threshold
+        )
+    else:
+        # ✅ DEFAULT: Original behavior (unchanged)
+        candidates = query.all()
+    
     return [CandidateResponse.from_orm(c) for c in candidates]
-
 
 # -------------------- Get Candidate by ID --------------------
 @router.get(

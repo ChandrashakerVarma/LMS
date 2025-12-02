@@ -3,6 +3,7 @@
 from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app.models.role_m import Role
+import app.models  # ✅ Register all models to avoid relationship errors
 
 def seed_roles():
     roles = [

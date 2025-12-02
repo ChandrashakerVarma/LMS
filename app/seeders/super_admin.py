@@ -4,6 +4,7 @@ from app.database import SessionLocal
 from app.models.user_m import User
 from app.models.role_m import Role
 from app.utils.utils import hash_password  # your hash_password function
+import app.models  # ✅ Register all models
 
 def seed_super_admin():
     db: Session = SessionLocal()

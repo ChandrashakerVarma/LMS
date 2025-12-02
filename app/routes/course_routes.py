@@ -1,8 +1,10 @@
-# app/routes/course_routes.py
+# ENHANCED app/routes/course_routes.py
+# ✅ Adds OPTIONAL fuzzy search to list_courses endpoint
+# ✅ All existing functionality UNCHANGED
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 
 from app.database import get_db
 from app.models.course_m import Course
@@ -21,7 +23,7 @@ MENU_ID = 31   # Course Module ID
 
 
 # ----------------------
-# Create Course
+# Create Course (UNCHANGED)
 # ----------------------
 @router.post("/", response_model=CourseResponse, status_code=status.HTTP_201_CREATED)
 def create_course(
@@ -42,18 +44,66 @@ def create_course(
 
 
 # ----------------------
-# List Courses (Read)
+# ✅ ENHANCED: List Courses with OPTIONAL Fuzzy Search
 # ----------------------
 @router.get("/", response_model=List[CourseResponse])
 def list_courses(
+    # ✅ NEW: Optional fuzzy search parameters
+    use_fuzzy_search: bool = Query(False, description="Enable typo-tolerant search"),
+    fuzzy_query: Optional[str] = Query(None, description="Fuzzy search query"),
+    fuzzy_threshold: int = Query(70, ge=50, le=100, description="Match threshold (50-100)"),
+    
     db: Session = Depends(get_db),
     current_user = Depends(require_view_permission(MENU_ID))
 ):
-    return db.query(Course).all()
+    """
+    List all courses with OPTIONAL fuzzy search
+    
+    **Default behavior (use_fuzzy_search=false):**
+    - Returns all courses (unchanged)
+    
+    **With fuzzy search (use_fuzzy_search=true):**
+    - Typo-tolerant search across: title, instructor, level
+    - Results sorted by relevance
+    
+    **Examples:**
+    - GET /courses/ → Normal (unchanged)
+    - GET /courses/?use_fuzzy_search=true&fuzzy_query=python → Finds "Python", "Pyton", etc.
+    - GET /courses/?use_fuzzy_search=true&fuzzy_query=john smith&fuzzy_threshold=80 → Search by instructor
+    """
+    
+    # Build base query
+    query = db.query(Course)
+    
+    # ✅ DECISION POINT: Use fuzzy search OR return all
+    if use_fuzzy_search and fuzzy_query:
+        from app.utils.fuzzy_search import apply_fuzzy_search_to_query
+        
+        # Define searchable fields and their importance
+        search_fields = ['title', 'instructor', 'level']
+        field_weights = {
+            'title': 2.5,      # Most important
+            'instructor': 1.5,
+            'level': 1.0
+        }
+        
+        courses = apply_fuzzy_search_to_query(
+            base_query=query,
+            model_class=Course,
+            fuzzy_query=fuzzy_query,
+            search_fields=search_fields,
+            field_weights=field_weights,
+            fuzzy_threshold=fuzzy_threshold
+        )
+        
+        return courses
+    else:
+        # ✅ DEFAULT PATH: Return all courses (unchanged)
+        return query.all()
 
 
 # ----------------------
-# Get Single Course (Read)
+# Get Single Course (UNCHANGED)
 # ----------------------
 @router.get("/{course_id}", response_model=CourseResponse)
 def get_course(
@@ -70,7 +120,7 @@ def get_course(
 
 
 # ----------------------
-# Update Course
+# Update Course (UNCHANGED)
 # ----------------------
 @router.put("/{course_id}", response_model=CourseResponse)
 def update_course(
@@ -97,7 +147,7 @@ def update_course(
 
 
 # ----------------------
-# Delete Course
+# Delete Course (UNCHANGED)
 # ----------------------
 @router.delete("/{course_id}", status_code=status.HTTP_200_OK)
 def delete_course(

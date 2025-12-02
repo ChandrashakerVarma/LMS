@@ -1,7 +1,6 @@
 # app/routes/job_posting_routes.py
-# app/routes/job_posting_routes.py
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
@@ -115,14 +114,50 @@ def create_job_posting(
 # ------------------------------------------------------------
 # 2️⃣ GET ALL JOB POSTINGS
 # ------------------------------------------------------------
+# ✅ ENHANCED: GET ALL JOB POSTINGS with Optional Fuzzy Search
 @router.get("/", response_model=List[JobPostingResponse])
 def get_all_job_postings(
+    # ✅ NEW: Optional fuzzy search parameters
+    use_fuzzy_search: bool = Query(False, description="Enable fuzzy search"),
+    fuzzy_query: Optional[str] = Query(None, description="Fuzzy search query"),
+    fuzzy_threshold: int = Query(70, ge=50, le=100),
+    
     db: Session = Depends(get_db),
     current_user: User = Depends(require_view_permission(MENU_ID)),
 ):
-    postings = db.query(JobPosting).all()
+    """
+    Get all job postings with OPTIONAL fuzzy search
+    
+    Fuzzy search fields: location, employment_type
+    
+    Examples:
+    - GET /job-postings/ → Normal (unchanged)
+    - GET /job-postings/?use_fuzzy_search=true&fuzzy_query=remote → Fuzzy search
+    """
+    
+    query = db.query(JobPosting)
+    
+    if use_fuzzy_search and fuzzy_query:
+        from app.utils.fuzzy_search import apply_fuzzy_search_to_query
+        
+        search_fields = ['location', 'employment_type']
+        field_weights = {
+            'location': 2.0,
+            'employment_type': 1.5
+        }
+        
+        postings = apply_fuzzy_search_to_query(
+            base_query=query,
+            model_class=JobPosting,
+            fuzzy_query=fuzzy_query,
+            search_fields=search_fields,
+            field_weights=field_weights,
+            fuzzy_threshold=fuzzy_threshold
+        )
+    else:
+        postings = query.all()
+    
     return [JobPostingResponse.model_validate(p) for p in postings]
-
 
 # ------------------------------------------------------------
 # 3️⃣ GET SINGLE POSTING

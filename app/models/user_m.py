@@ -32,6 +32,7 @@ class User(Base):
     # Audit user tracking
     created_by = Column(String(100), nullable=True)
     modified_by = Column(String(100), nullable=True)
+    deleted_at = Column(DateTime, nullable=True)
 
 
     # Relationships

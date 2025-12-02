@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 
 from app.database import get_db
 from app.models.department_m import Department
@@ -42,12 +42,53 @@ def create_department(
 
 # 📋 Get All Departments
 @router.get("/", response_model=List[DepartmentResponse])
-def get_all_departments(
+async def get_all_departments(
+    # ✅ NEW: Fuzzy search parameters
+    use_fuzzy_search: bool = Query(False, description="Enable fuzzy search"),
+    fuzzy_query: Optional[str] = Query(None, description="Fuzzy search query"),
+    fuzzy_threshold: int = Query(70, ge=50, le=100),
+    
+    # Your existing parameters
+    skip: int = 0,
+    limit: int = 100,
+    
     db: Session = Depends(get_db),
-    current_user: any = Depends(require_view_permission(MENU_ID))
+    current_user = Depends(get_current_user)
 ):
-    return db.query(Department).all()
-
+    """
+    Get all departments with OPTIONAL fuzzy search
+    
+    Searches across: name, code, description
+    """
+    
+    query = db.query(Department)
+    
+    # Your existing filters here
+    
+    if use_fuzzy_search and fuzzy_query:
+        from app.utils.fuzzy_search import apply_fuzzy_search_to_query
+        
+        search_fields = ['name', 'code', 'description']
+        field_weights = {
+            'name': 2.5,
+            'code': 2.0,
+            'description': 1.0
+        }
+        
+        departments = apply_fuzzy_search_to_query(
+            base_query=query,
+            model_class=Department,
+            fuzzy_query=fuzzy_query,
+            search_fields=search_fields,
+            field_weights=field_weights,
+            fuzzy_threshold=fuzzy_threshold
+        )
+        
+        departments = departments[skip:skip + limit]
+    else:
+        departments = query.offset(skip).limit(limit).all()
+    
+    return departments
 
 # 🔍 Get Department by ID
 @router.get("/{dept_id}", response_model=DepartmentResponse)

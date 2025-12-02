@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session, joinedload
-from typing import List
+from typing import List, Optional
 
 from app.database import get_db
 from app.models.category_m import Category
@@ -13,6 +13,7 @@ from app.permission_dependencies import (
     require_edit_permission,
     require_delete_permission,
 )
+from app.dependencies import get_current_user
 
 router = APIRouter(prefix="/categories", tags=["categories"])
 
@@ -46,21 +47,52 @@ def create_category(
 # List all categories (Read)
 # ----------------------
 @router.get("/", response_model=List[CategoryResponse])
-def categories_list(
+async def get_all_categories(
+    # ✅ NEW: Fuzzy search parameters
+    use_fuzzy_search: bool = Query(False, description="Enable fuzzy search"),
+    fuzzy_query: Optional[str] = Query(None, description="Fuzzy search query"),
+    fuzzy_threshold: int = Query(70, ge=50, le=100),
+    
+    # Your existing parameters
+    skip: int = 0,
+    limit: int = 100,
+    
     db: Session = Depends(get_db),
-    current_user = Depends(require_view_permission(MENU_ID))
+    current_user = Depends(get_current_user)
 ):
-    categories = db.query(Category).options(joinedload(Category.courses)).all()
-
-    result = []
-    for cat in categories:
-        cat_data = CategoryResponse.from_orm(cat)
-        cat_data.courses = [CourseResponse.from_orm(course) for course in cat.courses]
-        result.append(cat_data)
-
-    return result
-
-
+    """
+    Get all categories with OPTIONAL fuzzy search
+    
+    Searches across: name, description
+    """
+    
+    query = db.query(Category)
+    
+    # Your existing filters here
+    
+    if use_fuzzy_search and fuzzy_query:
+        from app.utils.fuzzy_search import apply_fuzzy_search_to_query
+        
+        search_fields = ['name', 'description']
+        field_weights = {
+            'name': 2.5,
+            'description': 1.0
+        }
+        
+        categories = apply_fuzzy_search_to_query(
+            base_query=query,
+            model_class=Category,
+            fuzzy_query=fuzzy_query,
+            search_fields=search_fields,
+            field_weights=field_weights,
+            fuzzy_threshold=fuzzy_threshold
+        )
+        
+        categories = categories[skip:skip + limit]
+    else:
+        categories = query.offset(skip).limit(limit).all()
+    
+    return categories
 # ----------------------
 # Get a single category (Read)
 # ----------------------

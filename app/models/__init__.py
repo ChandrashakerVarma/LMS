@@ -31,4 +31,7 @@ from app.models.subscription_plans_m import *
 from app.models.add_on_m import *
 from app.models.organization_add_on_m import *
 from app.models.payment_m import *
+from app.models.enrollment_m import Enrollment
+from app.models.shift_m import Shift
+from app.models.department_m import Department
 
