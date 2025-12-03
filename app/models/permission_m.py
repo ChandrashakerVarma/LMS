@@ -14,6 +14,9 @@ class Permission(Base):
     status = Column(String(20), default="pending")  # pending / approved / cancelled
     reason = Column(String(255), nullable=True)
 
+    from_time = Column(Time, nullable=True)
+    to_time = Column(Time, nullable=True)
+
     # Audit timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

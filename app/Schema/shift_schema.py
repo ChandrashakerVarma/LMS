@@ -1,6 +1,7 @@
 from pydantic import BaseModel
-from datetime import time
+from datetime import time, datetime
 from typing import Optional
+
 
 class ShiftBase(BaseModel):
     shift_name: str
@@ -12,8 +13,6 @@ class ShiftBase(BaseModel):
     lag_minutes: Optional[int] = 60
     description: Optional[str] = None
     status: Optional[str] = "active"
-
-    # ✔ added field
     is_week_off: Optional[int] = 0
 
 
@@ -31,16 +30,14 @@ class ShiftUpdate(BaseModel):
     lag_minutes: Optional[int] = None
     description: Optional[str] = None
     status: Optional[str] = None
-
-    # ✔ added
     is_week_off: Optional[int] = None
 
 
 class ShiftResponse(ShiftBase):
     id: int
-    created_by: int
+    created_at: Optional[datetime] = None       # FIX: allow None
+    updated_at: Optional[datetime] = None        # ✅ FIXED
+    created_by: Optional[int] = None             # integer FK
+    modified_by: Optional[str] = None            # string username
 
-    model_config = {
-    "from_attributes": True
-}
-
+    model_config = {"from_attributes": True}

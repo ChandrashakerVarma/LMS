@@ -9,7 +9,11 @@ from app.schema.shift_roster_schema import (
 )
 from app.dependencies import get_current_user
 
-router = APIRouter(prefix="/shift_rosters", tags=["Shift Rosters"])
+router = APIRouter(
+    prefix="/shift_rosters",
+    tags=["Shift Rosters"],
+    dependencies=[Depends(get_current_user)]   # <-- APPLY AUTH HERE
+)
 
 
 # ---------------------- CREATE ----------------------
@@ -61,9 +65,7 @@ def update_shift_roster(
     if not roster:
         raise HTTPException(status_code=404, detail="Shift Roster not found")
 
-    update_data = data.dict(exclude_unset=True)
-
-    for key, value in update_data.items():
+    for key, value in data.dict(exclude_unset=True).items():
         setattr(roster, key, value)
 
     roster.modified_by = current_user.first_name

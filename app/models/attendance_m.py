@@ -1,4 +1,3 @@
-# app/models/attendance_m.py
 from sqlalchemy import Column, Integer, Date, String, ForeignKey, DateTime, func
 from sqlalchemy.orm import relationship
 from app.database import Base
@@ -8,24 +7,31 @@ class Attendance(Base):
     __tablename__ = "attendances"
 
     id = Column(Integer, primary_key=True, index=True)
+
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    shift_id = Column(Integer, ForeignKey("shifts.id"), nullable=False)
+    month = Column(Date, nullable=False, index=True)
 
-    attendance_date = Column(Date, nullable=False)  # Always shift start date
-    punch_in = Column(DateTime, nullable=False)
-    punch_out = Column(DateTime, nullable=False)
-    total_worked_minutes = Column(Integer, nullable=True)
-    status = Column(String(20), nullable=False, default="Pending")  # Full Day / Half Day / Absent
+    total_days = Column(Integer, default=0)
+    present_days = Column(Integer, default=0)
+    absent_days = Column(Integer, default=0)
+    half_days = Column(Integer, default=0)
+    holidays = Column(Integer, default=0)
+    sundays = Column(Integer, default=0)
+    leaves = Column(Integer, default=0)
+    permissions = Column(Integer, default=0)
 
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    total_work_minutes = Column(Integer, default=0)
+    overtime_minutes = Column(Integer, default=0)
+    late_minutes = Column(Integer, default=0)
+    early_exit_minutes = Column(Integer, default=0)
 
-    # Audit user tracking
+    summary_status = Column(String(30), default="Pending")
+
+    # FIXED — updated_at should NOT get default
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_onupdate=func.now(), nullable=True)
+
     created_by = Column(String(100), nullable=True)
     modified_by = Column(String(100), nullable=True)
 
-
-
-    # Relationships
-    user = relationship("User", back_populates="attendances")
-    shift = relationship("Shift")
+    user = relationship("User", back_populates="monthly_attendance")

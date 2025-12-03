@@ -1,196 +1,131 @@
 # app/routes/attendance_routes.py
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from datetime import date
 
 from app.database import get_db
 from app.models.attendance_m import Attendance
-from app.models.shift_m import Shift
-from app.models.user_m import User
-from app.schema.attendance_schema import AttendanceCreate, AttendanceUpdate, AttendanceResponse
-from app.utils.attendance_utils import calculate_attendance_status
+from app.schema.attendance_schema import AttendanceSummaryResponse
+from app.utils.attendance_utils import calculate_monthly_summary
 from app.dependencies import get_current_user
 
-# ✅ Permission helpers
-from app.permission_dependencies import (
-    require_view_permission,
-    require_create_permission,
-    require_edit_permission,
-    require_delete_permission
-)
-
-ATTENDANCE_MENU_ID = 44
-
-router = APIRouter(prefix="/attendance", tags=["Attendance"])
+router = APIRouter(prefix="/attendance", tags=["Attendance Summary"])
 
 
-# -------------------------------
-# CREATE Attendance
-# -------------------------------
+# ----------------------------------------------------
+# GENERATE MONTHLY SUMMARY
+# ----------------------------------------------------
 @router.post(
-    "/", 
-    response_model=AttendanceResponse, 
-    status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(require_create_permission(ATTENDANCE_MENU_ID))]   # ✅ PERMISSION ADDED
+    "/generate/{user_id}/{year}/{month}",
+    response_model=AttendanceSummaryResponse
 )
-def create_attendance(
-    payload: AttendanceCreate,
+def generate_monthly_summary(
+    user_id: int,
+    year: int,
+    month: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user=Depends(get_current_user)
 ):
+    summary = calculate_monthly_summary(db, user_id, year, month)
 
-    shift = db.query(Shift).filter(Shift.id == payload.shift_id).first()
-    if not shift:
-        raise HTTPException(status_code=404, detail="Shift not found")
+    if not summary:
+        raise HTTPException(status_code=404, detail="User not found")
 
-    attendance_date = payload.punch_in.date()
-
-    existing = db.query(Attendance).filter(
-        Attendance.user_id == payload.user_id,
-        Attendance.attendance_date == attendance_date
-    ).first()
-
-    if existing:
-        raise HTTPException(
-            status_code=400,
-            detail="Attendance already exists for this user on this date"
-        )
-
-    if shift.start_time > shift.end_time:
-        if payload.punch_out <= payload.punch_in:
-            raise HTTPException(status_code=400, detail="Night shift: punch-out must be next day")
-    else:
-        if payload.punch_in >= payload.punch_out:
-            raise HTTPException(status_code=400, detail="Punch-out must be after punch-in")
-
-    result = calculate_attendance_status(
-        shift_start=shift.start_time,
-        shift_end=shift.end_time,
-        lag_minutes=shift.lag_minutes,
-        working_minutes=shift.working_minutes,
-        punch_in=payload.punch_in,
-        punch_out=payload.punch_out
-    )
-
-    record = Attendance(
-        user_id=payload.user_id,
-        shift_id=payload.shift_id,
-        attendance_date=attendance_date,
-        punch_in=payload.punch_in,
-        punch_out=payload.punch_out,
-        total_worked_minutes=result["total_worked_minutes"],
-        status=result["status"],
-        created_by=current_user.first_name
-    )
-
-    db.add(record)
+    summary.created_by = current_user.first_name
     db.commit()
-    db.refresh(record)
 
-    return record
+    return summary
 
 
-# -------------------------------
-# GET All Attendance
-# -------------------------------
+# ----------------------------------------------------
+# GET SUMMARY BY USER ID + YEAR + MONTH
+# ----------------------------------------------------
 @router.get(
-    "/", 
-    response_model=List[AttendanceResponse],
-    dependencies=[Depends(require_view_permission(ATTENDANCE_MENU_ID))]   # ✅ PERMISSION ADDED
+    "/{user_id}/{year}/{month}",
+    response_model=AttendanceSummaryResponse
 )
-def get_all_attendance(db: Session = Depends(get_db)):
-    return (
+def get_summary(
+    user_id: int,
+    year: int,
+    month: int,
+    db: Session = Depends(get_db)
+):
+    month_start = date(year, month, 1)
+
+    summary = (
         db.query(Attendance)
-        .order_by(Attendance.attendance_date.desc())
-        .all()
+        .filter(Attendance.user_id == user_id, Attendance.month == month_start)
+        .first()
     )
 
+    if not summary:
+        raise HTTPException(status_code=404, detail="Summary not generated")
 
-# -------------------------------
-# GET Attendance by ID
-# -------------------------------
+    return summary
+
+
+# ----------------------------------------------------
+# GET SUMMARY BY ATTENDANCE ID
+# ----------------------------------------------------
 @router.get(
-    "/{attendance_id}", 
-    response_model=AttendanceResponse,
-    dependencies=[Depends(require_view_permission(ATTENDANCE_MENU_ID))]   # ✅ PERMISSION ADDED
+    "/id/{attendance_id}",
+    response_model=AttendanceSummaryResponse
 )
-def get_attendance(attendance_id: int, db: Session = Depends(get_db)):
-    record = db.query(Attendance).filter(Attendance.id == attendance_id).first()
-    if not record:
-        raise HTTPException(status_code=404, detail="Attendance not found")
-    return record
+def get_summary_by_id(attendance_id: int, db: Session = Depends(get_db)):
+
+    summary = db.query(Attendance).filter(Attendance.id == attendance_id).first()
+
+    if not summary:
+        raise HTTPException(status_code=404, detail="Attendance summary not found")
+
+    return summary
 
 
-# -------------------------------
-# UPDATE Attendance
-# -------------------------------
-@router.put(
-    "/{attendance_id}", 
-    response_model=AttendanceResponse,
-    dependencies=[Depends(require_edit_permission(ATTENDANCE_MENU_ID))]   # ✅ PERMISSION ADDED
+# ----------------------------------------------------
+# GET ALL SUMMARIES
+# ----------------------------------------------------
+@router.get("/", response_model=List[AttendanceSummaryResponse])
+def get_all_summaries(db: Session = Depends(get_db)):
+    return db.query(Attendance).all()
+
+
+# ----------------------------------------------------
+# GET ALL SUMMARIES FOR A SPECIFIC USER
+# ----------------------------------------------------
+@router.get(
+    "/user/{user_id}",
+    response_model=List[AttendanceSummaryResponse]
 )
-def update_attendance(
-    attendance_id: int,
-    payload: AttendanceUpdate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
+def get_summaries_for_user(user_id: int, db: Session = Depends(get_db)):
 
-    record = db.query(Attendance).filter(Attendance.id == attendance_id).first()
-    if not record:
-        raise HTTPException(status_code=404, detail="Attendance not found")
+    summaries = db.query(Attendance).filter(Attendance.user_id == user_id).all()
 
-    for key, value in payload.dict(exclude_unset=True).items():
-        setattr(record, key, value)
+    if not summaries:
+        raise HTTPException(status_code=404, detail="No attendance summaries found")
 
-    if record.punch_in and record.punch_out:
-        if record.punch_in >= record.punch_out:
-            raise HTTPException(status_code=400, detail="Punch-out must be after punch-in")
-
-    shift = db.query(Shift).filter(Shift.id == record.shift_id).first()
-
-    if shift and record.punch_in and record.punch_out:
-        result = calculate_attendance_status(
-            shift_start=shift.start_time,
-            shift_end=shift.end_time,
-            lag_minutes=shift.lag_minutes,
-            working_minutes=shift.working_minutes,
-            punch_in=record.punch_in,
-            punch_out=record.punch_out
-        )
-
-        record.total_worked_minutes = result["total_worked_minutes"]
-        record.status = result["status"]
-        record.attendance_date = record.punch_in.date()
-
-    record.modified_by = current_user.first_name
-
-    db.commit()
-    db.refresh(record)
-
-    return record
+    return summaries
 
 
-# -------------------------------
-# DELETE Attendance
-# -------------------------------
-@router.delete(
-    "/{attendance_id}",
-    dependencies=[Depends(require_delete_permission(ATTENDANCE_MENU_ID))]   # ✅ PERMISSION ADDED
-)
-def delete_attendance(
+# ----------------------------------------------------
+# DELETE SUMMARY BY ID
+# ----------------------------------------------------
+@router.delete("/delete/{attendance_id}")
+def delete_summary(
     attendance_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user=Depends(get_current_user)
 ):
 
-    record = db.query(Attendance).filter(Attendance.id == attendance_id).first()
-    if not record:
-        raise HTTPException(status_code=404, detail="Attendance not found")
+    summary = db.query(Attendance).filter(Attendance.id == attendance_id).first()
 
-    db.delete(record)
+    if not summary:
+        raise HTTPException(status_code=404, detail="Attendance summary not found")
+
+    db.delete(summary)
     db.commit()
 
-    return {"message": f"Attendance deleted by {current_user.first_name}"}
+    return {
+        "message": f"Attendance summary deleted successfully by {current_user.first_name}"
+    }
