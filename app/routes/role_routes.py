@@ -4,8 +4,11 @@ from typing import List
 
 from app.database import get_db
 from app.models.role_m import Role
-from app.Schema.role_schema import RoleCreate, RoleUpdate, RoleResponse
-from app.dependencies import require_admin  # Admin access
+from app.schemas.role_schema import RoleCreate, RoleUpdate, RoleResponse
+from app.dependencies import get_current_user
+from app.models.user_m import User
+
+# Permission-based access control
 from app.permission_dependencies import (
     require_view_permission,
     require_create_permission,
@@ -15,25 +18,26 @@ from app.permission_dependencies import (
 
 router = APIRouter(prefix="/roles", tags=["Roles"])
 
-MENU_ID = 4
+MENU_ID = 4   # Roles Menu ID
 
-# 🟢 Create Role (Admin + Create Permission)
+
+# -----------------------------------------------------------
+# CREATE ROLE
+# -----------------------------------------------------------
 @router.post(
-    "/", 
-    response_model=RoleResponse, 
+    "/",
+    response_model=RoleResponse,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_create_permission(MENU_ID))]
 )
 def create_role(
     data: RoleCreate,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_admin)
+    current_user: User = Depends(get_current_user)
 ):
     existing_role = db.query(Role).filter(Role.name == data.name).first()
     if existing_role:
-        raise HTTPException(
-            status_code=400, detail="Role with this name already exists"
-        )
+        raise HTTPException(400, "Role with this name already exists")
 
     new_role = Role(name=data.name)
     db.add(new_role)
@@ -42,40 +46,46 @@ def create_role(
     return new_role
 
 
-# 🟡 Get All Roles (Admin + View Permission)
+# -----------------------------------------------------------
+# GET ALL ROLES
+# -----------------------------------------------------------
 @router.get(
-    "/", 
+    "/",
     response_model=List[RoleResponse],
     dependencies=[Depends(require_view_permission(MENU_ID))]
 )
 def get_all_roles(
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_admin)
+    current_user: User = Depends(get_current_user)
 ):
-    roles = db.query(Role).order_by(Role.id.asc()).all()
-    return roles
+    return db.query(Role).order_by(Role.id.asc()).all()
 
 
-# 🟠 Get Role by ID (Admin + View Permission)
+# -----------------------------------------------------------
+# GET SINGLE ROLE BY ID
+# -----------------------------------------------------------
 @router.get(
-    "/{role_id}", 
+    "/{role_id}",
     response_model=RoleResponse,
     dependencies=[Depends(require_view_permission(MENU_ID))]
 )
 def get_role_by_id(
     role_id: int,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_admin)
+    current_user: User = Depends(get_current_user)
 ):
     role = db.query(Role).filter(Role.id == role_id).first()
     if not role:
-        raise HTTPException(status_code=404, detail="Role not found")
+        raise HTTPException(404, "Role not found")
+
     return role
 
 
-# 🔵 Update Role (Admin + Edit Permission)
+# -----------------------------------------------------------
+# UPDATE ROLE
+# -----------------------------------------------------------
 @router.put(
-    "/{role_id}", 
+    "/{role_id}",
     response_model=RoleResponse,
     dependencies=[Depends(require_edit_permission(MENU_ID))]
 )
@@ -83,20 +93,21 @@ def update_role(
     role_id: int,
     data: RoleUpdate,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_admin)
+    current_user: User = Depends(get_current_user)
 ):
     role = db.query(Role).filter(Role.id == role_id).first()
     if not role:
-        raise HTTPException(status_code=404, detail="Role not found")
+        raise HTTPException(404, "Role not found")
 
+    # Check duplicate name
     if data.name:
-        existing = (
+        exists = (
             db.query(Role)
             .filter(Role.name == data.name, Role.id != role_id)
             .first()
         )
-        if existing:
-            raise HTTPException(status_code=400, detail="Role name already exists")
+        if exists:
+            raise HTTPException(400, "Role name already exists")
 
         role.name = data.name
 
@@ -105,7 +116,9 @@ def update_role(
     return role
 
 
-# 🔴 Delete Role (Admin + Delete Permission)
+# -----------------------------------------------------------
+# DELETE ROLE
+# -----------------------------------------------------------
 @router.delete(
     "/{role_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -114,11 +127,11 @@ def update_role(
 def delete_role(
     role_id: int,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_admin)
+    current_user: User = Depends(get_current_user)
 ):
     role = db.query(Role).filter(Role.id == role_id).first()
     if not role:
-        raise HTTPException(status_code=404, detail="Role not found")
+        raise HTTPException(404, "Role not found")
 
     db.delete(role)
     db.commit()

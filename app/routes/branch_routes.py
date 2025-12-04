@@ -4,7 +4,7 @@ from typing import List
 
 from app.database import get_db
 from app.models.branch_m import Branch
-from app.Schema.branch_schema import BranchCreate, BranchResponse, BranchUpdate
+from app.schemas.branch_schema import BranchCreate, BranchResponse, BranchUpdate
 
 from app.dependencies import get_current_user
 from app.permission_dependencies import (

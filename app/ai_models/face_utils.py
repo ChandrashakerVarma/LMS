@@ -1,88 +1,129 @@
-import cv2
-import os
 import numpy as np
-import face_recognition
-from datetime import datetime
-from deepface import DeepFace
-from app.ai_models.anti_spoof import is_live_face
+import cv2
+from sqlalchemy.orm import Session
+from sklearn.metrics.pairwise import cosine_similarity
 
-FACES_DIR = "app/ai_models/registered_faces"
-if not os.path.exists(FACES_DIR):
-    os.makedirs(FACES_DIR)
+from app.models.user_face_m import UserFace
+from app.ai_models.anti_spoof import is_live_face
+from app.ai_models.insight_model import get_face_model
 
 
 # ---------------------------------------------------------
-# FACE QUALITY CHECK (blur, brightness, angle)
+# FACE QUALITY CHECK
 # ---------------------------------------------------------
 def is_quality_face(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     clarity = cv2.Laplacian(gray, cv2.CV_64F).var()
-
-    if clarity < 50:   # too blurry
-        return False
-    return True
+    return clarity >= 50
 
 
 # ---------------------------------------------------------
-# REGISTER FACE
+# EXTRACT EMBEDDING USING INSIGHTFACE
 # ---------------------------------------------------------
-def register_user_face(image_path, user_id):
-    img = cv2.imread(image_path)
+def extract_embedding(frame):
+    face_app = get_face_model()          # 👈 lazy load here
+    faces = face_app.get(frame)
+
+    if len(faces) == 0:
+        return None
+
+    best_face = max(faces, key=lambda x: x.det_score)
+    return best_face.embedding
+
+
+# ---------------------------------------------------------
+# REGISTER FACE → DB
+# ---------------------------------------------------------
+def register_user_face(db: Session, user_id: int, image_bytes: bytes):
+    arr = np.frombuffer(image_bytes, np.uint8)
+    img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+
+    if img is None:
+        raise Exception("Invalid image format.")
 
     if not is_quality_face(img):
-        return {"success": False, "msg": "Low quality face. Retake with clear lighting."}
+        raise Exception("Face too blurry or low quality.")
 
-    # SPOOF CHECK
     if not is_live_face(img):
-        return {"success": False, "msg": "Spoof detected! Show your real face."}
+        raise Exception("Spoof detected! Show a real face.")
 
-    enc = face_recognition.face_encodings(img)
-    if len(enc) == 0:
-        return {"success": False, "msg": "No detectable face."}
+    embedding = extract_embedding(img)
+    if embedding is None:
+        raise Exception("Unable to detect face.")
 
-    np.save(os.path.join(FACES_DIR, f"{user_id}.npy"), enc[0])
-    return {"success": True, "msg": "Face registered securely"}
+    emb_bytes = embedding.astype("float32").tobytes()
+
+    rec = UserFace(
+        user_id=user_id,
+        embedding=emb_bytes
+    )
+
+    db.add(rec)
+    db.commit()
+    db.refresh(rec)
+    return rec
 
 
 # ---------------------------------------------------------
-# RECOGNIZE FACE WITH EMOTION + POSE + SPOOF CHECK
+# LOAD EMBEDDINGS FROM DB
 # ---------------------------------------------------------
-def analyze_frame(frame):
+def load_all_embeddings(db: Session):
+    faces = db.query(UserFace).all()
+    items = []
 
-    # SPOOF CHECK
-    if not is_live_face(frame):
-        return {"spoof": True}
+    for face in faces:
+        emb = np.frombuffer(face.embedding, dtype=np.float32)
+        items.append((face.user_id, emb))
 
-    rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    encs = face_recognition.face_encodings(rgb)
+    return items
 
-    if len(encs) == 0:
-        return {"recognized": False}
 
-    encoding = encs[0]
+# ---------------------------------------------------------
+# RECOGNIZE USER (strict match for attendance)
+# ---------------------------------------------------------
+def recognize_user(db: Session, frame, threshold=0.45):
+    emb = extract_embedding(frame)
+    if emb is None:
+        return None
 
-    # MULTI-FACE SCAN
-    candidates = []
-    for file in os.listdir(FACES_DIR):
-        if file.endswith(".npy"):
-            uid = file.replace(".npy", "")
-            saved_encoding = np.load(os.path.join(FACES_DIR, file))
+    emb = emb / np.linalg.norm(emb)
 
-            match = face_recognition.compare_faces([saved_encoding], encoding)[0]
-            if match:
-                candidates.append(int(uid))
+    items = load_all_embeddings(db)
+    if len(items) == 0:
+        return None
 
-    if len(candidates) == 0:
-        return {"recognized": False}
+    best_score = -1
+    best_user = None
 
-    user_id = candidates[0]
+    for (uid, db_emb) in items:
+        db_emb = db_emb / np.linalg.norm(db_emb)
+        score = np.dot(emb, db_emb)
 
-    # EMOTION
-    emo = DeepFace.analyze(frame, actions=['emotion'], enforce_detection=False)
+        if score > best_score:
+            best_score = score
+            best_user = uid
 
-    return {
-        "recognized": True,
-        "user_id": user_id,
-        "emotion": emo[0]['dominant_emotion'],
-        "spoof": False
-    }
+    return best_user if best_score >= threshold else None
+
+
+# ---------------------------------------------------------
+# FUZZY FACE SEARCH (Top K similar users)
+# ---------------------------------------------------------
+def fuzzy_face_search(db: Session, frame, top_k=5):
+    emb = extract_embedding(frame)
+    if emb is None:
+        return []
+
+    emb = emb.reshape(1, -1)
+
+    items = load_all_embeddings(db)
+    if len(items) == 0:
+        return []
+
+    results = []
+    for (uid, db_emb) in items:
+        score = cosine_similarity(emb, db_emb.reshape(1, -1))[0][0]
+        results.append((uid, float(score)))
+
+    results.sort(key=lambda x: x[1], reverse=True)
+    return results[:top_k]

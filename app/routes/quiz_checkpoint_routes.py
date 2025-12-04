@@ -6,7 +6,7 @@ from app.database import get_db
 from app.models.video_m import Video
 from app.models.course_m import Course
 from app.models.QuizCheckpoint_m import QuizCheckpoint
-from app.Schema.quiz_checkpoint_schema import (
+from app.schemas.quiz_checkpoint_schema import (
     QuizCheckpointResponse,
     QuizCheckpointCreate,
     QuizCheckpointUpdate

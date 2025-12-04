@@ -1,91 +1,82 @@
 import cv2
 import numpy as np
-from scipy.spatial import distance as dist
 
 
-# ---------------------------------------------------------
-# LEVEL 1: LBP Texture Analysis (detect printed photos)
-# ---------------------------------------------------------
-def lbp_histogram(image):
+# ============================================================
+# SHARPNESS CHECK (BLUR DETECTOR)
+# Prevents users from uploading extremely blurry photos.
+# ============================================================
+def is_blurry(image, threshold=60.0):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    lbp = np.zeros_like(gray)
-
-    for i in range(1, gray.shape[0] - 1):
-        for j in range(1, gray.shape[1] - 1):
-            center = gray[i, j]
-            binary = ""
-
-            binary += "1" if gray[i - 1, j - 1] > center else "0"
-            binary += "1" if gray[i - 1, j] > center else "0"
-            binary += "1" if gray[i - 1, j + 1] > center else "0"
-            binary += "1" if gray[i, j + 1] > center else "0"
-            binary += "1" if gray[i + 1, j + 1] > center else "0"
-            binary += "1" if gray[i + 1, j] > center else "0"
-            binary += "1" if gray[i + 1, j - 1] > center else "0"
-            binary += "1" if gray[i, j - 1] > center else "0"
-
-            lbp[i, j] = int(binary, 2)
-
-    hist, _ = np.histogram(lbp.ravel(), 256, [0, 256])
-    hist = hist.astype("float")
-    hist /= hist.sum()
-    return hist
+    variance = cv2.Laplacian(gray, cv2.CV_64F).var()
+    return variance < threshold  # True → blurry
 
 
-def lbp_spoof_detector(frame):
-    hist = lbp_histogram(frame)
-    flatness = hist[0] + hist[-1]  # printed photos show high flatness
+# ============================================================
+# LIGHTWEIGHT LBP CHECK (very soft) — works on photos
+# ============================================================
+def lbp_live_check(image):
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-    if flatness > 0.35:
-        return False  # SPOOF
-    return True  # LIVE
+    # Compute histogram
+    hist = cv2.calcHist([gray], [0], None, [256], [0, 256])
+    hist = hist.ravel() / hist.sum()
 
+    # Flat printed images tend to have huge counts in first & last bins
+    flatness = hist[0] + hist[-1]
 
-# ---------------------------------------------------------
-# LEVEL 2: Eye Blink + Mouth Movement (real-time check)
-# ---------------------------------------------------------
-def eye_aspect_ratio(eye):
-    A = dist.euclidean(eye[1], eye[5])
-    B = dist.euclidean(eye[2], eye[4])
-    C = dist.euclidean(eye[0], eye[3])
-    return (A + B) / (2.0 * C)
+    # Very soft threshold so real selfies do not fail
+    return flatness < 0.70  # True → Live
 
 
-def blink_detector(ear):
-    return ear < 0.21  # threshold
-
-
-# ---------------------------------------------------------
-# LEVEL 3: Shadow/Depth Check (3D estimation)
-# ---------------------------------------------------------
-def depth_shadow_check(frame):
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+# ============================================================
+# DEPTH / SHADOW CHECK (soft version)
+# Detects 2D flat surfaces like printed photos
+# ============================================================
+def depth_shadow_live_check(image):
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     sobel = cv2.Sobel(gray, cv2.CV_64F, 1, 1, ksize=5)
 
     variance = np.var(sobel)
-    if variance < 150:   # flat surface = printed photo
-        return False
-    return True
+
+    # Very soft threshold to avoid false positives
+    return variance > 60   # True → Live
 
 
-# ---------------------------------------------------------
-# FINAL SPOOF DETECTION
-# ---------------------------------------------------------
-def is_live_face(frame):
+# ============================================================
+# FINAL DECISION LOGIC
+# mode = "registration" → allow all (no spoof check)
+# mode = "attendance"   → apply soft spoof checks
+# ============================================================
+def is_live_face(image, mode="attendance"):
     """
-    Returns:
-        True → Real human
-        False → Spoof attack
+    RETURNS:
+        True  → image is live
+        False → spoof detected
     """
 
-    # LEVEL 1: LBP
-    if not lbp_spoof_detector(frame):
+    # ---------------------------------------------------------
+    # REGISTRATION MODE → DO NOT BLOCK SPOOF, only blur check
+    # ---------------------------------------------------------
+    if mode == "registration":
+        if is_blurry(image):
+            return False  # force retake only if blurry
+        return True
+
+    # ---------------------------------------------------------
+    # ATTENDANCE MODE → Apply 2 soft spoof checks
+    # ---------------------------------------------------------
+
+    # 1. Blur check
+    if is_blurry(image):
+        return False  # likely printed or screen show
+
+    # 2. LBP soft check
+    if not lbp_live_check(image):
         return False
 
-    # LEVEL 2: Depth/Shadow
-    if not depth_shadow_check(frame):
+    # 3. Depth/shadow soft check
+    if not depth_shadow_live_check(image):
         return False
-
-    # LEVEL 3: (Blink detection optional - landmarks needed)
 
     return True

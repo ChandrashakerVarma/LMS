@@ -5,7 +5,7 @@ from app.database import get_db
 from app.models.QuizHistory_m import QuizHistory
 from app.models.QuizCheckpoint_m import QuizCheckpoint
 from app.models.video_m import Video
-from app.Schema.quiz_history_schema import QuizHistoryCreate, QuizHistoryMessageResponse, QuizHistoryResponse
+from app.schemas.quiz_history_schema import QuizHistoryCreate, QuizHistoryMessageResponse, QuizHistoryResponse
 from app.dependencies import get_current_user
 
 # ✅ Permission imports

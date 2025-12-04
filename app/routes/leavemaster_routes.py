@@ -6,14 +6,17 @@ from datetime import datetime
 from app.database import get_db
 from app.models.leavemaster_m import LeaveMaster
 from app.models.user_m import User
-<<<<<<< HEAD
-from app.Schema.leavemaster_schema import LeaveMasterCreate, LeaveMasterUpdate, LeaveMasterOut
-=======
-from app.schema.leavemaster_schema import LeaveMasterCreate, LeaveMasterUpdate, LeaveMasterResponse
->>>>>>> origin/main
+
+# ✅ Correct Pydantic schema import path (Pydantic v2 safe)
+from app.schemas.leavemaster_schema import (
+    LeaveMasterCreate,
+    LeaveMasterUpdate,
+    LeaveMasterResponse
+)
+
 from app.dependencies import get_current_user
 
-# ---- Permission imports (your required style) ----
+# ---- Permission imports ----
 from app.permission_dependencies import (
     require_view_permission,
     require_create_permission,
@@ -33,10 +36,12 @@ def create_leave(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_create_permission(MENU_ID))
 ):
+    # Check user exists
     user = db.query(User).filter(User.id == leave.user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
+    # Check duplicate leave record
     existing_leave = db.query(LeaveMaster).filter(
         LeaveMaster.user_id == leave.user_id,
         LeaveMaster.holiday == leave.holiday
@@ -45,6 +50,7 @@ def create_leave(
     if existing_leave:
         return existing_leave
 
+    # Create new leave
     new_leave = LeaveMaster(
         **leave.dict(),
         created_by=current_user.first_name
@@ -61,8 +67,7 @@ def get_all_leaves(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_view_permission(MENU_ID))
 ):
-    leaves = db.query(LeaveMaster).all()
-    return leaves
+    return db.query(LeaveMaster).all()
 
 
 # 🔍 Get Leave by ID
@@ -90,6 +95,7 @@ def update_leave(
     if not leave:
         raise HTTPException(status_code=404, detail="Leave record not found")
 
+    # Apply updates
     for key, value in updated_data.dict(exclude_unset=True).items():
         setattr(leave, key, value)
 
@@ -114,4 +120,5 @@ def delete_leave(
 
     db.delete(leave)
     db.commit()
+
     return {"message": "Leave record deleted successfully"}

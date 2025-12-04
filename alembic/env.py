@@ -3,19 +3,20 @@ import os
 from logging.config import fileConfig
 from sqlalchemy import create_engine, pool
 from alembic import context
+from urllib.parse import quote_plus
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
+# Load .env file
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
-# Alembic config
+# Alembic Config object
 config = context.config
 
-# Logging
+# Logging configuration
 if config.config_file_name:
     fileConfig(config.config_file_name)
 
-# Import Base and models
+# ---- APP MODEL IMPORT SETUP ----
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from app.database import Base
@@ -25,43 +26,73 @@ from app.models import (
     shift_m, department_m, leavemaster_m, payroll_attendance_m,
     branch_m, category_m, organization_m, salary_structure_m, payroll_m,
     formula_m, permission_m, attendance_m, candidate_documents_m,
-    candidate_m, job_posting_m, shift_change_request_m,shift_roster_detail_m,
-    user_shifts_m,notification_m,menu_m,role_right_m,shift_roster_m,week_day_m,job_description_m
+    candidate_m, job_posting_m, shift_change_request_m, shift_roster_detail_m,
+    user_shifts_m, notification_m, menu_m, role_right_m,
+    shift_roster_m, week_day_m, job_description_m,
+    subscription_plans_m, add_on_m, organization_add_on_m, payment_m
 )
 
 target_metadata = Base.metadata
 
-# Read DB config
+
+# ----------------------------------------------------
+# ✔ Safe Database URL Builder (handles @ inside password)
+# ----------------------------------------------------
 def get_database_url():
-    # ⭐ IMPORTANT FIX ⭐
-    # When running on GitHub Actions → DB_HOST must be "mysql"
+    db_user = os.getenv("DB_USER")
+    raw_password = os.getenv("DB_PASSWORD")
     db_host = os.getenv("GITHUB_DB_HOST") or os.getenv("DB_HOST")
+    db_name = os.getenv("DB_NAME")
 
-    return f"mysql+pymysql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{db_host}:3306/{os.getenv('DB_NAME')}"
+    # ⭐ FIX: Encode password so @ → %40
+    db_password = quote_plus(raw_password)
 
-# Offline migrations
+    url = f"mysql+pymysql://{db_user}:{db_password}@{db_host}:3306/{db_name}"
+
+    # Print only for debugging (safe because encoded)
+    print("Using DATABASE_URL:", url)
+
+    return url
+
+
+# ----------------------------------------------------
+# OFFLINE MIGRATIONS
+# ----------------------------------------------------
 def run_migrations_offline():
+    url = get_database_url()
     context.configure(
-        url=get_database_url(),
+        url=url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
     )
+
     with context.begin_transaction():
         context.run_migrations()
 
-# Online migrations
+
+# ----------------------------------------------------
+# ONLINE MIGRATIONS
+# ----------------------------------------------------
 def run_migrations_online():
     connectable = create_engine(
         get_database_url(),
         poolclass=pool.NullPool
     )
+
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+        )
+
         with context.begin_transaction():
             context.run_migrations()
 
-# Entry point
+
+# ----------------------------------------------------
+# ENTRY POINT
+# ----------------------------------------------------
 if context.is_offline_mode():
     run_migrations_offline()
 else:

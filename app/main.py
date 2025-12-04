@@ -1,5 +1,5 @@
 # ==========================================================
-# main.py (FINAL FIXED VERSION)
+# main.py (FINAL MERGED VERSION)
 # ==========================================================
 
 from fastapi import FastAPI
@@ -16,7 +16,7 @@ from app.models import (
     formula_m, permission_m, attendance_m, payroll_attendance_m,
     job_posting_m, candidate_m, candidate_documents_m, menu_m,
     role_right_m, shift_roster_detail_m, shift_roster_m,
-    user_shifts_m, shift_change_request_m
+    user_shifts_m, shift_change_request_m, job_description_m, notification_m
 )
 
 # ROUTERS
@@ -53,6 +53,8 @@ from app.routes.shift_summery_routes import router as shift_summary_router
 from app.routes.job_posting_routes import router as job_posting_router
 from app.routes.candidate_routes import router as candidate_router
 from app.routes.candidates_documents_routes import router as candidate_docs_router
+from app.routes.job_description_routes import router as job_description_router
+from app.routes.notification_routes import router as notification_router
 
 # AI
 from app.routes.face_routes import router as face_router
@@ -64,13 +66,12 @@ from app.seeders.role_seeder import seed_roles
 from app.seeders.menu_seeder import seed_menus
 from app.seeders.role_right_seeder import seed_role_rights
 from app.seeders.week_day_seeders import seed_weekdays
-
+from app.seeders.super_admin import seed_super_admin
 
 # ==========================================================
 # APP INITIALIZATION
 # ==========================================================
 app = FastAPI(title="LMS + HRMS + AI Attendance Backend")
-
 
 # ==========================================================
 # CORS
@@ -83,14 +84,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 # ==========================================================
 # ROOT
 # ==========================================================
 @app.get("/")
 def root():
     return {"status": "ok", "message": "LMS + HRMS + AI Attendance Running 🚀"}
-
 
 # ==========================================================
 # REGISTER ROUTERS (CLEAN ORDER)
@@ -134,6 +133,8 @@ app.include_router(payroll_attendance_router)
 app.include_router(job_posting_router)
 app.include_router(candidate_router)
 app.include_router(candidate_docs_router)
+app.include_router(job_description_router)
+app.include_router(notification_router)
 
 # Attendance (Manual + AI)
 app.include_router(attendance_router)         # /attendance/
@@ -142,12 +143,14 @@ app.include_router(ai_attendance_router)      # /attendance/ai-checkin
 # AI Face Registration
 app.include_router(face_router)
 
-
 # ==========================================================
 # DB INIT + SEEDERS
 # ==========================================================
 Base.metadata.create_all(bind=engine)
+
+# Seed core data
 seed_roles()
 seed_menus()
 seed_role_rights()
+seed_super_admin()
 seed_weekdays()

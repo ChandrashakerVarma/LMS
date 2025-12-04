@@ -4,7 +4,7 @@ from typing import List
 
 from app.database import get_db
 from app.models.department_m import Department
-from app.Schema.department_schema import DepartmentCreate, DepartmentUpdate, DepartmentResponse
+from app.schemas.department_schema import DepartmentCreate, DepartmentUpdate, DepartmentResponse
 
 from app.dependencies import get_current_user
 from app.permission_dependencies import (

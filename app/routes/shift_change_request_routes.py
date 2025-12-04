@@ -4,7 +4,7 @@ from typing import List
 
 from app.database import get_db
 from app.models.shift_change_request_m import ShiftChangeRequest
-from app.Schema.shift_change_request_schema import (
+from app.schemas.shift_change_request_schema import (
     ShiftChangeRequestCreate,
     ShiftChangeRequestUpdate,
     ShiftChangeRequestResponse

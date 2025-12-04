@@ -1,7 +1,16 @@
-# app/utils/attendance_utils.py
+# D:\LMS\app\utils\attendance_utils.py
+
 from datetime import datetime, timedelta, time
+from typing import Tuple, Optional
 
+from app.models.attendance_location_policy_m import AttendanceLocationPolicy
+from app.models.user_m import User
+from app.utils.geo_utils import haversine_distance as external_haversine  # optional if you already have geo_utils
+from app.database import SessionLocal
 
+# ------------------------------
+# Attendance time calculations
+# ------------------------------
 def calculate_attendance_status(
     shift_start: time,
     shift_end: time,
@@ -9,41 +18,40 @@ def calculate_attendance_status(
     working_minutes: int,
     punch_in: datetime,
     punch_out: datetime,
-):
+) -> dict:
     """
-    Calculate attendance status based on shift timing, lag, and punch duration.
-    Handles overnight shifts (e.g., 22:00–06:00 next day).
+    Calculate the attendance status and total worked minutes.
+    Handles cross-midnight shifts.
+    Returns: {"total_worked_minutes": int, "status": "Full Day"|"Half Day"|"Absent"}
     """
 
-    # Convert timezone-aware datetimes to naive
+    # normalize tz-aware datetimes to naive (UTC)
     if punch_in.tzinfo:
         punch_in = punch_in.replace(tzinfo=None)
     if punch_out.tzinfo:
         punch_out = punch_out.replace(tzinfo=None)
 
-    # Determine shift start & end datetime based on punch_in date
+    # Build shift start/end datetimes on punch_in date
     shift_start_dt = datetime.combine(punch_in.date(), shift_start)
     shift_end_dt = datetime.combine(punch_in.date(), shift_end)
 
-    # Handle cross-midnight shifts
+    # If shift_end is earlier or equal to start → next day
     if shift_end_dt <= shift_start_dt:
-        shift_end_dt += timedelta(days=1)
+        shift_end_dt = shift_end_dt + timedelta(days=1)
 
-    # Allow small lag buffer
-    early_start = shift_start_dt - timedelta(minutes=lag_minutes)
-    late_end = shift_end_dt + timedelta(minutes=lag_minutes)
+    # Allow small lag buffer both sides
+    earliest_allowed = shift_start_dt - timedelta(minutes=lag_minutes)
+    latest_allowed = shift_end_dt + timedelta(minutes=lag_minutes)
 
-    # Clip actual punches within this window
-    punch_in_clipped = max(punch_in, early_start)
-    punch_out_clipped = min(punch_out, late_end)
+    # Clip punches to window
+    punch_in_clipped = max(punch_in, earliest_allowed)
+    punch_out_clipped = min(punch_out, latest_allowed)
 
-    # Ensure valid range
     if punch_out_clipped < punch_in_clipped:
         return {"total_worked_minutes": 0, "status": "Absent"}
 
     total_worked_minutes = int((punch_out_clipped - punch_in_clipped).total_seconds() / 60)
 
-    # Determine status
     half_day_threshold = working_minutes // 2
     if total_worked_minutes >= working_minutes:
         status = "Full Day"
@@ -52,89 +60,137 @@ def calculate_attendance_status(
     else:
         status = "Absent"
 
-    return {
-        "total_worked_minutes": total_worked_minutes,
-        "status": status
-    }
+    return {"total_worked_minutes": total_worked_minutes, "status": status}
+
+
 # ------------------------------
-# AI FACE + GEO LOCATION POLICY
+# Haversine distance (meters)
 # ------------------------------
-
-from app.models.attendance_location_policy_m import AttendanceLocationPolicy
-from app.utils.geo_utils import haversine_distance
-
-
-def resolve_location_policy(db, user_id, branch_id=None, organization_id=None):
+def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """
-    Priority order: User > Branch > Organization
+    Compute distance in meters between two lat/long points using Haversine formula.
+    If you already have app.utils.geo_utils.haversine_distance, you can use that instead.
     """
-    # User-specific policy
+    try:
+        # Prefer external helper if available (keeps behaviour consistent)
+        if external_haversine:
+            return external_haversine(lat1, lon1, lat2, lon2)
+    except Exception:
+        # fallthrough to internal implementation
+        pass
+
+    from math import radians, sin, cos, asin, sqrt
+
+    R = 6371000.0  # Earth radius in meters
+
+    dlat = radians(lat2 - lat1)
+    dlon = radians(lon2 - lon1)
+    a = sin(dlat / 2.0) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2.0) ** 2
+    c = 2 * asin(sqrt(a))
+    return R * c
+
+
+# ------------------------------
+# Resolve active policy (User > Branch > Organization)
+# ------------------------------
+def resolve_location_policy(db, user_id: int, branch_id: Optional[int] = None, organization_id: Optional[int] = None) -> Optional[AttendanceLocationPolicy]:
+    """
+    Return the most-specific active AttendanceLocationPolicy.
+    Priority: User -> Branch -> Organization
+    """
+    # 1) user policy
     policy = (
         db.query(AttendanceLocationPolicy)
-        .filter(
-            AttendanceLocationPolicy.user_id == user_id,
-            AttendanceLocationPolicy.is_active.is_(True),
-        )
+        .filter(AttendanceLocationPolicy.user_id == user_id, AttendanceLocationPolicy.is_active.is_(True))
         .first()
     )
 
-    # Branch policy
-    if not policy and branch_id:
+    if policy:
+        return policy
+
+    # 2) branch policy
+    if branch_id:
         policy = (
             db.query(AttendanceLocationPolicy)
-            .filter(
-                AttendanceLocationPolicy.branch_id == branch_id,
-                AttendanceLocationPolicy.is_active.is_(True),
-            )
+            .filter(AttendanceLocationPolicy.branch_id == branch_id, AttendanceLocationPolicy.is_active.is_(True))
             .first()
         )
+        if policy:
+            return policy
 
-    # Organization policy
-    if not policy and organization_id:
+    # 3) organization policy
+    if organization_id:
         policy = (
             db.query(AttendanceLocationPolicy)
-            .filter(
-                AttendanceLocationPolicy.organization_id == organization_id,
-                AttendanceLocationPolicy.is_active.is_(True),
-            )
+            .filter(AttendanceLocationPolicy.organization_id == organization_id, AttendanceLocationPolicy.is_active.is_(True))
             .first()
         )
+        if policy:
+            return policy
 
-    return policy
+    return None
 
 
-def check_location(db, user_id, branch_id, organization_id, lat, long):
+# ------------------------------
+# Check location against policy
+# ------------------------------
+def check_location(db, user_id: int, branch_id: Optional[int], organization_id: Optional[int], lat: Optional[float], long: Optional[float]) -> Tuple[str, bool]:
     """
-    Returns:
-        ("INSIDE", True)
-        ("OUTSIDE", False)
-        ("WFA", True)
+    Evaluate lat/long against resolved policy.
+    Returns (status_string, allowed_bool)
+
+    status_string: one of "INSIDE", "OUTSIDE", "WFA", "ANY"
     """
 
     policy = resolve_location_policy(db, user_id, branch_id, organization_id)
 
-    # If no policy → allow attendance normally
+    # No policy configured -> allow by default (INSIDE)
     if not policy:
         return "INSIDE", True
 
-    # Work From Anywhere
+    # Work from anywhere mode on policy
     if policy.mode == "WFA":
         return "WFA", True
 
-    # No restriction
+    # Anywhere allowed
     if policy.mode == "ANYWHERE":
-        return "INSIDE", True
+        return "ANY", True
 
-    # Geo-fencing mode
+    # GEO_FENCE mode requires allowed_lat/long
     if policy.mode == "GEO_FENCE":
+        if lat is None or long is None:
+            # Missing coords → treat as outside
+            return "OUTSIDE", False
+
         if policy.allowed_lat is None or policy.allowed_long is None:
             return "OUTSIDE", False
 
+        radius = policy.radius_meters or 200  # default 200m if not set
         distance = haversine_distance(lat, long, policy.allowed_lat, policy.allowed_long)
 
-        if distance <= (policy.radius_meters or 200):
+        if distance <= radius:
             return "INSIDE", True
         else:
             return "OUTSIDE", False
 
+    # Default fallback: allow
     return "INSIDE", True
+
+
+# ------------------------------
+# Helper: get user attendance_mode (WFH/BRANCH/ANY)
+# ------------------------------
+def get_user_attendance_mode(db, user_id: int) -> str:
+    """
+    Read `attendance_mode` from user row. Returns uppercase string:
+    "BRANCH" (default), "WFH", or "ANY".
+    """
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        return "BRANCH"
+    mode = (user.attendance_mode or "BRANCH").upper()
+    if mode == "WFH":
+        return "WFH"
+    if mode == "ANY":
+        return "ANY"
+    return "BRANCH"

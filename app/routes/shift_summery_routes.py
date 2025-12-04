@@ -6,7 +6,7 @@ from app.models.user_m import User
 from app.models.shift_roster_detail_m import ShiftRosterDetail
 
 from app.models.user_shifts_m import UserShift
-from app.dependencies import require_admin
+from app.dependencies import require_org_admin
 
 router = APIRouter(prefix="/shift-summary", tags=["Shift Summary"])
 
@@ -229,8 +229,4 @@ def delete_monthly_roster(
         "year": year,
         "total_deleted_records": total_deleted,
         "affected_users": len(users)
-<<<<<<< HEAD
     }
-=======
-    }
->>>>>>> origin/main

@@ -1,0 +1,64 @@
+[33m440a746[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32msai[m[33m)[m Local changes before merging sasir branch
+[33maaa7448[m Fixed merge conflict and restored clean main.py
+[33m4b3369a[m[33m ([m[1;31morigin/sai[m[33m)[m Removed JobRole and Workflow modules as per main branch
+[33mf6917db[m Added face recognition + geo attendance feature
+[33m416b219[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Merge pull request #10 from ChandrashakerVarma/new_srilaxmi
+[33ma2e0904[m[33m ([m[1;31morigin/new_srilaxmi[m[33m)[m fixed issue while starting app
+[33m5ef1d5f[m Your meaningful commit message here
+[33m49c713a[m your message
+[33m79a0a14[m[33m ([m[1;31morigin/laxman[m[33m, [m[1;32mmain[m[33m)[m Merge pull request #7 from ChandrashakerVarma/ravi_branch
+[33m326dd03[m added roster feature
+[33m02d1b21[m Merge pull request #6 from ChandrashakerVarma/ravi_branch
+[33m2ba2f58[m added menus feature
+[33mc0d0bf4[m Merge pull request #5 from ChandrashakerVarma/new_chandu
+[33m7a2ea55[m[33m ([m[1;31morigin/new_chandu[m[33m)[m Delete mysql-init/fix-auth.sql
+[33mf49ab7f[m Delete .github/workflows/alembic-check.yml
+[33m1f0a789[m Delete mysql-init/fix-auth.sql
+[33ma9ba839[m Delete .github/workflows/alembic-check.yml
+[33m3168ee3[m Add MySQL readiness check before Alembic upgrade
+[33m618fae5[m Add MySQL readiness check before Alembic upgrade
+[33ma641626[m Fix comments and clean up alembic-check.yml
+[33m554b4d9[m Update MySQL health check and comments in workflow
+[33m5afe667[m Merge branch 'main' into new_chandu
+[33md8fd3a5[m Update alembic-check.yml
+[33m3f3e1bd[m Fix database URL for GitHub Actions
+[33m5d5ed33[m Update MySQL service configuration in workflow
+[33mb46e0bb[m Refactor database URL retrieval and migration functions
+[33m1ed6f0b[m Update alembic-check.yml for MySQL setup
+[33m2324515[m Update alembic-check.yml for MySQL setup
+[33mdc1b7fc[m Modify MySQL host and add readiness check
+[33me3ef107[m Fix MySQL root user authentication method
+[33m0a9eb8f[m Fix MySQL host and add readiness check in workflow
+[33m5f1ed34[m Fix MySQL root user authentication method
+[33m3c9a84b[m Fix environment variables in alembic-check.yml
+[33m02aa8d2[m Fix MySQL host and database URL formatting
+[33md505460[m Fix MySQL configuration in alembic-check.yml
+[33ma696ca1[m Fix MySQL settings in alembic-check.yml
+[33mac71fb4[m Update DATABASE_URL for Alembic upgrade
+[33m0977a27[m Update DATABASE_URL for Alembic upgrade
+[33m50bb3f3[m chandu changes
+[33m2ff585d[m Add Alembic migration check workflow
+[33me046160[m bug fixed n role and user model
+[33mcaaa26b[m applied srilaxmi migrations
+[33mb08befd[m created as a single migration
+[33mc5e0092[m changes
+[33meb3c618[m WIP: local changes before switching to chandu
+[33ma45610a[m Merge pull request #4 from ChandrashakerVarma/chandu
+[33m690b18f[m Merge branch 'main' into chandu
+[33m0f2734b[m Resolved merge conflicts with main branch
+[33mb14e5a1[m Updated LMS: quiz checkpoints bound to videos and course improvements
+[33m22d6be8[m jobposting module added
+[33m8861a50[m Forced update with latest code
+[33m89bd48d[m Updated modified code in LMS project
+[33md2e960e[m Remove venv and .env from repo; ignore them
+[33m7d537fa[m Added full CRUD operations for QuizHistory with updated schema
+[33m223b92f[m Initial commit
+[33mc2527d8[m Initial commit
+[33m2949677[m Initial commit
+[33m1460eb8[m Initial commit
+[33m6687f00[m first commit
+[33m65baa80[m Merge branch 'main' of https://github.com/ChandrashakerVarma/LMS
+[33m69324be[m modified code
+[33m18ff0c4[m Create README.md
+[33mf773ddb[m Initial commit - LMS project
+[33mf6c4024[m Initial commit - LMS project with auth, courses, lessons, enrollment, progress

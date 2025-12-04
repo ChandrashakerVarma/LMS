@@ -5,7 +5,7 @@ from datetime import datetime
 
 from app.database import get_db
 from app.models.job_description_m import JobDescription
-from app.schema.job_description_schema import (
+from app.schemas.job_description_schema import (
     JobDescriptionCreate,
     JobDescriptionResponse,
     JobDescriptionUpdate,

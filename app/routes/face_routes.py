@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies import get_current_user
-from app.utils.face_utils import register_user_face
+from app.ai_models.face_utils import register_user_face
 
 router = APIRouter(prefix="/face", tags=["Face Recognition"])
 

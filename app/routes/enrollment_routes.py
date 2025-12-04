@@ -6,7 +6,7 @@ from app.database import get_db
 from app.models.enrollment_m import Enrollment
 from app.models.user_m import User
 from app.models.course_m import Course
-from app.Schema.enrollment_schema import EnrollmentCreate, EnrollmentResponse
+from app.schemas.enrollment_schema import EnrollmentCreate, EnrollmentResponse
 
 from app.permission_dependencies import (
     require_view_permission,

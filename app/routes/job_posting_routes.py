@@ -1,6 +1,3 @@
-# app/routes/job_posting_routes.py
-# app/routes/job_posting_routes.py
-
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -11,12 +8,9 @@ from app.models.job_posting_m import JobPosting, ApprovalStatus
 from app.models.candidate_m import Candidate
 from app.models.notification_m import Notification
 from app.models.user_m import User
-<<<<<<< HEAD
-from app.Schema.job_posting_schema import JobPostingCreate, JobPostingUpdate, JobPostingOut
-=======
 from app.models.role_m import Role
 
-from app.schema.job_posting_schema import (
+from app.schemas.job_posting_schema import (
     AcceptedCandidateResponse,
     JobPostingCreate,
     JobPostingUpdate,
@@ -25,7 +19,6 @@ from app.schema.job_posting_schema import (
 
 from app.utils.email_utils import send_email
 from app.config import settings
->>>>>>> origin/main
 
 from app.permission_dependencies import (
     require_view_permission,
@@ -49,7 +42,6 @@ def create_job_posting(
     current_user: User = Depends(require_create_permission(MENU_ID))
 ):
 
-    # Duplicate check
     existing_job = (
         db.query(JobPosting)
         .filter(
@@ -69,14 +61,13 @@ def create_job_posting(
     job = JobPosting(
         **data.model_dump(),
         created_by_id=current_user.id,
-        created_by_name=current_user.first_name
+        created_by_name=current_user.first_name,
     )
 
     db.add(job)
     db.commit()
     db.refresh(job)
 
-    # Notify admins
     admin_users = (
         db.query(User)
         .join(Role, User.role_id == Role.id)
@@ -92,7 +83,6 @@ def create_job_posting(
                 message=f"New Job Posted: job id {job.id} — location {job.location}",
             )
         )
-
         if admin.email:
             admin_emails.append(admin.email)
 
@@ -117,7 +107,7 @@ def create_job_posting(
 
 
 # ------------------------------------------------------------
-# 2️⃣ GET ALL JOB POSTINGS
+# GET ALL JOB POSTINGS
 # ------------------------------------------------------------
 @router.get("/", response_model=List[JobPostingResponse])
 def get_all_job_postings(
@@ -129,7 +119,7 @@ def get_all_job_postings(
 
 
 # ------------------------------------------------------------
-# 3️⃣ GET SINGLE POSTING
+# GET SINGLE POSTING
 # ------------------------------------------------------------
 @router.get("/{job_posting_id}", response_model=JobPostingResponse)
 def get_job_posting(
@@ -146,7 +136,7 @@ def get_job_posting(
 
 
 # ------------------------------------------------------------
-# 4️⃣ UPDATE POSTING
+# UPDATE POSTING
 # ------------------------------------------------------------
 @router.put("/{job_posting_id}", response_model=JobPostingResponse)
 def update_job_posting(
@@ -163,7 +153,7 @@ def update_job_posting(
     for key, value in updated.model_dump(exclude_unset=True).items():
         setattr(posting, key, value)
 
-    posting.modified_by = current_user.first_name if current_user else None
+    posting.modified_by = current_user.first_name
     posting.updated_at = datetime.utcnow()
 
     db.commit()
@@ -173,7 +163,7 @@ def update_job_posting(
 
 
 # ------------------------------------------------------------
-# 5️⃣ DELETE POSTING
+# DELETE POSTING
 # ------------------------------------------------------------
 @router.delete("/{job_posting_id}")
 def delete_job_posting(
@@ -193,7 +183,7 @@ def delete_job_posting(
 
 
 # ------------------------------------------------------------
-# 6️⃣ FILTER POSTINGS
+# FILTER POSTINGS
 # ------------------------------------------------------------
 @router.get("/filters", response_model=List[JobPostingResponse])
 def filter_jobs(
@@ -220,7 +210,7 @@ def filter_jobs(
 
 
 # ------------------------------------------------------------
-# 7️⃣ ADMIN DASHBOARD
+# ADMIN DASHBOARD
 # ------------------------------------------------------------
 @router.get("/admin/dashboard")
 def admin_dashboard(
@@ -236,7 +226,7 @@ def admin_dashboard(
 
 
 # ------------------------------------------------------------
-# 8️⃣ ACCEPTED CANDIDATES
+# ACCEPTED CANDIDATES
 # ------------------------------------------------------------
 @router.get("/accepted-candidates", response_model=List[AcceptedCandidateResponse])
 def get_accepted_candidates(
