@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from datetime import datetime
 
 from app.models.shift_roster_detail_m import ShiftRosterDetail
 from app.schema.shift_roster_detail_schema import (
@@ -7,21 +8,22 @@ from app.schema.shift_roster_detail_schema import (
     ShiftRosterDetailUpdate,
     ShiftRosterDetailResponse
 )
-
 from app.database import get_db
+from app.dependencies import get_current_user  # Assuming you have this dependency
 
 router = APIRouter(
     prefix="/shift_roster_details",
     tags=["Shift Roster Details"]
 )
 
+
 # ---------------------- CREATE ----------------------
 @router.post("/", response_model=ShiftRosterDetailResponse)
 def create_shift_roster_detail(
-    detail: ShiftRosterDetailCreate, 
-    db: Session = Depends(get_db)
+    detail: ShiftRosterDetailCreate,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user)
 ):
-
     # Duplicate check
     existing = db.query(ShiftRosterDetail).filter(
         ShiftRosterDetail.shift_roster_id == detail.shift_roster_id,
@@ -38,7 +40,10 @@ def create_shift_roster_detail(
         shift_roster_id=detail.shift_roster_id,
         week_day_id=detail.week_day_id,
         shift_id=detail.shift_id,
-        created_by=detail.created_by
+        created_by=current_user.first_name,
+        modified_by=None,
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow()
     )
 
     db.add(new_detail)
@@ -69,11 +74,11 @@ def get_shift_roster_detail(detail_id: int, db: Session = Depends(get_db)):
 # ---------------------- UPDATE ----------------------
 @router.put("/{detail_id}", response_model=ShiftRosterDetailResponse)
 def update_shift_roster_detail(
-    detail_id: int, 
-    updated_data: ShiftRosterDetailUpdate, 
-    db: Session = Depends(get_db)
+    detail_id: int,
+    updated_data: ShiftRosterDetailUpdate,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user)
 ):
-
     detail = db.query(ShiftRosterDetail).filter(
         ShiftRosterDetail.id == detail_id
     ).first()
@@ -98,6 +103,10 @@ def update_shift_roster_detail(
     # Apply updates
     for key, value in updated_data.dict(exclude_unset=True).items():
         setattr(detail, key, value)
+
+    # Set modified_by and updated_at
+    detail.modified_by = current_user.first_name
+    detail.updated_at = datetime.utcnow()
 
     db.commit()
     db.refresh(detail)

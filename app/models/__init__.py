@@ -32,3 +32,7 @@ from app.models.add_on_m import *
 from app.models.organization_add_on_m import *
 from app.models.payment_m import *
 
+from app.models.holiday_m import *
+from app.models.shift_m import Shift
+from app.models.department_m import Department
+from app.models.attendance_punch_m import AttendancePunch

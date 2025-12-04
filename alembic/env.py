@@ -29,8 +29,8 @@ from app.models import (
     formula_m, permission_m, attendance_m, candidate_documents_m,
     candidate_m, job_posting_m, shift_change_request_m,shift_roster_detail_m,
     user_shifts_m,notification_m,menu_m,role_right_m,shift_roster_m,week_day_m,job_description_m,
-    subscription_plans_m,add_on_m,organization_add_on_m,payment_m
-    
+    subscription_plans_m,add_on_m,organization_add_on_m,payment_m,
+    attendance_punch_m
 )
 
 target_metadata = Base.metadata
