@@ -1,7 +1,10 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional
 from datetime import date, datetime
 
+# ---------------------------------------------------------
+# Base User Fields
+# ---------------------------------------------------------
 class UserBase(BaseModel):
     first_name: str
     last_name: Optional[str] = None
@@ -20,11 +23,28 @@ class UserBase(BaseModel):
     biometric_id: Optional[str] = None
     shift_roster_id: Optional[int] = None
 
-# User creation: no relieving_date
+# ---------------------------------------------------------
+# Create User (includes password + auto username)
+# ---------------------------------------------------------
 class UserCreate(UserBase):
     password: str = Field(..., min_length=6)
+    username: Optional[str] = None
 
-# Update user: can update relieving_date (when leaving)
+    @field_validator("username", mode="before")
+    def auto_generate_username(cls, v, values):
+        if v:
+            return v.lower().replace(" ", "")
+
+        first = values.get("first_name", "")
+        last = values.get("last_name", "")
+
+        username = (first + last).lower().replace(" ", "")
+        return username
+
+
+# ---------------------------------------------------------
+# Update User
+# ---------------------------------------------------------
 class UserUpdate(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
@@ -35,7 +55,7 @@ class UserUpdate(BaseModel):
 
     date_of_birth: Optional[date] = None
     joining_date: Optional[date] = None
-    relieving_date: Optional[date] = None  # only for resignation/exit
+    relieving_date: Optional[date] = None
 
     address: Optional[str] = None
     designation: Optional[str] = None
@@ -43,26 +63,41 @@ class UserUpdate(BaseModel):
     biometric_id: Optional[str] = None
     shift_roster_id: Optional[int] = None
 
+
+# ---------------------------------------------------------
+# Response Model
+# ---------------------------------------------------------
 class UserResponse(UserBase):
     id: int
+    username: str
     created_at: datetime
     updated_at: datetime
-    relieving_date: Optional[date] = None  # can appear in response
+    relieving_date: Optional[date] = None
 
     model_config = {
         "from_attributes": True
     }
 
-#------------------------
-# Authentication Schemas
-#------------------------
 
+# ---------------------------------------------------------
+# Authentication Schemas
+# ---------------------------------------------------------
 class AuthRegister(BaseModel):
     first_name: str
     last_name: Optional[str] = None
     email: EmailStr
     password: str
     role_id: Optional[int] = None
+    username: Optional[str] = None
+
+    @field_validator("username", mode="before")
+    def auto_username(cls, v, values):
+        if v:
+            return v.lower().replace(" ", "")
+
+        first = values.get("first_name", "")
+        last = values.get("last_name", "")
+        return (first + last).lower().replace(" ", "")
 
 
 class AuthRegisterResponse(BaseModel):
@@ -70,6 +105,9 @@ class AuthRegisterResponse(BaseModel):
     last_name: Optional[str] = None
     email: EmailStr
     role_id: Optional[int] = None
-    
-    class Config:
-        from_attributes = True
+    username: str
+
+    model_config = {
+        "from_attributes": True
+    }
+

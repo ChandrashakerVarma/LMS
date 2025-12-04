@@ -4,46 +4,45 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user_m import User
 from app.models.role_m import Role
-from app.schema.user_schema import AuthRegister, AuthRegisterResponse
+from app.schema.user_schema import AuthRegister, AuthRegisterResponse, UserCreate
 from app.utils.utils import hash_password, verify_password, create_access_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 # ---------------- REGISTER ----------------
-@router.post("/register", response_model=AuthRegisterResponse)
-def register(user: AuthRegister, db: Session = Depends(get_db)):
-    """✅ Open registration — anyone can create an account"""
-    # Check if email already exists
-    if db.query(User).filter(User.email == user.email).first():
+@router.post("/register")
+def register(user: UserCreate, db: Session = Depends(get_db)):
+    existing_user = db.query(User).filter(User.email == user.email).first()
+    if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    # Validate role_id (optional)
-    if user.role_id:
-        role = db.query(Role).filter(Role.id == user.role_id).first()
-        if not role:
-            raise HTTPException(status_code=400, detail="Invalid role_id")
+    # Ensure default role exists
+    default_role = db.query(Role).filter(Role.name == "user").first()
+    if not default_role:
+        default_role = Role(name="user")
+        db.add(default_role)
+        db.commit()
+        db.refresh(default_role)
 
-    # ✅ Create new user (no 'name' field — use first_name / last_name)
+    # Hash user password
+    hashed_password = hash_password(user.password)
+
+    # Create user properly
     new_user = User(
-    first_name=user.first_name,
-    last_name=user.last_name,
-    email=user.email.lower(),
-    hashed_password=hash_password(user.password),  # must use truncated version
-    role_id=user.role_id
-)
-
+        first_name=user.first_name,
+        last_name=user.last_name,
+        email=user.email,
+        hashed_password=hashed_password,   # FIXED
+        role_id=default_role.id            # FIXED
+    )
 
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
 
-    return AuthRegisterResponse(
-        first_name=new_user.first_name,
-        last_name=new_user.last_name,
-        email=new_user.email,
-        role_id=new_user.role_id
-    )
+    return {"message": "User registered successfully"}
+
 
 
 # ---------------- LOGIN ----------------
