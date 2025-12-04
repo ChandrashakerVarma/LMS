@@ -12,6 +12,15 @@ from app.schema.attendance_punch_schema import (
     AttendancePunchResponse,
 )
 from app.dependencies import get_current_user
+from app.permission_dependencies import (
+    require_view_permission,
+    require_create_permission,
+    require_edit_permission,
+    require_delete_permission,
+)
+
+# Unique menu ID for Attendance Punch module
+ATTENDANCE_PUNCH_MENU_ID = 46
 
 router = APIRouter(prefix="/attendance-punch", tags=["Attendance Punch"])
 
@@ -19,7 +28,11 @@ router = APIRouter(prefix="/attendance-punch", tags=["Attendance Punch"])
 # ----------------------------------------------------
 # CREATE Punch Entry
 # ----------------------------------------------------
-@router.post("/", response_model=AttendancePunchResponse)
+@router.post(
+    "/", 
+    response_model=AttendancePunchResponse,
+    dependencies=[Depends(require_create_permission(ATTENDANCE_PUNCH_MENU_ID))]
+)
 def create_punch(
     data: AttendancePunchCreate,
     db: Session = Depends(get_db),
@@ -44,7 +57,11 @@ def create_punch(
 # ----------------------------------------------------
 # GET All Punches
 # ----------------------------------------------------
-@router.get("/", response_model=List[AttendancePunchResponse])
+@router.get(
+    "/", 
+    response_model=List[AttendancePunchResponse],
+    dependencies=[Depends(require_view_permission(ATTENDANCE_PUNCH_MENU_ID))]
+)
 def get_punches(db: Session = Depends(get_db)):
     return db.query(AttendancePunch).order_by(AttendancePunch.punch_date.desc()).all()
 
@@ -52,7 +69,11 @@ def get_punches(db: Session = Depends(get_db)):
 # ----------------------------------------------------
 # GET Punch by ID
 # ----------------------------------------------------
-@router.get("/{punch_id}", response_model=AttendancePunchResponse)
+@router.get(
+    "/{punch_id}", 
+    response_model=AttendancePunchResponse,
+    dependencies=[Depends(require_view_permission(ATTENDANCE_PUNCH_MENU_ID))]
+)
 def get_punch(punch_id: int, db: Session = Depends(get_db)):
     punch = db.query(AttendancePunch).filter(AttendancePunch.id == punch_id).first()
     if not punch:
@@ -63,7 +84,11 @@ def get_punch(punch_id: int, db: Session = Depends(get_db)):
 # ----------------------------------------------------
 # UPDATE Punch
 # ----------------------------------------------------
-@router.put("/{punch_id}", response_model=AttendancePunchResponse)
+@router.put(
+    "/{punch_id}",
+    response_model=AttendancePunchResponse,
+    dependencies=[Depends(require_edit_permission(ATTENDANCE_PUNCH_MENU_ID))]
+)
 def update_punch(
     punch_id: int,
     data: AttendancePunchUpdate,
@@ -88,8 +113,14 @@ def update_punch(
 # ----------------------------------------------------
 # DELETE Punch
 # ----------------------------------------------------
-@router.delete("/{punch_id}")
-def delete_punch(punch_id: int, db: Session = Depends(get_db)):
+@router.delete(
+    "/{punch_id}",
+    dependencies=[Depends(require_delete_permission(ATTENDANCE_PUNCH_MENU_ID))]
+)
+def delete_punch(
+    punch_id: int,
+    db: Session = Depends(get_db)
+):
     punch = db.query(AttendancePunch).filter(AttendancePunch.id == punch_id).first()
     if not punch:
         raise HTTPException(404, "Punch not found")
