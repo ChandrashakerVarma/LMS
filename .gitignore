@@ -31,3 +31,7 @@ Thumbs.db
 
 # --- Alembic ---
 alembic/versions/__pycache__/
+
+echo "test.db" >> .gitignore
+echo "test_dept.db" >> .gitignore
+echo "test_org.db" >> .gitignore
