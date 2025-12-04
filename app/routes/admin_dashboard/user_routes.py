@@ -36,6 +36,15 @@ USERS_MENU_ID = 3 # Updated to match your menu seeder
 # ROLE VALIDATION HELPER
 # ============================================================
 def validate_role_assignment(current_user: User, target_role: Role) -> bool:
+    """
+    ✅ Validate if current user can assign a specific role
+    
+    Rules:
+    - super_admin: Can assign ANY role (including super_admin)
+    - org_admin: Can assign org_admin, manager, employee (NOT super_admin)
+    - manager: Can assign employee only (NOT org_admin or manager)
+    - employee: Cannot assign any roles
+    """
     current_role = current_user.role.name.lower() if current_user.role else None
     target_role_name = target_role.name.lower()
 
