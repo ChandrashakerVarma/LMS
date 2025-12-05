@@ -51,9 +51,11 @@ class User(Base):
     shift_change_requests = relationship("ShiftChangeRequest", back_populates="user", cascade="all, delete-orphan")
     department = relationship("Department", back_populates="users")
     user_shifts = relationship("UserShift", back_populates="user", cascade="all, delete-orphan")
-    job_postings = relationship("JobPosting", back_populates="created_by")
+    # job_postings = relationship("JobPosting", back_populates="created_by")
     shift_roster = relationship("ShiftRoster", back_populates="users")
     
     # ✅ Add a relationship for salary structure
     salary_structure = relationship("SalaryStructure", back_populates="users")
     created_shifts = relationship("Shift", back_populates="created_manager")
+    notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
+

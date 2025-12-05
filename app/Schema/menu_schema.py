@@ -30,11 +30,18 @@ class MenuResponse(MenuBase):
     created_by: Optional[str] = None
     modified_by: Optional[str] = None
 
-    model_config = {"from_attributes": True}
+    class Config:
+        from_attributes = True
+
 
 class MenuTreeResponse(MenuResponse):
+    # Correct forward reference usage
     children: List["MenuTreeResponse"] = Field(default_factory=list)
-    model_config = {"from_attributes": True}
 
-# Use model_rebuild() instead of update_forward_refs()
-MenuTreeResponse.model_rebuild()
+    model_config = {
+    "from_attributes": True
+}
+
+
+MenuTreeResponse.update_forward_refs()
+

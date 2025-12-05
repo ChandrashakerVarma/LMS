@@ -417,7 +417,7 @@ async def update_user(
 
     db.commit()
     db.refresh(db_user)
-    return UserResponse.from_orm(db_user)
+    # return UserResponse.from_orm(db_user)
 
     return UserResponse.model_validate(db_user)
 
@@ -506,7 +506,7 @@ async def assign_shift_to_role(
         user.modified_by = f"{current_user.first_name} {current_user.last_name}"
 
     db.commit()
-    return {"message": "Shift roster assigned", "total_updated_users": len(users)}
+    # return {"message": "Shift roster assigned", "total_updated_users": len(users)}
 
     return {
         "message": "Shift roster assigned",

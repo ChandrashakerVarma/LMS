@@ -4,15 +4,9 @@ from datetime import datetime, date
 from decimal import Decimal
 
 class OrganizationBase(BaseModel):
-<<<<<<< HEAD
-    name: str
-    description: Optional[str] = None
-    organization_logo: Optional[str] = None  # lowercase to match model
-=======
     name: str = Field(..., min_length=1, max_length=150)
     description: Optional[str] = Field(None, max_length=255)
 
->>>>>>> main
 
 class OrganizationCreate(OrganizationBase):
     """Schema for creating a new organization (used during registration)"""
@@ -21,11 +15,6 @@ class OrganizationCreate(OrganizationBase):
     plan_id: Optional[int] = None  # If not provided, assign default plan
 
 class OrganizationUpdate(BaseModel):
-<<<<<<< HEAD
-    name: Optional[str] = None
-    description: Optional[str] = None
-    organization_logo: Optional[str] = None
-=======
     """Schema for updating organization details"""
     name: Optional[str] = Field(None, min_length=1, max_length=150)
     description: Optional[str] = Field(None, max_length=255)
@@ -51,7 +40,6 @@ class OrganizationAdminUpdate(BaseModel):
     contact_email: Optional[EmailStr] = None
     contact_phone: Optional[str] = None
 
->>>>>>> main
 
 class OrganizationResponse(OrganizationBase):
     """Basic organization response"""
@@ -62,39 +50,7 @@ class OrganizationResponse(OrganizationBase):
     created_at: datetime
     updated_at: datetime
 
-<<<<<<< HEAD
-    model_config = {
-        "from_attributes": True
-    }
-
-
-# app/schema/organization_schema.py
-
-from pydantic import BaseModel
-from typing import Optional
-
-class OrganizationBase(BaseModel):
-    name: str
-    description: Optional[str] = None
-
-class OrganizationCreate(OrganizationBase):
-    pass
-
-class OrganizationUpdate(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-
-class OrganizationResponse(OrganizationBase):
-    id: int
-    organization_logo: Optional[str]
-
-    
-    model_config = {
-        "from_attributes": True  # was orm_mode in v1
-    }
-=======
     model_config = {"from_attributes": True}
->>>>>>> main
 
 
 class OrganizationDetailResponse(OrganizationResponse):
