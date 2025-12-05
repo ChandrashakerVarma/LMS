@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional
 from datetime import date, datetime
 
@@ -20,7 +20,6 @@ class UserBase(BaseModel):
 
     date_of_birth: Optional[date] = None
     joining_date: Optional[date] = None
-    relieving_date: Optional[date] = None
 
     address: Optional[str] = Field(None, max_length=255)
     designation: Optional[str] = Field(None, max_length=100)
@@ -76,6 +75,7 @@ class UserResponse(UserBase):
     is_org_admin: bool
     created_at: datetime
     updated_at: datetime
+    relieving_date: Optional[date] = None
 
     model_config = {"from_attributes": True}
 

@@ -40,5 +40,6 @@ class AttendancePunchResponse(BaseModel):
     created_at: Optional[datetime]
     modified_at: Optional[datetime]
 
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }

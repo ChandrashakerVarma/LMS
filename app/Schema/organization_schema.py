@@ -3,7 +3,6 @@ from typing import Optional
 from datetime import datetime, date
 from decimal import Decimal
 
-
 class OrganizationBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=150)
     description: Optional[str] = Field(None, max_length=255)
@@ -14,7 +13,6 @@ class OrganizationCreate(OrganizationBase):
     contact_email: Optional[EmailStr] = None
     contact_phone: Optional[str] = Field(None, max_length=20)
     plan_id: Optional[int] = None  # If not provided, assign default plan
-
 
 class OrganizationUpdate(BaseModel):
     """Schema for updating organization details"""

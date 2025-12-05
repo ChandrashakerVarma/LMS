@@ -12,9 +12,9 @@ class ShiftChangeRequestBase(BaseModel):
     reason: Optional[str] = None
     status: Optional[RequestStatus] = RequestStatus.Pending
 
-    class Config:
-        from_attributes = True
-        use_enum_values = True  # Serialize Enum as string
+    model_config = {
+        "from_attributes": True
+    }
 
 class ShiftChangeRequestCreate(ShiftChangeRequestBase):
     pass
