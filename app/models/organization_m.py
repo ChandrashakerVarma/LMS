@@ -9,7 +9,7 @@ class Organization(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(150), nullable=False, unique=True)
     description = Column(String(255), nullable=True)
-    organization_logo = Column(String(255), nullable=True)
+    # organization_logo = Column(String(255), nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(),server_onupdate=func.now(), nullable=False)
     # Relationships
