@@ -40,7 +40,7 @@ def create_shift(
 
     new_shift = Shift(
         **shift_in.dict(),
-        created_by=current_user.first_name
+        created_by=current_user.id     # ✔ FIXED (integer FK)
     )
 
     db.add(new_shift)
@@ -100,7 +100,7 @@ def update_shift(
     for key, value in update_data.items():
         setattr(shift, key, value)
 
-    shift.modified_by = current_user.first_name
+    shift.modified_by = current_user.first_name   # ✔ FIXED (string OK)
 
     db.commit()
     db.refresh(shift)

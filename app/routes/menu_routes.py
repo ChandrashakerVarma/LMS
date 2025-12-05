@@ -5,7 +5,7 @@ from typing import List
 from app.database import get_db
 from app.models.menu_m import Menu
 from app.schema.menu_schema import MenuCreate, MenuUpdate, MenuResponse, MenuTreeResponse
-from app.dependencies import require_admin, get_current_user
+from app.dependencies import require_org_admin, get_current_user
 from app.models.user_m import User
 
 router = APIRouter(prefix="/menus", tags=["Menus"])
@@ -15,7 +15,7 @@ router = APIRouter(prefix="/menus", tags=["Menus"])
 def create_menu(
     payload: MenuCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_org_admin)
 ):
     # Check if parent exists if parent_id is provided
     if payload.parent_id:
@@ -138,7 +138,7 @@ def update_menu(
     menu_id: int,
     payload: MenuUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_org_admin)
 ):
     menu = db.query(Menu).filter(Menu.id == menu_id).first()
     if not menu:
@@ -168,7 +168,7 @@ def update_menu(
 def delete_menu(
     menu_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_org_admin)
 ):
     menu = db.query(Menu).filter(Menu.id == menu_id).first()
     if not menu:

@@ -1,92 +1,110 @@
+# app/routes/leave_routes.py
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List
 from datetime import datetime
+from typing import List
 
 from app.database import get_db
 from app.models.leavemaster_m import LeaveMaster
 from app.models.user_m import User
-from app.schema.leavemaster_schema import LeaveMasterCreate, LeaveMasterUpdate, LeaveMasterResponse
+from app.schema.leavemaster_schema import (
+    LeaveMasterCreate,
+    LeaveMasterUpdate,
+    LeaveMasterResponse
+)
 from app.dependencies import get_current_user
 
-# ---- Permission imports (your required style) ----
 from app.permission_dependencies import (
     require_view_permission,
     require_create_permission,
     require_edit_permission,
-    require_delete_permission
+    require_delete_permission,
 )
 
-router = APIRouter(prefix="/leaves", tags=["Leave Master"])
+MENU_ID = 45
 
-MENU_ID = 45   # Leave Master menu ID
+router = APIRouter(prefix="/leaves", tags=["Leaves"])
 
 
-# ➕ Create Leave Record
-@router.post("/", response_model=LeaveMasterResponse)
+# ---------------- CREATE ----------------
+@router.post(
+    "/", 
+    response_model=LeaveMasterResponse,
+    dependencies=[Depends(require_create_permission(MENU_ID))]
+)
 def create_leave(
-    leave: LeaveMasterCreate,
+    data: LeaveMasterCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_create_permission(MENU_ID))
+    current_user: User = Depends(get_current_user)
 ):
-    user = db.query(User).filter(User.id == leave.user_id).first()
+
+    user = db.query(User).filter(User.id == data.user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    existing_leave = db.query(LeaveMaster).filter(
-        LeaveMaster.user_id == leave.user_id,
-        LeaveMaster.holiday == leave.holiday
-    ).first()
-
-    if existing_leave:
-        return existing_leave
-
     new_leave = LeaveMaster(
-        **leave.dict(),
+        **data.dict(),
         created_by=current_user.first_name
     )
+
     db.add(new_leave)
     db.commit()
     db.refresh(new_leave)
+
     return new_leave
 
 
-# 📋 Get All Leaves
-@router.get("/", response_model=List[LeaveMasterResponse])
+# ---------------- GET ALL ----------------
+@router.get(
+    "/", 
+    response_model=List[LeaveMasterResponse],
+    dependencies=[Depends(require_view_permission(MENU_ID))]
+)
 def get_all_leaves(
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_view_permission(MENU_ID))
+    current_user: User = Depends(get_current_user)
 ):
-    leaves = db.query(LeaveMaster).all()
-    return leaves
+    return db.query(LeaveMaster).all()
 
 
-# 🔍 Get Leave by ID
-@router.get("/{leave_id}", response_model=LeaveMasterResponse)
-def get_leave_by_id(
+# ---------------- GET BY ID ----------------
+@router.get(
+    "/{leave_id}",
+    response_model=LeaveMasterResponse,
+    dependencies=[Depends(require_view_permission(MENU_ID))]
+)
+def get_leave(
     leave_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_view_permission(MENU_ID))
+    current_user: User = Depends(get_current_user)
 ):
     leave = db.query(LeaveMaster).filter(LeaveMaster.id == leave_id).first()
     if not leave:
-        raise HTTPException(status_code=404, detail="Leave record not found")
+        raise HTTPException(status_code=404, detail="Leave not found")
+
     return leave
 
 
-# ✏️ Update Leave Record
-@router.put("/{leave_id}", response_model=LeaveMasterResponse)
+# ---------------- UPDATE ----------------
+@router.put(
+    "/{leave_id}",
+    response_model=LeaveMasterResponse,
+    dependencies=[Depends(require_edit_permission(MENU_ID))]
+)
 def update_leave(
     leave_id: int,
-    updated_data: LeaveMasterUpdate,
+    data: LeaveMasterUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_edit_permission(MENU_ID))
+    current_user: User = Depends(get_current_user)
 ):
     leave = db.query(LeaveMaster).filter(LeaveMaster.id == leave_id).first()
-    if not leave:
-        raise HTTPException(status_code=404, detail="Leave record not found")
 
-    for key, value in updated_data.dict(exclude_unset=True).items():
+    if not leave:
+        raise HTTPException(status_code=404, detail="Leave not found")
+
+    update_data = data.dict(exclude_unset=True)
+
+    for key, value in update_data.items():
         setattr(leave, key, value)
 
     leave.modified_by = current_user.first_name
@@ -94,20 +112,26 @@ def update_leave(
 
     db.commit()
     db.refresh(leave)
+
     return leave
 
 
-# ❌ Delete Leave Record
-@router.delete("/{leave_id}")
+# ---------------- DELETE ----------------
+@router.delete(
+    "/{leave_id}",
+    dependencies=[Depends(require_delete_permission(MENU_ID))]
+)
 def delete_leave(
     leave_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_delete_permission(MENU_ID))
+    current_user: User = Depends(get_current_user)
 ):
     leave = db.query(LeaveMaster).filter(LeaveMaster.id == leave_id).first()
+
     if not leave:
-        raise HTTPException(status_code=404, detail="Leave record not found")
+        raise HTTPException(status_code=404, detail="Leave not found")
 
     db.delete(leave)
     db.commit()
-    return {"message": "Leave record deleted successfully"}
+
+    return {"message": f"Leave deleted by {current_user.first_name}"}

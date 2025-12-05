@@ -8,23 +8,26 @@ class LeaveMaster(Base):
     __tablename__ = "leave_master"
 
     id = Column(Integer, primary_key=True, index=True)
-    holiday = Column(String(100), nullable=False)
-    description = Column(String(255), nullable=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
     allocated = Column(Integer, default=0)
     used = Column(Integer, default=0)
     balance = Column(Integer, default=0)
     carry_forward = Column(Boolean, default=False)
     leave_type = Column(String(50), nullable=False)  # e.g. "Sick Leave", "Casual Leave"
+    status = Column(String(20), default="pending")  
+# values: pending / approved / rejected / cancelled
+
+    # HALF-DAY support
+    is_half_day = Column(Boolean, nullable=True)     # NULL = no half day, True = half-day leave
+
     start_date = Column(Date, nullable=True)
     end_date = Column(Date, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-     # Audit user tracking
+    updated_at = Column(DateTime, onupdate=datetime.utcnow, nullable=True)  # Only update   
+    # Audit user tracking
     created_by = Column(String(100), nullable=True)
     modified_by = Column(String(100), nullable=True)
-
 
     # Relationship to User
     user = relationship("User", back_populates="leave_records")

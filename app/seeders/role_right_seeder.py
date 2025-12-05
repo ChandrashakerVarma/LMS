@@ -1,116 +1,220 @@
+# app/seeders/seed_role_rights.py
+
 from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app.models.role_right_m import RoleRight
 from app.models.role_m import Role
 from app.models.menu_m import Menu
 
-def seed_role_rights():
-    """Seed role rights based on updated LMS + HRMS menu structure"""
 
+def get_menu_by_name(db, name):
+    """Get menu by name field (lowercase)"""
+    return db.query(Menu).filter(Menu.name == name).first()
+
+
+def get_role(db, name):
+    """Get role by name"""
+    return db.query(Role).filter(Role.name == name).first()
+
+
+def seed_role_rights():
     db: Session = SessionLocal()
 
     try:
         # ---------------------------------------------------------
-        # 1️⃣ Admin Role -> Full Access
+        # 1️⃣ SUPER ADMIN → FULL ACCESS (GLOBAL)
         # ---------------------------------------------------------
-        admin_role = db.query(Role).filter_by(name="admin").first()
-
-        if not admin_role:
-            print("❌ Admin role not found. Run role_seeder first.")
+        super_admin = get_role(db, "super_admin")
+        if not super_admin:
+            print("❌ super_admin role missing. Run seed_roles.py first.")
             return
 
         all_menus = db.query(Menu).all()
-
-        if not all_menus:
-            print("❌ No menus found. Run menu_seeder first.")
-            return
+        print(f"📋 Found {len(all_menus)} menus")
 
         for menu in all_menus:
             exists = db.query(RoleRight).filter_by(
-                role_id=admin_role.id,
+                role_id=super_admin.id,
                 menu_id=menu.id
             ).first()
 
             if not exists:
                 db.add(RoleRight(
-                    role_id=admin_role.id,
+                    role_id=super_admin.id,
                     menu_id=menu.id,
                     can_view=True,
                     can_create=True,
                     can_edit=True,
-                    can_delete=True
+                    can_delete=True,
+                    created_by="System",
+                    modified_by="System"
                 ))
+        
+        print(f"✅ Super Admin: Granted full access to all {len(all_menus)} menus")
+
 
         # ---------------------------------------------------------
-        # 2️⃣ User Role -> Very Limited Access
+        # 2️⃣ ORG ADMIN → FULL ACCESS WITHIN THE ORG
         # ---------------------------------------------------------
-        user_role = db.query(Role).filter_by(name="user").first()
-        if user_role:
-            # Basic user can view dashboard only
-            user_view_only_menus = [1]  # Dashboard
-
-            for menu_id in user_view_only_menus:
+        org_admin = get_role(db, "org_admin")
+        if org_admin:
+            for menu in all_menus:
                 exists = db.query(RoleRight).filter_by(
-                    role_id=user_role.id,
-                    menu_id=menu_id
+                    role_id=org_admin.id,
+                    menu_id=menu.id
                 ).first()
 
                 if not exists:
                     db.add(RoleRight(
-                        role_id=user_role.id,
-                        menu_id=menu_id,
+                        role_id=org_admin.id,
+                        menu_id=menu.id,
                         can_view=True,
-                        can_create=False,
-                        can_edit=False,
-                        can_delete=False
+                        can_create=True,
+                        can_edit=True,
+                        can_delete=True,
+                        created_by="System",
+                        modified_by="System"
                     ))
+            
+            print(f"✅ Org Admin: Granted full access to all {len(all_menus)} menus")
+
 
         # ---------------------------------------------------------
-        # 3️⃣ Manager Role -> Moderate Access
+        # 3️⃣ EMPLOYEE → LIMITED ACCESS
         # ---------------------------------------------------------
-        manager_role = db.query(Role).filter_by(name="manager").first()
-        if manager_role:
-            # Manager accesses updated menus in LMS + HRMS
-            manager_permissions = [
-                # Dashboard
-                (1, True, False, False, False),
-
-                # User Management
-                (3, True, True, True, False),  # Users
-                (17, True, False, False, False),  # User Reports
-                (18, True, False, False, False),  # Active Users
-                (19, True, False, False, False),  # Inactive Users
-
-                # Attendance Reports
-                (21, True, False, False, False),
-                (22, True, False, False, False),
+        employee = get_role(db, "employee")
+        if employee:
+            # ✅ Use actual menu names from your seeder
+            employee_allowed_menus = [
+                "dashboard",           # Menu ID 1
+                "attendance",          # Menu ID 44 (HRMS module)
+                "leave_master",        # Menu ID 45 (for requesting leaves)
+                "progress",            # Menu ID 37 (LMS - view own progress)
+                "courses",             # Menu ID 31 (LMS - view courses)
+                "videos",              # Menu ID 32 (LMS - watch videos)
+                "enrollments",         # Menu ID 34 (view own enrollments)
             ]
 
-            for menu_id, can_view, can_create, can_edit, can_delete in manager_permissions:
+            for menu_name in employee_allowed_menus:
+                menu = get_menu_by_name(db, menu_name)
+                if not menu:
+                    print(f"⚠️  Menu '{menu_name}' not found, skipping...")
+                    continue
+
                 exists = db.query(RoleRight).filter_by(
-                    role_id=manager_role.id,
-                    menu_id=menu_id
+                    role_id=employee.id,
+                    menu_id=menu.id
+                ).first()
+
+                if not exists:
+                    # Employees can view but not create/edit/delete
+                    db.add(RoleRight(
+                        role_id=employee.id,
+                        menu_id=menu.id,
+                        can_view=True,
+                        can_create=False,  # Can't create
+                        can_edit=False,    # Can't edit
+                        can_delete=False,  # Can't delete
+                        created_by="System",
+                        modified_by="System"
+                    ))
+            
+            print(f"✅ Employee: Granted view access to {len(employee_allowed_menus)} menus")
+
+
+        # ---------------------------------------------------------
+        # 4️⃣ MANAGER → MODERATE ACCESS
+        # ---------------------------------------------------------
+        manager = get_role(db, "manager")
+        if manager:
+            # Managers get more access than employees
+            # Format: menu_name: (can_view, can_create, can_edit, can_delete)
+            manager_access = {
+                # Base Access
+                "dashboard":            (True, False, False, False),
+                
+                # User Management (limited)
+                "users":                (True, True, True, False),  # Can manage users
+                
+                # Organization
+                "departments":          (True, True, True, False),  # Manage departments
+                
+                # HRMS Module
+                "attendance":           (True, True, True, False),  # Manage attendance
+                "shifts":               (True, True, True, False),  # Manage shifts
+                "user_shifts":          (True, True, True, False),  # Assign shifts
+                "shift_change_requests":(True, False, True, False), # Approve requests
+                "leave_master":         (True, False, True, False), # Approve leaves
+                "permissions_module":   (True, False, True, False), # Approve permissions
+                
+                # Payroll (view only)
+                "payroll":              (True, False, False, False),
+                "payroll_attendance":   (True, False, False, False),
+                
+                # Reports
+                "reports":              (True, False, False, False),
+                "attendance_reports":   (True, False, False, False),
+                "daily_attendance":     (True, False, False, False),
+                "monthly_attendance":   (True, False, False, False),
+                
+                # LMS Module (manage team learning)
+                "courses":              (True, False, False, False),
+                "videos":               (True, False, False, False),
+                "enrollments":          (True, True, False, False),  # Enroll team
+                "progress":             (True, False, False, False),  # View team progress
+                
+                # Hiring (if manager is hiring manager)
+                "candidates":           (True, True, True, False),
+                "candidate_documents":  (True, True, False, False),
+            }
+
+            for menu_name, perms in manager_access.items():
+                menu = get_menu_by_name(db, menu_name)
+                if not menu:
+                    print(f"⚠️  Menu '{menu_name}' not found, skipping...")
+                    continue
+
+                can_view, can_create, can_edit, can_delete = perms
+
+                exists = db.query(RoleRight).filter_by(
+                    role_id=manager.id,
+                    menu_id=menu.id
                 ).first()
 
                 if not exists:
                     db.add(RoleRight(
-                        role_id=manager_role.id,
-                        menu_id=menu_id,
+                        role_id=manager.id,
+                        menu_id=menu.id,
                         can_view=can_view,
                         can_create=can_create,
                         can_edit=can_edit,
-                        can_delete=can_delete
+                        can_delete=can_delete,
+                        created_by="System",
+                        modified_by="System"
                     ))
+            
+            print(f"✅ Manager: Granted access to {len(manager_access)} menus")
+
 
         # ---------------------------------------------------------
-        # Commit All Changes
+        # Commit changes
         # ---------------------------------------------------------
         db.commit()
-        print("✅ Role rights seeded successfully")
+        print("\n✅ Role rights seeded successfully!")
+        print("\n📊 Summary:")
+        print(f"   - super_admin: {db.query(RoleRight).filter_by(role_id=super_admin.id).count()} permissions")
+        if org_admin:
+            print(f"   - org_admin: {db.query(RoleRight).filter_by(role_id=org_admin.id).count()} permissions")
+        if employee:
+            print(f"   - employee: {db.query(RoleRight).filter_by(role_id=employee.id).count()} permissions")
+        if manager:
+            print(f"   - manager: {db.query(RoleRight).filter_by(role_id=manager.id).count()} permissions")
 
     except Exception as e:
         db.rollback()
-        print(f"❌ Error seeding role rights: {e}")
+        print(f"\n❌ Error seeding role rights: {e}")
+        import traceback
+        traceback.print_exc()
 
     finally:
         db.close()

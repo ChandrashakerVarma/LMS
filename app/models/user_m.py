@@ -16,6 +16,10 @@ class User(Base):
     branch_id = Column(Integer, ForeignKey("branches.id"), nullable=True)
     organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=True)
     department_id = Column(Integer, ForeignKey("departments.id"), nullable=True)
+
+    # ✅ Add salary structure ID
+    salary_structure_id = Column(Integer, ForeignKey("salary_structures.id"), nullable=True)
+
     date_of_birth = Column(Date, nullable=True)
     joining_date = Column(Date, nullable=True)
     relieving_date = Column(Date, nullable=True)  # optional, only when employee leaves
@@ -27,6 +31,7 @@ class User(Base):
     shift_roster_id = Column(Integer, ForeignKey("shift_rosters.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    is_org_admin = Column(Boolean, default=False)# First user of org = admin
 
     # Audit
     created_by = Column(String(100), nullable=True)
@@ -41,12 +46,14 @@ class User(Base):
     leave_records = relationship("LeaveMaster", back_populates="user", cascade="all, delete-orphan")
     payrolls = relationship("Payroll", back_populates="user", cascade="all, delete-orphan")
     payroll_attendances = relationship("PayrollAttendance", back_populates="user")
-    attendances = relationship("Attendance", back_populates="user", cascade="all, delete-orphan")
+    monthly_attendance = relationship("Attendance", back_populates="user")
     permissions = relationship("Permission", back_populates="user", cascade="all, delete-orphan")
     shift_change_requests = relationship("ShiftChangeRequest", back_populates="user", cascade="all, delete-orphan")
     department = relationship("Department", back_populates="users")
     user_shifts = relationship("UserShift", back_populates="user", cascade="all, delete-orphan")
-    # job_postings = relationship("JobPosting", back_populates="created_by")
-    created_shifts = relationship("Shift", back_populates="created_manager")
+    job_postings = relationship("JobPosting", back_populates="created_by")
     shift_roster = relationship("ShiftRoster", back_populates="users")
-    notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
+    
+    # ✅ Add a relationship for salary structure
+    salary_structure = relationship("SalaryStructure", back_populates="users")
+    created_shifts = relationship("Shift", back_populates="created_manager")

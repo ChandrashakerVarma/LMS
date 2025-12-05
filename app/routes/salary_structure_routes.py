@@ -8,7 +8,7 @@ from app.schema.salary_structure_schema import (
     SalaryStructureUpdate,
     SalaryStructureResponse,
 )
-from app.dependencies import require_admin
+from app.dependencies import require_org_admin
 from app.permission_dependencies import (
     require_view_permission,
     require_create_permission,
@@ -31,7 +31,7 @@ MENU_ID = 47
 def create_salary_structure(
     data: SalaryStructureCreate,
     db: Session = Depends(get_db),
-    current_user=Depends(require_admin),
+    current_user=Depends(require_org_admin),
 ):
     total_annual = (
         data.basic_salary_annual
@@ -85,7 +85,7 @@ def update_salary_structure(
     salary_structure_id: int,
     data: SalaryStructureUpdate,
     db: Session = Depends(get_db),
-    current_user=Depends(require_admin),
+    current_user=Depends(require_org_admin),
 ):
     structure = db.query(SalaryStructure).filter(SalaryStructure.id == salary_structure_id).first()
     if not structure:
@@ -117,7 +117,7 @@ def update_salary_structure(
 def delete_salary_structure(
     salary_structure_id: int,
     db: Session = Depends(get_db),
-    current_user=Depends(require_admin),
+    current_user=Depends(require_org_admin),
 ):
     structure = db.query(SalaryStructure).filter(SalaryStructure.id == salary_structure_id).first()
     if not structure:

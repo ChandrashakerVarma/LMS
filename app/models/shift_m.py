@@ -8,7 +8,7 @@ class Shift(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    # Manager who created the shift (FK)
+    # Manager who created the shift (FK → users.id)
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
 
     shift_name = Column(String(100), nullable=False, unique=True)
@@ -27,7 +27,6 @@ class Shift(Base):
     # Relationships
     created_manager = relationship("User", back_populates="created_shifts")
     permissions = relationship("Permission", back_populates="shift", cascade="all, delete-orphan")
-    attendances = relationship("Attendance", back_populates="shift", cascade="all, delete-orphan")
     shift_roster_details = relationship("ShiftRosterDetail", back_populates="shift")
     user_shifts = relationship("UserShift", back_populates="shift")
 

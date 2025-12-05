@@ -30,3 +30,5 @@ class SalaryStructure(Base):
     # Relationships
     payrolls = relationship("Payroll", back_populates="salary_structure")
     formulas = relationship("Formula", back_populates="salary_structure")
+    users = relationship("User", back_populates="salary_structure")
+
