@@ -16,7 +16,7 @@ def calculate_attendance_status(
     shift_end: time,
     lag_minutes: int,
     working_minutes: int,
-    punch_in: datetime,
+    check_in_time: datetime,
     punch_out: datetime,
 ) -> dict:
     """
@@ -26,14 +26,14 @@ def calculate_attendance_status(
     """
 
     # normalize tz-aware datetimes to naive (UTC)
-    if punch_in.tzinfo:
-        punch_in = punch_in.replace(tzinfo=None)
+    if check_in_time.tzinfo:
+        check_in_time = check_in_time.replace(tzinfo=None)
     if punch_out.tzinfo:
         punch_out = punch_out.replace(tzinfo=None)
 
-    # Build shift start/end datetimes on punch_in date
-    shift_start_dt = datetime.combine(punch_in.date(), shift_start)
-    shift_end_dt = datetime.combine(punch_in.date(), shift_end)
+    # Build shift start/end datetimes on check_in_time date
+    shift_start_dt = datetime.combine(check_in_time.date(), shift_start)
+    shift_end_dt = datetime.combine(check_in_time.date(), shift_end)
 
     # If shift_end is earlier or equal to start → next day
     if shift_end_dt <= shift_start_dt:
@@ -44,13 +44,13 @@ def calculate_attendance_status(
     latest_allowed = shift_end_dt + timedelta(minutes=lag_minutes)
 
     # Clip punches to window
-    punch_in_clipped = max(punch_in, earliest_allowed)
+    check_in_clipped = max(check_in_time, earliest_allowed)
     punch_out_clipped = min(punch_out, latest_allowed)
 
-    if punch_out_clipped < punch_in_clipped:
+    if punch_out_clipped < check_in_clipped:
         return {"total_worked_minutes": 0, "status": "Absent"}
 
-    total_worked_minutes = int((punch_out_clipped - punch_in_clipped).total_seconds() / 60)
+    total_worked_minutes = int((punch_out_clipped - check_in_clipped).total_seconds() / 60)
 
     half_day_threshold = working_minutes // 2
     if total_worked_minutes >= working_minutes:

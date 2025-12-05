@@ -28,6 +28,12 @@ from app.models.shift_roster_m import ShiftRoster
 from app.models.week_day_m import WeekDay
 from app.models.shift_roster_detail_m import ShiftRosterDetail
 
+# MISSING IMPORTS - Required for model relationships
+from app.models.department_m import Department
+from app.models.shift_m import Shift
+from app.models.enrollment_m import Enrollment
+
+
 # Added from HEAD branch
 from app.models.user_face_m import UserFace
 from app.models.attendance_location_policy_m import AttendanceLocationPolicy

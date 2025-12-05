@@ -81,7 +81,7 @@ def load_all_embeddings(db: Session):
 # ---------------------------------------------------------
 # RECOGNIZE USER (strict match for attendance)
 # ---------------------------------------------------------
-def recognize_user(db: Session, frame, threshold=0.45):
+def recognize_user(db: Session, frame, threshold=0.48):
     emb = extract_embedding(frame)
     if emb is None:
         return None

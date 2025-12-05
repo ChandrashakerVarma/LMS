@@ -12,7 +12,7 @@ def generate_attendance_based_salary(db: Session, user_id: int, month: str):
 
     attendances = db.query(Attendance).filter(
         Attendance.user_id == user_id,
-        Attendance.punch_in.like(f"{month}%")
+        Attendance.check_in_time.like(f"{month}%")
     ).all()
 
     if not attendances:
