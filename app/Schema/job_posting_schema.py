@@ -51,8 +51,7 @@ class JobPostingUpdate(BaseModel):
 class JobPostingResponse(JobPostingBase):
     id: int
     approval_status: ApprovalStatus
-    created_by_id: int
-    created_by_name: Optional[str]
+    created_by: Optional[str]
     modified_by: Optional[str]
     created_at: Optional[datetime]
     updated_at: Optional[datetime]

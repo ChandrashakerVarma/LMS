@@ -78,10 +78,6 @@ def upload_file_to_s3(file_obj, folder="videos", existing_key: str = None, max_s
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to upload to S3: {e}")
 
-
-import boto3
-from uuid import uuid4
-
 def generate_s3_key(filename: str, course_id: int, folder: str = "videos"):
     ext = filename.split(".")[-1]
     return f"{folder}/course_{course_id}/{uuid4()}.{ext}"

@@ -26,8 +26,10 @@ class RoleRightResponse(RoleRightBase):
     created_by: Optional[str] = None
     modified_by: Optional[str] = None
     
-    class Config:
-        from_attributes = True
+    model_config = {
+        "from_attributes": True
+    }
+
 
 class RoleRightWithMenuResponse(BaseModel):
     id: int
