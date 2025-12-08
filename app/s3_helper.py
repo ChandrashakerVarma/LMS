@@ -13,6 +13,7 @@ s3_client = boto3.client(
     region_name=settings.AWS_REGION_RESUME,
 )
 
+
 def upload_file_to_s3(file, folder):
     try:
         if not file.filename or "." not in file.filename:
@@ -24,27 +25,20 @@ def upload_file_to_s3(file, folder):
         if ext not in allowed:
             raise HTTPException(status_code=400, detail="Invalid file type")
 
-        # Unique filename
         key = f"{folder}/{uuid4()}.{ext}"
 
-        # Upload
         s3_client.upload_fileobj(
             file.file,
             settings.BUCKET_NAME_RESUME,
             key
         )
 
-        # Public URL
-        file_url = (
+        url = (
             f"https://{settings.BUCKET_NAME_RESUME}.s3."
             f"{settings.AWS_REGION_RESUME}.amazonaws.com/{key}"
         )
 
-        return file_url
+        return url
 
     except Exception as e:
-<<<<<<< HEAD
-        raise HTTPException(status_code=500, detail=f"Failed to upload to S3: {str(e)}")
-=======
         raise HTTPException(status_code=500, detail=f"S3 upload error: {str(e)}")
->>>>>>> origin/main

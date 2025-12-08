@@ -1,31 +1,50 @@
-from datetime import datetime
+
+from datetime import datetime, date
 from pydantic import BaseModel
 from typing import Optional
 
 
+# -----------------------------------------
+# 🟡 existing model stays untouched
+# -----------------------------------------
 class AttendanceResponse(BaseModel):
     id: int
     user_id: int
-    shift_id: Optional[int] = None
-
-    # AI Attendance fields
-    check_in_time: Optional[datetime] = None
-    punch_out: Optional[datetime] = None
-
-    check_in_lat: Optional[float] = None
-    check_in_long: Optional[float] = None
-
-    gps_score: Optional[float] = None
-    location_status: Optional[str] = None
-
-    is_face_verified: Optional[int] = None
-    face_confidence: Optional[float] = None
-
-    total_worked_minutes: Optional[int] = None
-    status: Optional[str] = None
-
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    shift_id: int | None = None
+    check_in_time: datetime | None = None
+    punch_out: datetime | None = None
+    check_in_lat: float | None = None
+    check_in_long: float | None = None
+    gps_score: float | None = None
+    location_status: str | None = None
+    is_face_verified: int | None = None
+    face_confidence: float | None = None
+    total_worked_minutes: int | None = None
+    status: str | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+
+# -----------------------------------------
+# 🆕 MONTHLY SUMMARY RESPONSE
+# -----------------------------------------
+class AttendanceSummaryResponse(BaseModel):
+    id: int
+    user_id: int
+    month: date
+
+    present_days: int | None = None
+    absent_days: int | None = None
+    half_days: int | None = None
+    total_working_days: int | None = None
+
+    leave_days: int | None = None
+    working_hours: float | None = None
+
+    created_by: str | None = None
+
+    class Config:
+        from_attributes = True

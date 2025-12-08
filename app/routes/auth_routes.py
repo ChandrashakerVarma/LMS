@@ -10,21 +10,13 @@ from app.models.organization_m import Organization
 from app.models.subscription_plans_m import SubscriptionPlan
 from app.models.menu_m import Menu
 from app.models.role_right_m import RoleRight
-<<<<<<< HEAD
-from app.schemas.user_schema import AuthRegister, AuthRegisterResponse  # Keep HEAD version (correct folder is Schema)
-# OR if your folder is lowercase, use:
-# from app.schema.user_schema import AuthRegister, AuthRegisterResponse
+
+from app.schemas.user_schema import AuthRegister, AuthRegisterResponse
 
 from app.utils.utils import hash_password, verify_password, create_access_token
 from app.middleware.tenant_limits import TenantLimitsMiddleware
 from app.dependencies import get_current_user
 
-=======
-from app.schema.user_schema import AuthRegister, AuthRegisterResponse
-from app.utils.utils import hash_password, verify_password, create_access_token
-from app.middleware.tenant_limits import TenantLimitsMiddleware
-from app.dependencies import get_current_user
->>>>>>> origin/main
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -631,8 +623,3 @@ async def logout(current_user: User = Depends(get_current_user)):
 # super_admin     → Platform-wide access (all organizations)
 # org_admin       → Organization-wide access (their org only)
 # manager         → Department/team level (role rights)
-<<<<<<< HEAD
-# employee        → Basic level (role rights)
-=======
-# employee        → Basic level (role rights)
->>>>>>> origin/main

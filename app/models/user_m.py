@@ -1,4 +1,4 @@
-# D:\LMS\app\models\user_m.py
+# app/models/user_m.py
 
 from sqlalchemy import (
     Column,
@@ -18,35 +18,31 @@ from app.database import Base
 class User(Base):
     __tablename__ = "users"
 
-    # ------------------------------------------------------
-    # BASIC USER DETAILS
-    # ------------------------------------------------------
+    # ======================================================
+    # BASIC USER INFO
+    # ======================================================
     id = Column(Integer, primary_key=True, index=True)
     first_name = Column(String(50), nullable=False)
     last_name = Column(String(50), nullable=True)
     email = Column(String(100), unique=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
 
-    # ------------------------------------------------------
-    # ORGANIZATION / ROLE
-    # ------------------------------------------------------
+    # ======================================================
+    # ORG / ROLE
+    # ======================================================
     role_id = Column(Integer, ForeignKey("roles.id"), nullable=False)
     branch_id = Column(Integer, ForeignKey("branches.id"), nullable=True)
     organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=True)
     department_id = Column(Integer, ForeignKey("departments.id"), nullable=True)
 
-<<<<<<< HEAD
-    # ------------------------------------------------------
-    # PERSONAL DETAILS
-    # ------------------------------------------------------
-=======
-    # ✅ Add salary structure ID
     salary_structure_id = Column(Integer, ForeignKey("salary_structures.id"), nullable=True)
 
->>>>>>> origin/main
+    # ======================================================
+    # PERSONAL / EMPLOYMENT INFO
+    # ======================================================
     date_of_birth = Column(Date, nullable=True)
     joining_date = Column(Date, nullable=True)
-    relieving_date = Column(Date, nullable=True)  # optional, only when employee leaves
+    relieving_date = Column(Date, nullable=True)
 
     address = Column(String(255), nullable=True)
     designation = Column(String(100), nullable=True)
@@ -56,38 +52,22 @@ class User(Base):
 
     shift_roster_id = Column(Integer, ForeignKey("shift_rosters.id"), nullable=True)
 
-    # ------------------------------------------------------
+    attendance_mode = Column(String(20), default="BRANCH", nullable=False)
+
+    # ======================================================
     # SYSTEM METADATA
-    # ------------------------------------------------------
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    is_org_admin = Column(Boolean, default=False)# First user of org = admin
-
-<<<<<<< HEAD
-    is_org_admin = Column(Boolean, default=False)
-
+    # ======================================================
     created_by = Column(String(100), nullable=True)
     modified_by = Column(String(100), nullable=True)
 
-    # ------------------------------------------------------
-    # NEW FIELD → Attendance Mode
-    # ------------------------------------------------------
-    # BRANCH = Must be inside branch geofence
-    # WFH    = Work from home allowed
-    # ANY    = No location restriction
-    attendance_mode = Column(String(20), default="BRANCH", nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    is_org_admin = Column(Boolean, default=False)
 
     # ======================================================
     # RELATIONSHIPS
     # ======================================================
-
-=======
-    # Audit
-    created_by = Column(String(100), nullable=True)
-    modified_by = Column(String(100), nullable=True)
-
-    # Relationships
->>>>>>> origin/main
     role = relationship("Role", back_populates="users", lazy="joined")
     branch = relationship("Branch", back_populates="users")
     organization = relationship("Organization", back_populates="users")
@@ -95,43 +75,47 @@ class User(Base):
 
     progress = relationship("Progress", back_populates="user", lazy="selectin")
 
-    enrollments = relationship(
-        "app.models.enrollment_m.Enrollment",
+    enrollments = relationship("app.models.enrollment_m.Enrollment",
         back_populates="user",
         cascade="all, delete-orphan"
     )
 
-    leave_records = relationship("LeaveMaster", back_populates="user", cascade="all, delete-orphan")
+    leave_records = relationship("LeaveMaster", back_populates="user",
+        cascade="all, delete-orphan"
+    )
 
-    payrolls = relationship("Payroll", back_populates="user", cascade="all, delete-orphan")
+    payrolls = relationship("Payroll", back_populates="user",
+        cascade="all, delete-orphan"
+    )
+
     payroll_attendances = relationship("PayrollAttendance", back_populates="user")
-<<<<<<< HEAD
 
-    attendances = relationship("Attendance", back_populates="user", cascade="all, delete-orphan")
+    attendances = relationship("Attendance", back_populates="user",
+        cascade="all, delete-orphan"
+    )
 
-=======
-    monthly_attendance = relationship("Attendance", back_populates="user")
->>>>>>> origin/main
-    permissions = relationship("Permission", back_populates="user", cascade="all, delete-orphan")
+    permissions = relationship("Permission", back_populates="user",
+        cascade="all, delete-orphan"
+    )
 
-    shift_change_requests = relationship("ShiftChangeRequest", back_populates="user", cascade="all, delete-orphan")
-<<<<<<< HEAD
-    user_shifts = relationship("UserShift", back_populates="user", cascade="all, delete-orphan")
+    shift_change_requests = relationship("ShiftChangeRequest", back_populates="user",
+        cascade="all, delete-orphan"
+    )
 
-=======
-    department = relationship("Department", back_populates="users")
-    user_shifts = relationship("UserShift", back_populates="user", cascade="all, delete-orphan")
-    # job_postings = relationship("JobPosting", back_populates="created_by")
->>>>>>> origin/main
+    user_shifts = relationship("UserShift", back_populates="user",
+        cascade="all, delete-orphan"
+    )
+
     shift_roster = relationship("ShiftRoster", back_populates="users")
-    
-    # ✅ Add a relationship for salary structure
+
     salary_structure = relationship("SalaryStructure", back_populates="users")
-    created_shifts = relationship("Shift", back_populates="created_manager")
-    notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
 
-    job_postings = relationship("JobPosting", back_populates="created_by")
     created_shifts = relationship("Shift", back_populates="created_manager")
+    notifications = relationship("Notification", back_populates="user",
+        cascade="all, delete-orphan"
+    )
 
-    # Face Recognition (InsightFace embeddings)
+    # ❗ Commented cause no FK exists
+    # job_postings = relationship("JobPosting", back_populates="created_by")
+
     faces = relationship("UserFace", back_populates="user", cascade="all, delete-orphan")

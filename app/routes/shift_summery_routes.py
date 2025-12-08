@@ -1,16 +1,15 @@
+# app/routes/shift_summary_routes.py
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from datetime import date, timedelta
+
 from app.database import get_db
 from app.models.user_m import User
 from app.models.shift_roster_detail_m import ShiftRosterDetail
-
 from app.models.user_shifts_m import UserShift
-<<<<<<< HEAD
-from app.dependencies import require_org_admin
-=======
+
 from app.dependencies import get_current_user
->>>>>>> origin/main
 
 router = APIRouter(prefix="/shift-summary", tags=["Shift Summary"])
 
@@ -33,7 +32,6 @@ def generate_monthly_shift_roster(
         raise HTTPException(400, detail="Provide user_id or role_id or department_id")
 
     query = db.query(User)
-
     if user_id:
         query = query.filter(User.id == user_id)
     if role_id:
@@ -54,9 +52,7 @@ def generate_monthly_shift_roster(
     total_missing_shift_days = 0
 
     for user in users:
-
         if not user.shift_roster_id:
-            print(f"User {user.id} has NO roster assigned. Skipped.")
             continue
 
         weekly_details = db.query(ShiftRosterDetail).filter(
@@ -64,25 +60,20 @@ def generate_monthly_shift_roster(
         ).all()
 
         if not weekly_details:
-            print(f"User {user.id} roster has NO details! Skipped.")
             continue
 
-        # Map weekday 1–7 to shift_id
         weekly_map = {d.week_day_id: d.shift_id for d in weekly_details}
 
         current_date = start_date
         while current_date < end_date:
-
-            weekday_id = current_date.weekday() + 1  # Monday=1 ... Sunday=7
+            weekday_id = current_date.weekday() + 1
             shift_id = weekly_map.get(weekday_id)
 
             if not shift_id:
-                # No roster shift for this day
                 total_missing_shift_days += 1
                 current_date += delta
                 continue
 
-            # Check if assignment exists
             existing = db.query(UserShift).filter(
                 UserShift.user_id == user.id,
                 UserShift.assigned_date == current_date
@@ -94,7 +85,7 @@ def generate_monthly_shift_roster(
                         user_id=user.id,
                         assigned_date=current_date,
                         shift_id=shift_id,
-                        created_by=current_user.first_name
+                        created_by=current_user.email
                     )
                 )
                 total_inserted += 1
@@ -134,7 +125,6 @@ def get_monthly_roster(
         raise HTTPException(400, detail="Provide user_id or role_id or department_id")
 
     query = db.query(User)
-
     if user_id:
         query = query.filter(User.id == user_id)
     if role_id:
@@ -152,8 +142,6 @@ def get_monthly_roster(
     response_data = []
 
     for user in users:
-
-        # Fetch user's shifts
         shifts = db.query(UserShift).filter(
             UserShift.user_id == user.id,
             UserShift.assigned_date >= start_date,
@@ -202,7 +190,6 @@ def delete_monthly_roster(
         raise HTTPException(400, detail="Provide user_id or role_id or department_id")
 
     query = db.query(User)
-
     if user_id:
         query = query.filter(User.id == user_id)
     if role_id:
@@ -234,10 +221,6 @@ def delete_monthly_roster(
         "message": "Monthly roster deleted successfully",
         "month": month,
         "year": year,
-<<<<<<< HEAD
         "total_deleted_records": total_deleted,
         "affected_users": len(users)
-=======
-        "deleted_records": total_deleted
->>>>>>> origin/main
     }

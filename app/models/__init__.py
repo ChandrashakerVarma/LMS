@@ -22,41 +22,25 @@ from app.models.leavemaster_m import LeaveMaster
 from app.models.shift_change_request_m import ShiftChangeRequest
 from app.models.user_shifts_m import UserShift
 from app.models.notification_m import Notification
-<<<<<<< HEAD
 from app.models.menu_m import Menu
 from app.models.role_right_m import RoleRight
 from app.models.shift_roster_m import ShiftRoster
 from app.models.week_day_m import WeekDay
 from app.models.shift_roster_detail_m import ShiftRosterDetail
-
-# MISSING IMPORTS - Required for model relationships
 from app.models.department_m import Department
 from app.models.shift_m import Shift
 from app.models.enrollment_m import Enrollment
 
-
-# Added from HEAD branch
+# from HEAD branch
 from app.models.user_face_m import UserFace
 from app.models.attendance_location_policy_m import AttendanceLocationPolicy
 
-# Added from MAIN branch
+# from MAIN branch
 from app.models.subscription_plans_m import SubscriptionPlan
 from app.models.add_on_m import AddOn
 from app.models.organization_add_on_m import OrganizationAddOn
 from app.models.payment_m import Payment
-=======
-from app.models.menu_m import *
-from app.models.role_right_m import *
-from app.models.shift_roster_m import *
-from app.models.week_day_m import *
-from app.models.shift_roster_detail_m import *
-from app.models.subscription_plans_m import *
-from app.models.add_on_m import *
-from app.models.organization_add_on_m import *
-from app.models.payment_m import *
 
-from app.models.holiday_m import *
-from app.models.shift_m import Shift
-from app.models.department_m import Department
+# new models from main
+from app.models.holiday_m import Holiday
 from app.models.attendance_punch_m import AttendancePunch
->>>>>>> origin/main

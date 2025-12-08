@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, date
 import numpy as np
 import cv2
 import base64
@@ -13,7 +13,7 @@ from app.models.attendance_m import Attendance
 
 from app.ai_models.face_service import recognize_face_with_box
 from app.ai_models.face_utils import recognize_user
-from app.ai_models.insight_model import get_face_model   # <-- correct import
+from app.ai_models.insight_model import get_face_model
 
 from app.utils.attendance_utils import check_location
 from app.utils.attendance_anomaly_detector import detect_anomaly
@@ -21,26 +21,17 @@ from app.utils.attendance_anomaly_detector import detect_anomaly
 router = APIRouter(prefix="/attendance", tags=["AI Attendance"])
 
 
-# =====================================================================
+# ------------------------------------------------------------------
 # RESPECT USER attendance_mode
-# =====================================================================
+# ------------------------------------------------------------------
 def resolve_attendance_location(db, current_user, lat, long):
-    """
-    Applies attendance_mode logic:
-        - BRANCH → normal geofence check
-        - WFH → always inside
-        - ANY → always inside (no location restriction)
-    """
 
-    # Work From Home
     if current_user.attendance_mode == "WFH":
         return "WFH", True, 1.0
 
-    # No restriction
     if current_user.attendance_mode == "ANY":
         return "ANY", True, 1.0
 
-    # BRANCH mode → normal location policy
     policy_status, allowed = check_location(
         db,
         current_user.id,
@@ -51,13 +42,12 @@ def resolve_attendance_location(db, current_user, lat, long):
     )
 
     gps_score = 1.0 if policy_status in ["OK", "INSIDE", "WFA"] else 0.4
-
     return policy_status, allowed, gps_score
 
 
-# =====================================================================
+# ------------------------------------------------------------------
 # AI CHECK-IN
-# =====================================================================
+# ------------------------------------------------------------------
 @router.post("/ai-checkin")
 async def ai_checkin(
     lat: float,
@@ -66,11 +56,8 @@ async def ai_checkin(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-
-    # 1. Read image
     image_bytes = await file.read()
 
-    # 2. Face recognition
     recognized_user_id, processed_img, error_msg = recognize_face_with_box(
         image_bytes, db
     )
@@ -80,15 +67,12 @@ async def ai_checkin(
 
     if recognized_user_id != current_user.id:
         raise HTTPException(
-            403,
-            f"Face mismatch. Expected: {current_user.id}, Detected: {recognized_user_id}"
+            403, f"Face mismatch. Expected: {current_user.id}, Detected: {recognized_user_id}"
         )
 
-    # Convert preview to base64
     _, img_encoded = cv2.imencode(".jpg", processed_img)
     face_preview_b64 = base64.b64encode(img_encoded).decode()
 
-    # 3. Location check based on attendance_mode
     policy_status, allowed, gps_score = resolve_attendance_location(
         db, current_user, lat, long
     )
@@ -96,14 +80,15 @@ async def ai_checkin(
     if not allowed:
         raise HTTPException(403, "Outside allowed attendance location")
 
-    # 4. Anomaly detection
     anomaly_status = detect_anomaly(
         similarity=1.0,
         gps_score=gps_score,
-        avg_time_diff=0
+        avg_time_diff=0,
     )
 
-    # 5. Save attendance
+    # --- required month field ---
+    today_month = date.today().replace(day=1)
+
     entry = Attendance(
         user_id=current_user.id,
         check_in_time=datetime.utcnow(),
@@ -114,6 +99,8 @@ async def ai_checkin(
         face_confidence=1.0,
         is_face_verified=True,
         anomaly_flag=anomaly_status,
+        month=today_month,          # <-- required NOT NULL field
+        shift_id=current_user.shift_roster_id,  # safe temporary mapping
     )
 
     db.add(entry)
@@ -129,9 +116,9 @@ async def ai_checkin(
     }
 
 
-# =====================================================================
+# ------------------------------------------------------------------
 # AI CHECK-OUT
-# =====================================================================
+# ------------------------------------------------------------------
 @router.post("/ai-checkout")
 async def ai_checkout(
     lat: float,
@@ -140,15 +127,12 @@ async def ai_checkout(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-
-    # 1. Read image
     image_bytes = await file.read()
     frame = cv2.imdecode(np.frombuffer(image_bytes, np.uint8), cv2.IMREAD_COLOR)
 
     if frame is None:
         raise HTTPException(400, "Invalid image file")
 
-    # 2. Face recognition (ID match)
     recognized_id = recognize_user(db, frame)
 
     if not recognized_id:
@@ -156,11 +140,9 @@ async def ai_checkout(
 
     if recognized_id != current_user.id:
         raise HTTPException(
-            403,
-            f"Face mismatch. Expected {current_user.id}, Detected {recognized_id}"
+            403, f"Face mismatch. Expected {current_user.id}, Detected {recognized_id}"
         )
 
-    # 3. Draw bounding box using model
     face_app = get_face_model()
     faces = face_app.get(frame)
 
@@ -171,7 +153,6 @@ async def ai_checkout(
     _, img_encoded = cv2.imencode(".jpg", frame)
     face_preview_b64 = base64.b64encode(img_encoded).decode()
 
-    # 4. Location check
     policy_status, allowed, gps_score = resolve_attendance_location(
         db, current_user, lat, long
     )
@@ -179,13 +160,12 @@ async def ai_checkout(
     if not allowed:
         raise HTTPException(403, "Outside allowed location for punch-out")
 
-    # 5. Get today's active attendance
     today = (
         db.query(Attendance)
         .filter(
             Attendance.user_id == current_user.id,
             Attendance.check_in_time != None,
-            Attendance.punch_out == None
+            Attendance.punch_out == None,
         )
         .order_by(Attendance.id.desc())
         .first()
@@ -194,18 +174,15 @@ async def ai_checkout(
     if not today:
         raise HTTPException(404, "No active attendance record for checkout")
 
-    # 6. Compute worked minutes
     now = datetime.utcnow()
     worked_minutes = int((now - today.check_in_time).total_seconds() / 60)
 
-    # 7. Anomaly detection
     anomaly_status = detect_anomaly(
         similarity=1.0,
         gps_score=gps_score,
-        avg_time_diff=0
+        avg_time_diff=0,
     )
 
-    # 8. Update attendance record
     today.punch_out = now
     today.total_worked_minutes = worked_minutes
     today.status = "Present" if worked_minutes >= 240 else "Short Hours"

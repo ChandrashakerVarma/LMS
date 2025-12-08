@@ -7,12 +7,8 @@ from app.database import get_db
 from app.models.user_shifts_m import UserShift
 from app.models.user_m import User
 from app.models.shift_roster_detail_m import ShiftRosterDetail
-<<<<<<< HEAD
-from app.schemas.user_shifts_schema import (
-=======
 
-from app.schema.user_shifts_schema import (
->>>>>>> origin/main
+from app.schemas.user_shifts_schema import (
     UserShiftCreate,
     UserShiftUpdate,
     UserShiftResponse

@@ -1,25 +1,13 @@
-# app/routes/notification_routes.py
-<<<<<<< HEAD
-
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from typing import List
-=======
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
 from typing import List, Dict
->>>>>>> origin/main
 
+from app.database import get_db
 from app.models.notification_m import Notification
-<<<<<<< HEAD
-from app.schemas.notification_schema import NotificationCreate, NotificationResponse
-=======
 from app.models.user_m import User
 from app.models.candidate_m import Candidate
 from app.models.job_posting_m import JobPosting
-from app.database import get_db
 from app.dependencies import get_current_user
->>>>>>> origin/main
 
 from app.permission_dependencies import (
     require_view_permission,
@@ -29,77 +17,12 @@ from app.permission_dependencies import (
 )
 
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
-<<<<<<< HEAD
 
-MENU_ID = 62  # Notification menu ID
-
-
-# ------------------------------------------------------
-# CREATE NOTIFICATION
-# ------------------------------------------------------
-@router.post(
-    "/",
-    response_model=NotificationResponse,
-    status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(require_create_permission(MENU_ID))]
-)
-def create_notification(data: NotificationCreate, db: Session = Depends(get_db)):
-    new_note = Notification(**data.model_dump())
-    db.add(new_note)
-    db.commit()
-    db.refresh(new_note)
-    return new_note
-
-
-# ------------------------------------------------------
-# GET ALL NOTIFICATIONS
-# ------------------------------------------------------
-@router.get(
-    "/",
-    response_model=List[NotificationResponse],
-    dependencies=[Depends(require_view_permission(MENU_ID))]
-)
-def get_all_notifications(db: Session = Depends(get_db)):
-    return db.query(Notification).all()
-
-
-# ------------------------------------------------------
-# GET BY ID
-# ------------------------------------------------------
-@router.get(
-    "/{note_id}",
-    response_model=NotificationResponse,
-    dependencies=[Depends(require_view_permission(MENU_ID))]
-)
-def get_notification(note_id: int, db: Session = Depends(get_db)):
-    note = db.query(Notification).filter(Notification.id == note_id).first()
-    if not note:
-        raise HTTPException(status_code=404, detail="Notification not found")
-    return note
-
-
-# ------------------------------------------------------
-# UPDATE NOTIFICATION
-# ------------------------------------------------------
-@router.put(
-    "/{note_id}",
-    response_model=NotificationResponse,
-    dependencies=[Depends(require_edit_permission(MENU_ID))]
-)
-def update_notification(note_id: int, data: NotificationCreate, db: Session = Depends(get_db)):
-    note = db.query(Notification).filter(Notification.id == note_id).first()
-    if not note:
-        raise HTTPException(status_code=404, detail="Notification not found")
-
-    for key, value in data.model_dump().items():
-        setattr(note, key, value)
-
-=======
-MENU_ID = 62   # Permission Menu ID
+MENU_ID = 62  # Permission Menu
 
 
 # -----------------------------------------------------------
-# GET ALL NOTIFICATIONS FOR LOGGED-IN USER (VIEW PERMISSION)
+# GET ALL NOTIFICATIONS FOR CURRENT USER
 # -----------------------------------------------------------
 @router.get(
     "/",
@@ -123,15 +46,16 @@ def get_notifications(
     )
 
     result = []
-
     for note in notifications:
         candidate_name = None
         job_title = None
 
         if note.candidate:
             candidate_name = f"{note.candidate.first_name} {note.candidate.last_name}"
-
-            if note.candidate.job_posting and note.candidate.job_posting.job_description:
+            if (
+                note.candidate.job_posting and 
+                note.candidate.job_posting.job_description
+            ):
                 job_title = note.candidate.job_posting.job_description.title
 
         result.append({
@@ -140,14 +64,14 @@ def get_notifications(
             "is_read": note.is_read,
             "created_at": note.created_at,
             "candidate_name": candidate_name,
-            "job_title": job_title
+            "job_title": job_title,
         })
 
     return result
 
 
 # -----------------------------------------------------------
-# MARK NOTIFICATION AS READ (EDIT PERMISSION)
+# MARK READ
 # -----------------------------------------------------------
 @router.put(
     "/{notification_id}/read",
@@ -172,26 +96,14 @@ def mark_notification_read(
         raise HTTPException(status_code=404, detail="Notification not found")
 
     note.is_read = True
->>>>>>> origin/main
     db.commit()
     db.refresh(note)
 
-    return {"notification_id": note.id, "is_read": note.is_read}
+    return {"notification_id": note.id, "is_read": True}
 
 
-<<<<<<< HEAD
-# ------------------------------------------------------
-# DELETE NOTIFICATION
-# ------------------------------------------------------
-@router.delete(
-    "/{note_id}",
-    dependencies=[Depends(require_delete_permission(MENU_ID))]
-)
-def delete_notification(note_id: int, db: Session = Depends(get_db)):
-    note = db.query(Notification).filter(Notification.id == note_id).first()
-=======
 # -----------------------------------------------------------
-# DELETE NOTIFICATION (DELETE PERMISSION)
+# DELETE
 # -----------------------------------------------------------
 @router.delete(
     "/{notification_id}",
@@ -212,7 +124,6 @@ def delete_notification(
         .first()
     )
 
->>>>>>> origin/main
     if not note:
         raise HTTPException(status_code=404, detail="Notification not found")
 
@@ -220,5 +131,3 @@ def delete_notification(
     db.commit()
 
     return {"detail": "Notification deleted successfully"}
-
-

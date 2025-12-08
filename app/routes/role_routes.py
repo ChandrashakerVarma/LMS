@@ -4,16 +4,10 @@ from typing import List
 
 from app.database import get_db
 from app.models.role_m import Role
-<<<<<<< HEAD
 from app.schemas.role_schema import RoleCreate, RoleUpdate, RoleResponse
 from app.dependencies import get_current_user
 from app.models.user_m import User
 
-# Permission-based access control
-=======
-from app.schema.role_schema import RoleCreate, RoleUpdate, RoleResponse
-from app.dependencies import require_org_admin  # Admin access
->>>>>>> origin/main
 from app.permission_dependencies import (
     require_view_permission,
     require_create_permission,
@@ -22,7 +16,6 @@ from app.permission_dependencies import (
 )
 
 router = APIRouter(prefix="/roles", tags=["Roles"])
-
 MENU_ID = 4   # Roles Menu ID
 
 
@@ -38,11 +31,7 @@ MENU_ID = 4   # Roles Menu ID
 def create_role(
     data: RoleCreate,
     db: Session = Depends(get_db),
-<<<<<<< HEAD
     current_user: User = Depends(get_current_user)
-=======
-    current_user: dict = Depends(require_org_admin)
->>>>>>> origin/main
 ):
     existing_role = db.query(Role).filter(Role.name == data.name).first()
     if existing_role:
@@ -65,17 +54,13 @@ def create_role(
 )
 def get_all_roles(
     db: Session = Depends(get_db),
-<<<<<<< HEAD
     current_user: User = Depends(get_current_user)
-=======
-    current_user: dict = Depends(require_org_admin)
->>>>>>> origin/main
 ):
     return db.query(Role).order_by(Role.id.asc()).all()
 
 
 # -----------------------------------------------------------
-# GET SINGLE ROLE BY ID
+# GET SINGLE ROLE
 # -----------------------------------------------------------
 @router.get(
     "/{role_id}",
@@ -85,11 +70,7 @@ def get_all_roles(
 def get_role_by_id(
     role_id: int,
     db: Session = Depends(get_db),
-<<<<<<< HEAD
     current_user: User = Depends(get_current_user)
-=======
-    current_user: dict = Depends(require_org_admin)
->>>>>>> origin/main
 ):
     role = db.query(Role).filter(Role.id == role_id).first()
     if not role:
@@ -110,17 +91,12 @@ def update_role(
     role_id: int,
     data: RoleUpdate,
     db: Session = Depends(get_db),
-<<<<<<< HEAD
     current_user: User = Depends(get_current_user)
-=======
-    current_user: dict = Depends(require_org_admin)
->>>>>>> origin/main
 ):
     role = db.query(Role).filter(Role.id == role_id).first()
     if not role:
         raise HTTPException(404, "Role not found")
 
-    # Check duplicate name
     if data.name:
         exists = (
             db.query(Role)
@@ -148,11 +124,7 @@ def update_role(
 def delete_role(
     role_id: int,
     db: Session = Depends(get_db),
-<<<<<<< HEAD
     current_user: User = Depends(get_current_user)
-=======
-    current_user: dict = Depends(require_org_admin)
->>>>>>> origin/main
 ):
     role = db.query(Role).filter(Role.id == role_id).first()
     if not role:

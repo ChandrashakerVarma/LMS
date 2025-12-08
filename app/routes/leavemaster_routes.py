@@ -7,26 +7,17 @@ from typing import List
 from app.database import get_db
 from app.models.leavemaster_m import LeaveMaster
 from app.models.user_m import User
-<<<<<<< HEAD
 
-# ✅ Correct Pydantic schema import path (Pydantic v2 safe)
+# Correct Schema import
 from app.schemas.leavemaster_schema import (
-=======
-from app.schema.leavemaster_schema import (
->>>>>>> origin/main
     LeaveMasterCreate,
     LeaveMasterUpdate,
     LeaveMasterResponse
 )
-<<<<<<< HEAD
 
 from app.dependencies import get_current_user
 
-# ---- Permission imports ----
-=======
-from app.dependencies import get_current_user
-
->>>>>>> origin/main
+# Permission imports
 from app.permission_dependencies import (
     require_view_permission,
     require_create_permission,
@@ -41,7 +32,7 @@ router = APIRouter(prefix="/leaves", tags=["Leaves"])
 
 # ---------------- CREATE ----------------
 @router.post(
-    "/", 
+    "/",
     response_model=LeaveMasterResponse,
     dependencies=[Depends(require_create_permission(MENU_ID))]
 )
@@ -50,32 +41,16 @@ def create_leave(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-<<<<<<< HEAD
-    # Check user exists
-    user = db.query(User).filter(User.id == leave.user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
 
-    # Check duplicate leave record
-    existing_leave = db.query(LeaveMaster).filter(
-        LeaveMaster.user_id == leave.user_id,
-        LeaveMaster.holiday == leave.holiday
-    ).first()
-
-    if existing_leave:
-        return existing_leave
-
-    # Create new leave
-=======
-
+    # Validate user exists
     user = db.query(User).filter(User.id == data.user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
->>>>>>> origin/main
+    # Create leave
     new_leave = LeaveMaster(
         **data.dict(),
-        created_by=current_user.first_name
+        created_by=current_user.email
     )
 
     db.add(new_leave)
@@ -87,7 +62,7 @@ def create_leave(
 
 # ---------------- GET ALL ----------------
 @router.get(
-    "/", 
+    "/",
     response_model=List[LeaveMasterResponse],
     dependencies=[Depends(require_view_permission(MENU_ID))]
 )
@@ -128,22 +103,18 @@ def update_leave(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+
     leave = db.query(LeaveMaster).filter(LeaveMaster.id == leave_id).first()
 
-<<<<<<< HEAD
-    # Apply updates
-    for key, value in updated_data.dict(exclude_unset=True).items():
-=======
     if not leave:
         raise HTTPException(status_code=404, detail="Leave not found")
 
     update_data = data.dict(exclude_unset=True)
 
     for key, value in update_data.items():
->>>>>>> origin/main
         setattr(leave, key, value)
 
-    leave.modified_by = current_user.first_name
+    leave.modified_by = current_user.email
     leave.updated_at = datetime.utcnow()
 
     db.commit()
@@ -162,6 +133,7 @@ def delete_leave(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+
     leave = db.query(LeaveMaster).filter(LeaveMaster.id == leave_id).first()
 
     if not leave:
@@ -170,8 +142,4 @@ def delete_leave(
     db.delete(leave)
     db.commit()
 
-<<<<<<< HEAD
-    return {"message": "Leave record deleted successfully"}
-=======
-    return {"message": f"Leave deleted by {current_user.first_name}"}
->>>>>>> origin/main
+    return {"message": "Leave deleted successfully"}

@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'cbb8a888cb3b'
-down_revision = ('181582ffb259', 'eaec9ea4abcd')   # <- FIXED: use your last valid revision
+down_revision = 'eaec9ea4abcd'   # <-- Only ONE parent, no tuple
 branch_labels = None
 depends_on = None
 

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.holiday_m import Holiday
-from app.schema.holiday_schema import HolidayCreate, HolidayUpdate, HolidayResponse
+from app.schemas.holiday_schema import HolidayCreate, HolidayUpdate, HolidayResponse
 from app.dependencies import get_current_user  # adjust import based on your project
 
 router = APIRouter(prefix="/holidays", tags=["Holidays"])
