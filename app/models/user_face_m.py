@@ -10,7 +10,7 @@ class UserFace(Base):
     __tablename__ = "user_faces"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True, unique=True)
 
     embedding = Column(LargeBinary, nullable=False)
     model_name = Column(String(100), default="face_recognition_resnet")

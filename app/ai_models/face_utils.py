@@ -53,6 +53,16 @@ def register_user_face(db: Session, user_id: int, image_bytes: bytes):
 
     emb_bytes = embedding.astype("float32").tobytes()
 
+    # 🔒 SECURITY FIX: Enforce ONE face per user
+    # Delete any existing faces to prevent multiple people registering under same account
+    existing_faces = db.query(UserFace).filter(UserFace.user_id == user_id).all()
+    
+    if existing_faces:
+        print(f"⚠️  Replacing {len(existing_faces)} existing face(s) for user {user_id}")
+        for old_face in existing_faces:
+            db.delete(old_face)
+        db.flush()  # Apply deletions before adding new face
+
     rec = UserFace(
         user_id=user_id,
         embedding=emb_bytes
