@@ -1,29 +1,21 @@
 from pydantic import BaseModel, Field
-from typing import Optional
 from datetime import datetime
+from typing import Optional
 
-
-# ---------------- Base Schema ----------------
 class PayrollBase(BaseModel):
     user_id: int
     salary_structure_id: int
-    month: str = Field(..., example="2025-10")  # Format: YYYY-MM
+    month: str = Field(..., json_schema_extra={"example": "2025-10"})  # v2 compatible
 
-
-# ---------------- Create Schema ----------------
 class PayrollCreate(PayrollBase):
-    # HR shouldn't send salary fields — backend calculates automatically
     pass
 
-# ---------------- Update Schema ----------------
 class PayrollUpdate(BaseModel):
-    status: Optional[str] = None  # For marking Paid, Approved, etc.
+    status: Optional[str] = None
     recalculate: Optional[bool] = Field(
         False, description="If True, system recalculates salary using latest formulas."
     )
 
-
-# ---------------- Response Schema ----------------
 class PayrollResponse(BaseModel):
     id: int
     user_id: int
@@ -40,10 +32,7 @@ class PayrollResponse(BaseModel):
     salary_structure_name: Optional[str] = None
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
-    created_by: str | None = None
-    modified_by: str | None = None
+    created_by: Optional[str] = None
+    modified_by: Optional[str] = None
 
-    model_config = {
-    "from_attributes": True
-}
-
+    model_config = {"from_attributes": True}

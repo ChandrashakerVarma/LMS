@@ -17,21 +17,35 @@ fastapi==0.116.1
 fastapi-mail==1.5.8
 greenlet==3.2.4
 h11==0.16.0
+httpcore==1.0.9
 httptools==0.6.4
+httpx==0.28.1
 idna==3.10
+<<<<<<< HEAD
+=======
+iniconfig==2.3.0
+>>>>>>> origin/main
 Jinja2==3.1.6
 jmespath==1.0.1
 Mako==1.3.10
 MarkupSafe==3.0.2
 mysqlclient==2.2.7
+packaging==25.0
 passlib==1.7.4
+pluggy==1.6.0
 psycopg2-binary==2.9.10
 pyasn1==0.6.1
 pycparser==2.22
 pydantic==2.12.5
 pydantic-settings==2.12.0
 pydantic_core==2.41.5
+Pygments==2.19.2
 PyMySQL==1.1.2
+<<<<<<< HEAD
+=======
+pytest==9.0.1
+pytest-asyncio==1.3.0
+>>>>>>> origin/main
 python-dateutil==2.9.0.post0
 python-dotenv==1.1.1
 python-jose==3.5.0

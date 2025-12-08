@@ -35,12 +35,18 @@ class User(Base):
     organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=True)
     department_id = Column(Integer, ForeignKey("departments.id"), nullable=True)
 
+<<<<<<< HEAD
     # ------------------------------------------------------
     # PERSONAL DETAILS
     # ------------------------------------------------------
+=======
+    # ✅ Add salary structure ID
+    salary_structure_id = Column(Integer, ForeignKey("salary_structures.id"), nullable=True)
+
+>>>>>>> origin/main
     date_of_birth = Column(Date, nullable=True)
     joining_date = Column(Date, nullable=True)
-    relieving_date = Column(Date, nullable=True)
+    relieving_date = Column(Date, nullable=True)  # optional, only when employee leaves
 
     address = Column(String(255), nullable=True)
     designation = Column(String(100), nullable=True)
@@ -55,7 +61,9 @@ class User(Base):
     # ------------------------------------------------------
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    is_org_admin = Column(Boolean, default=False)# First user of org = admin
 
+<<<<<<< HEAD
     is_org_admin = Column(Boolean, default=False)
 
     created_by = Column(String(100), nullable=True)
@@ -73,6 +81,13 @@ class User(Base):
     # RELATIONSHIPS
     # ======================================================
 
+=======
+    # Audit
+    created_by = Column(String(100), nullable=True)
+    modified_by = Column(String(100), nullable=True)
+
+    # Relationships
+>>>>>>> origin/main
     role = relationship("Role", back_populates="users", lazy="joined")
     branch = relationship("Branch", back_populates="users")
     organization = relationship("Organization", back_populates="users")
@@ -90,15 +105,30 @@ class User(Base):
 
     payrolls = relationship("Payroll", back_populates="user", cascade="all, delete-orphan")
     payroll_attendances = relationship("PayrollAttendance", back_populates="user")
+<<<<<<< HEAD
 
     attendances = relationship("Attendance", back_populates="user", cascade="all, delete-orphan")
 
+=======
+    monthly_attendance = relationship("Attendance", back_populates="user")
+>>>>>>> origin/main
     permissions = relationship("Permission", back_populates="user", cascade="all, delete-orphan")
 
     shift_change_requests = relationship("ShiftChangeRequest", back_populates="user", cascade="all, delete-orphan")
+<<<<<<< HEAD
     user_shifts = relationship("UserShift", back_populates="user", cascade="all, delete-orphan")
 
+=======
+    department = relationship("Department", back_populates="users")
+    user_shifts = relationship("UserShift", back_populates="user", cascade="all, delete-orphan")
+    # job_postings = relationship("JobPosting", back_populates="created_by")
+>>>>>>> origin/main
     shift_roster = relationship("ShiftRoster", back_populates="users")
+    
+    # ✅ Add a relationship for salary structure
+    salary_structure = relationship("SalaryStructure", back_populates="users")
+    created_shifts = relationship("Shift", back_populates="created_manager")
+    notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
 
     job_postings = relationship("JobPosting", back_populates="created_by")
     created_shifts = relationship("Shift", back_populates="created_manager")

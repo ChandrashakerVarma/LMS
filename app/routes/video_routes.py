@@ -6,8 +6,12 @@ from typing import List
 from app.database import get_db
 from app.models.video_m import Video
 from app.models.course_m import Course
+<<<<<<< HEAD
 from app.schemas.video_schema import VideoCreate, VideoResponse, VideoUpdate
 from app.models.user_m import User
+=======
+from app.schema.video_schema import VideoCreate, VideoResponse, VideoUpdate
+>>>>>>> origin/main
 from app.dependencies import get_current_user, require_org_admin
 
 # Permission dependencies
@@ -33,9 +37,15 @@ MENU_ID = 32
     dependencies=[Depends(require_create_permission(MENU_ID))]
 )
 def create_video(
+<<<<<<< HEAD
     video: VideoCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_org_admin)
+=======
+    video: VideoCreate, 
+    db: Session = Depends(get_db), 
+    current_user: dict = Depends(require_org_admin)
+>>>>>>> origin/main
 ):
     course = db.query(Course).filter(Course.id == video.course_id).first()
     if not course:
@@ -108,10 +118,17 @@ def get_video(video_id: int, db: Session = Depends(get_db)):
     dependencies=[Depends(require_edit_permission(MENU_ID))]
 )
 def update_video(
+<<<<<<< HEAD
     video_id: int,
     payload: VideoUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_org_admin)
+=======
+    video_id: int, 
+    payload: VideoUpdate, 
+    db: Session = Depends(get_db), 
+    current_user: dict = Depends(require_org_admin)
+>>>>>>> origin/main
 ):
     video = db.query(Video).filter(Video.id == video_id).first()
     if not video:
@@ -154,9 +171,15 @@ def update_video(
     dependencies=[Depends(require_delete_permission(MENU_ID))]
 )
 def delete_video(
+<<<<<<< HEAD
     video_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_org_admin)
+=======
+    video_id: int, 
+    db: Session = Depends(get_db), 
+    current_user: dict = Depends(require_org_admin)
+>>>>>>> origin/main
 ):
     video = db.query(Video).filter(Video.id == video_id).first()
     if not video:

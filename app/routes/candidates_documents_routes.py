@@ -1,16 +1,23 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 
 from app.database import get_db
 from app.models.candidate_documents_m import CandidateDocument
 from app.models.candidate_m import Candidate
+<<<<<<< HEAD
 from app.schemas.candidate_documents_schema import (
     CandidateDocumentCreate,
     CandidateDocumentUpdate,
     CandidateDocumentResponse
+=======
+from app.schema.candidate_documents_schema import (
+    CandidateDocumentResponse,
+    CandidateDocumentUpdate
+>>>>>>> origin/main
 )
 
+from app.s3_helper import upload_file_to_s3
 from app.dependencies import get_current_user
 from app.permission_dependencies import (
     require_view_permission,
@@ -20,147 +27,126 @@ from app.permission_dependencies import (
 )
 
 router = APIRouter(prefix="/candidate-documents", tags=["Candidate Documents"])
+MENU_ID = 65
 
-# Correct menu ID from Seeder
-CANDIDATE_DOCS_MENU_ID = 65
-
-
-# -------------------------
-# ➕ CREATE DOCUMENT
-# -------------------------
+# Upload Document
 @router.post(
-    "/",
+    "/upload",
     response_model=CandidateDocumentResponse,
-    dependencies=[Depends(require_create_permission(CANDIDATE_DOCS_MENU_ID))]
+    dependencies=[Depends(require_create_permission(MENU_ID))]
 )
-def create_document(
-    doc_data: CandidateDocumentCreate,
+async def upload_candidate_document(
+    candidate_id: int = Form(...),
+    document_type: str = Form(...),
+    file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
-
-    # Check candidate exists
-    candidate = db.query(Candidate).filter(Candidate.id == doc_data.candidate_id).first()
+    # Check if candidate exists
+    candidate = db.query(Candidate).filter(Candidate.id == candidate_id).first()
     if not candidate:
         raise HTTPException(status_code=404, detail="Candidate not found")
 
-    # Check duplicate document
+    # Check if document of this type already exists for the candidate
     existing_doc = db.query(CandidateDocument).filter(
-        CandidateDocument.candidate_id == doc_data.candidate_id,
-        CandidateDocument.document_name == doc_data.document_name
+        CandidateDocument.candidate_id == candidate_id,
+        CandidateDocument.document_type == document_type
     ).first()
-
     if existing_doc:
         raise HTTPException(
-            status_code=400,
-            detail="Document already exists for this candidate"
+            status_code=400, 
+            detail=f"Document of type '{document_type}' already exists for this candidate"
         )
 
-    new_doc = CandidateDocument(
-        **doc_data.dict(),
-        created_by=current_user.username,
-        modified_by=current_user.username
-    )
+    # Upload file to S3
+    document_url = upload_file_to_s3(file, folder="candidate_docs")
+    created_by_name = f"{current_user.first_name} {current_user.last_name}"
 
+    # Create new document
+    new_doc = CandidateDocument(
+        candidate_id=candidate_id,
+        document_type=document_type,
+        document_url=document_url,
+        created_by=created_by_name
+    )
     db.add(new_doc)
     db.commit()
     db.refresh(new_doc)
     return new_doc
 
 
-# -------------------------
-# 📜 GET ALL DOCUMENTS
-# -------------------------
+# Get All Documents
+
 @router.get(
     "/",
     response_model=List[CandidateDocumentResponse],
-    dependencies=[Depends(require_view_permission(CANDIDATE_DOCS_MENU_ID))]
+    dependencies=[Depends(require_view_permission(MENU_ID))]
 )
 def get_all_documents(db: Session = Depends(get_db)):
     return db.query(CandidateDocument).all()
 
-
-# -------------------------
-# 📄 GET DOCUMENTS BY CANDIDATE
-# -------------------------
+# Get Documents by Candidate
 @router.get(
     "/candidate/{candidate_id}",
     response_model=List[CandidateDocumentResponse],
-    dependencies=[Depends(require_view_permission(CANDIDATE_DOCS_MENU_ID))]
+    dependencies=[Depends(require_view_permission(MENU_ID))]
 )
 def get_documents_by_candidate(candidate_id: int, db: Session = Depends(get_db)):
-    docs = db.query(CandidateDocument).filter(
-        CandidateDocument.candidate_id == candidate_id
-    ).all()
-
+    docs = db.query(CandidateDocument).filter(CandidateDocument.candidate_id == candidate_id).all()
     if not docs:
-        raise HTTPException(status_code=404, detail="No documents found for this candidate")
-
+        raise HTTPException(status_code=404, detail="No documents found")
     return docs
 
-
-# -------------------------
-# ✏️ UPDATE DOCUMENT
-# -------------------------
+# -------------------------------------------
+# Update Document
+# -------------------------------------------
 @router.put(
     "/{document_id}",
     response_model=CandidateDocumentResponse,
-    dependencies=[Depends(require_edit_permission(CANDIDATE_DOCS_MENU_ID))]
+    dependencies=[Depends(require_edit_permission(MENU_ID))]
 )
-def update_document(
+async def update_document(
     document_id: int,
-    update_data: CandidateDocumentUpdate,
+    document_type: str = Form(None),
+    file: UploadFile = File(None),
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
-
     doc = db.query(CandidateDocument).filter(CandidateDocument.id == document_id).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
-    # Prevent duplicate type update
-    if update_data.document_name:
-        exists = db.query(CandidateDocument).filter(
-            CandidateDocument.candidate_id == doc.candidate_id,
-            CandidateDocument.document_name == update_data.document_name,
-            CandidateDocument.id != document_id
-        ).first()
+    # If new file uploaded → upload to S3
+    if file:
+        new_document_url = upload_file_to_s3(file, folder="candidate_docs")
+        doc.document_url = new_document_url
 
-        if exists:
-            raise HTTPException(
-                status_code=400,
-                detail="Document already exists for this candidate"
-            )
+    # Update only if provided
+    if document_type:
+        doc.document_type = document_type
 
-    # Update fields
-    for key, value in update_data.dict(exclude_unset=True).items():
-        setattr(doc, key, value)
-
-    doc.modified_by = current_user.username
+    doc.modified_by = f"{current_user.first_name} {current_user.last_name}"
 
     db.commit()
     db.refresh(doc)
     return doc
 
 
-# -------------------------
-# ❌ DELETE DOCUMENT
-# -------------------------
+# Delete Document
 @router.delete(
     "/{document_id}",
-    dependencies=[Depends(require_delete_permission(CANDIDATE_DOCS_MENU_ID))]
+    dependencies=[Depends(require_delete_permission(MENU_ID))]
 )
 def delete_document(
     document_id: int,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
-
     doc = db.query(CandidateDocument).filter(CandidateDocument.id == document_id).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
     db.delete(doc)
     db.commit()
-
-    return {"message": f"Document deleted successfully by {current_user.username}"}
+    deleted_by_name = f"{current_user.first_name} {current_user.last_name}"
+    return {"message": f"Document deleted successfully by {deleted_by_name}"}
