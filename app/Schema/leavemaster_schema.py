@@ -1,53 +1,43 @@
-# app/schema/leave_schema.py
 from pydantic import BaseModel
 from datetime import date, datetime
 from typing import Optional
 
-# -------- BASE --------
+
+# ================= BASE =================
 class LeaveMasterBase(BaseModel):
-    allocated: int = 0
-    used: int = 0
-    balance: int = 0
-    carry_forward: bool = False
-
-    leave_type: str
-    start_date: Optional[date] = None
-    end_date: Optional[date] = None
-    status: str = "pending"
-
-    # HALF DAY SUPPORT
-    is_half_day: Optional[bool] = None   # None => not a half-day leave
+    leave_type_id: int
+    start_date: date
+    end_date: date
+    is_half_day: Optional[bool] = False
 
 
-# -------- CREATE --------
+# ================= CREATE (ORG INCHARGE / ADMIN) =================
 class LeaveMasterCreate(LeaveMasterBase):
-    user_id: int
+    user_id: int   # ✅ REQUIRED (leave created for another user)
 
 
-# -------- UPDATE --------
+# ================= UPDATE (Admin) =================
 class LeaveMasterUpdate(BaseModel):
-    allocated: Optional[int] = None
-    used: Optional[int] = None
-    balance: Optional[int] = None
-    carry_forward: Optional[bool] = None
-
-    leave_type: Optional[str] = None
-    start_date: Optional[date] = None
-    end_date: Optional[date] = None
-    status: Optional[str] = None
-
-    is_half_day: Optional[bool] = None  # update half-day if needed
+    status: str  # approved / rejected / cancelled
 
 
-# -------- RESPONSE --------
-class LeaveMasterResponse(LeaveMasterBase):
+# ================= RESPONSE =================
+class LeaveMasterResponse(BaseModel):
     id: int
     user_id: int
+    leave_type_id: int
 
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    start_date: date
+    end_date: date
+    leave_days: float
+    is_half_day: bool
+
+    status: str
+
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
     created_by: Optional[str] = None
-    modified_by: Optional[str] = None
+    modified_by: Optional[str] = None    
 
     model_config = {
         "from_attributes": True

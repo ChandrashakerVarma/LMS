@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import date, datetime
 
 
@@ -26,6 +26,4 @@ class HolidayResponse(HolidayBase):
     created_by: str | None = None
     modified_by: str | None = None
 
-    model_config = {
-        "from_attributes": True
-    }
+model_config = ConfigDict(from_attributes=True)

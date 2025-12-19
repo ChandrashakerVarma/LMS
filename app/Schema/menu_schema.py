@@ -1,6 +1,7 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 from typing import Optional, List
+
 
 class MenuBase(BaseModel):
     name: str
@@ -11,8 +12,10 @@ class MenuBase(BaseModel):
     menu_order: Optional[int] = 0
     is_active: Optional[bool] = True
 
+
 class MenuCreate(MenuBase):
     pass
+
 
 class MenuUpdate(BaseModel):
     name: Optional[str] = None
@@ -23,6 +26,7 @@ class MenuUpdate(BaseModel):
     menu_order: Optional[int] = None
     is_active: Optional[bool] = None
 
+
 class MenuResponse(MenuBase):
     id: int
     created_at: Optional[datetime] = None
@@ -30,18 +34,14 @@ class MenuResponse(MenuBase):
     created_by: Optional[str] = None
     modified_by: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MenuTreeResponse(MenuResponse):
-    # Correct forward reference usage
     children: List["MenuTreeResponse"] = Field(default_factory=list)
 
-    model_config = {
-    "from_attributes": True
-}
+    model_config = ConfigDict(from_attributes=True)
 
 
-MenuTreeResponse.update_forward_refs()
-
+# Pydantic v2 forward reference fix
+MenuTreeResponse.model_rebuild()

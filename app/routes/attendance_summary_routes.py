@@ -7,14 +7,14 @@ from datetime import date, datetime, timedelta
 import calendar
 
 from app.database import get_db
-from app.models.attendance_m import Attendance
+from app.models.attendance_summary_m import Attendance
 from app.models.user_m import User
 from app.models.attendance_punch_m import AttendancePunch
 from app.models.leavemaster_m import LeaveMaster
 from app.models.permission_m import Permission
 from app.models.holiday_m import Holiday
 
-from app.schema.attendance_schema import AttendanceSummaryResponse
+from app.schema.attendance_summary_schema import AttendanceSummaryResponse
 from app.utils.attendance_utils import calculate_monthly_summary
 from app.dependencies import get_current_user
 

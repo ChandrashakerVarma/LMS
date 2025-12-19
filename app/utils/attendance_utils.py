@@ -13,7 +13,7 @@ from app.models.permission_m import Permission
 from app.models.user_m import User
 from app.models.shift_m import Shift
 from app.models.shift_roster_detail_m import ShiftRosterDetail
-from app.models.attendance_m import Attendance
+from app.models.attendance_summary_m import Attendance
 
 
 DEFAULT_WORKING_MINUTES = 480
