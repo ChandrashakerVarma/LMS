@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 from typing import Optional
 
@@ -26,9 +26,7 @@ class RoleRightResponse(RoleRightBase):
     created_by: Optional[str] = None
     modified_by: Optional[str] = None
     
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = ConfigDict(from_attributes=True)
 
 
 class RoleRightWithMenuResponse(BaseModel):

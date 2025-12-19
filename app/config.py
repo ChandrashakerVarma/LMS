@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 from fastapi_mail import ConnectionConfig
+from pydantic import EmailStr, ConfigDict
 
 load_dotenv()
 
@@ -14,13 +15,10 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 60))
 
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
-# -------------------------------
-# PYDANTIC SETTINGS
-# -------------------------------
-from pydantic_settings import BaseSettings
-from pydantic import EmailStr
 
-
+# -------------------------------
+# PYDANTIC SETTINGS (Pydantic v2)
+# -------------------------------
 class Settings(BaseSettings):
 
     # Database
@@ -45,9 +43,11 @@ class Settings(BaseSettings):
     AWS_REGION_VIDEO: str
     AWS_S3_BUCKET_VIDEO: str
 
-    class Config:
-        env_file = ".env"
-        extra = "allow"  # Allow additional keys
+    # ✔️ NEW: Pydantic v2 model config
+    model_config = ConfigDict(
+        env_file=".env",
+        extra="allow"       # Allow additional keys
+    )
 
 
 settings = Settings()

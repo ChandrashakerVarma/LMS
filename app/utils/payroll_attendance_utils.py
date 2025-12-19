@@ -1,6 +1,6 @@
 from datetime import datetime
 from sqlalchemy.orm import Session
-from app.models.attendance_m import Attendance
+from models.attendance_summary_m import Attendance
 from app.models.salary_structure_m import SalaryStructure
 from app.utils.formula_engine import calculate_salary_with_formulas
 

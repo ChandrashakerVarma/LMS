@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 from datetime import datetime
 
@@ -17,12 +17,13 @@ class CategoryResponse(CategoryBase):
     id: int
     created_at: datetime
     updated_at: datetime
-    courses: Optional[List["CourseResponse"]] = []  # forward ref
+    courses: Optional[List["CourseResponse"]] = []
 
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
 
-# Import referenced model AFTER defining CategoryResponse
+
+# Import AFTER definition to solve circular import
 from app.schema.course_schema import CourseResponse
 
-# Use model_rebuild() instead of update_forward_refs()
+# Pydantic v2 forward reference fix
 CategoryResponse.model_rebuild()

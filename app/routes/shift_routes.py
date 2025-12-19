@@ -30,6 +30,8 @@ def create_shift(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+
+    # Check duplicates (name OR code)
     exists = db.query(Shift).filter(
         (Shift.shift_name == shift_in.shift_name) |
         (Shift.shift_code == shift_in.shift_code)
@@ -38,14 +40,16 @@ def create_shift(
     if exists:
         raise HTTPException(status_code=400, detail="Shift already exists")
 
+    # FIX: Use model_dump() instead of dict()
     new_shift = Shift(
-        **shift_in.dict(),
-        created_by=current_user.id     # ✔ FIXED (integer FK)
+        **shift_in.model_dump(),
+        created_by=current_user.id
     )
 
     db.add(new_shift)
     db.commit()
     db.refresh(new_shift)
+
     return new_shift
 
 
@@ -76,6 +80,7 @@ def get_shift(
     shift = db.query(Shift).filter(Shift.id == shift_id).first()
     if not shift:
         raise HTTPException(status_code=404, detail="Shift not found")
+
     return shift
 
 
@@ -95,15 +100,17 @@ def update_shift(
     if not shift:
         raise HTTPException(status_code=404, detail="Shift not found")
 
-    update_data = update.dict(exclude_unset=True)
+    # FIX: Use model_dump(exclude_unset=True)
+    update_data = update.model_dump(exclude_unset=True)
 
     for key, value in update_data.items():
         setattr(shift, key, value)
 
-    shift.modified_by = current_user.first_name   # ✔ FIXED (string OK)
+    shift.modified_by = current_user.first_name
 
     db.commit()
     db.refresh(shift)
+
     return shift
 
 
@@ -124,4 +131,5 @@ def delete_shift(
     db.delete(shift)
     db.commit()
 
-    return {"message": f"Shift deleted successfully by {current_user.first_name}"}
+    # Your test expects only: "Shift deleted successfully"
+    return {"message": "Shift deleted successfully"}
