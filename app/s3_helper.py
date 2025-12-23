@@ -1,11 +1,9 @@
-import boto3
+import os
 from uuid import uuid4
-from fastapi import HTTPException
+from fastapi import UploadFile, HTTPException
 from app.config import settings
+import boto3
 
-# -----------------------------
-# S3 CLIENT FOR RESUME UPLOADS
-# -----------------------------
 s3_client = boto3.client(
     "s3",
     aws_access_key_id=settings.AWS_ACCESS_KEY_ID_RESUME,
@@ -13,34 +11,30 @@ s3_client = boto3.client(
     region_name=settings.AWS_REGION_RESUME,
 )
 
-def upload_file_to_s3(file, folder):
-    try:
-        if not file.filename or "." not in file.filename:
-            raise HTTPException(status_code=400, detail="File must have an extension")
+def upload_file_to_s3(file: UploadFile, folder: str) -> str:
+    if not file or not file.filename:
+        raise HTTPException(status_code=400, detail="File is required")
 
-        ext = file.filename.split(".")[-1].lower()
+    filename = file.filename.split(";")[0]
+    ext = os.path.splitext(filename)[1].lower().replace(".", "")
 
-        allowed = ["pdf", "jpg", "jpeg", "png"]
-        if ext not in allowed:
-            raise HTTPException(status_code=400, detail="Invalid file type")
-
-        # Unique filename
-        key = f"{folder}/{uuid4()}.{ext}"
-
-        # Upload
-        s3_client.upload_fileobj(
-            file.file,
-            settings.BUCKET_NAME_RESUME,
-            key
+    allowed = {"pdf", "jpg", "jpeg", "png"}
+    if ext not in allowed:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid file type. Allowed: {', '.join(allowed)}"
         )
 
-        # Public URL
-        file_url = (
-            f"https://{settings.BUCKET_NAME_RESUME}.s3."
-            f"{settings.AWS_REGION_RESUME}.amazonaws.com/{key}"
-        )
+    key = f"{folder}/{uuid4()}.{ext}"
 
-        return file_url
+    s3_client.upload_fileobj(
+        file.file,
+        settings.BUCKET_NAME_RESUME,
+        key,
+        ExtraArgs={"ContentType": file.content_type}
+    )
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"S3 upload error: {str(e)}")
+    return (
+        f"https://{settings.BUCKET_NAME_RESUME}.s3."
+        f"{settings.AWS_REGION_RESUME}.amazonaws.com/{key}"
+    )

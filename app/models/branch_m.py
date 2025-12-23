@@ -12,11 +12,11 @@ class Branch(Base):
     organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"))
 
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(),
-                        server_onupdate=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(),server_onupdate=func.now(), nullable=False)
 
     # Relationships
     organization = relationship("Organization", back_populates="branches")
     courses = relationship("Course", back_populates="branch", cascade="all, delete-orphan")
     users = relationship("User", back_populates="branch", cascade="all, delete-orphan")
-
+    job_postings = relationship("JobPosting", back_populates="branch", cascade="all, delete-orphan")
+    

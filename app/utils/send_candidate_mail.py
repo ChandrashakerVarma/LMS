@@ -1,6 +1,6 @@
 # app/utils/candidate_email.py
 
-from LMS.app.utils.email_templates_utils import render_email
+from app.utils.email_templates_utils import render_email
 from app.utils.email_ses import send_email_ses  # ✅ SES instead of SMTP
 from app.config import settings
 
