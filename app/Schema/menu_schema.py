@@ -5,6 +5,7 @@ from typing import Optional, List, TYPE_CHECKING
 if TYPE_CHECKING:
     from __main__ import MenuTreeResponse  # for type checkers
 
+
 class MenuBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -45,8 +46,16 @@ class MenuResponse(MenuBase):
 
 class MenuTreeResponse(MenuResponse):
     children: List["MenuTreeResponse"] = Field(default_factory=list)
+<<<<<<< HEAD
     model_config = ConfigDict(from_attributes=True)
 
 
 # Pydantic v2 replacement for update_forward_refs
+=======
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# Pydantic v2 forward reference fix
+>>>>>>> origin/main
 MenuTreeResponse.model_rebuild()

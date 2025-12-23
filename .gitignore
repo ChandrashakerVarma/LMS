@@ -1,37 +1,45 @@
-# --- Virtual Environments ---
+# ===============================
+# Python Virtual Environments
+# ===============================
+venv/
+.env_venv/
 lms_env/
 lms_env1/
 l_env/
-venv/
-Lib/
-Include/
-bin/
-Scripts/
-pyvenv.cfg
 
-# --- Bytecode and Cache ---
+# ===============================
+# Python Cache / Bytecode
+# ===============================
 __pycache__/
 *.py[cod]
 *.pyo
 
-# --- Environment & Secrets ---
+# ===============================
+# Environment Variables / Secrets
+# ===============================
 .env
 .env.*
 
-# --- IDE / Editor Settings ---
+# ===============================
+# IDE / Editor
+# ===============================
 .vscode/
 .idea/
 
-# --- OS / System Files ---
+# ===============================
+# OS Files
+# ===============================
 .DS_Store
 Thumbs.db
 
-# --- Logs ---
+# ===============================
+# Logs
+# ===============================
 *.log
 
-# --- Alembic ---
-alembic/versions/__pycache__/
-
-echo "test.db" >> .gitignore
-echo "test_dept.db" >> .gitignore
-echo "test_org.db" >> .gitignore
+# ===============================
+# Test / Local DB files
+# ===============================
+test.db
+test_dept.db
+test_org.db

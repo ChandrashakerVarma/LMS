@@ -6,17 +6,18 @@ from app.database import engine, Base
 # ======================
 from app.models import (user_m,role_m,organization_m,branch_m,menu_m,role_right_m,department_m,course_m,
     video_m,category_m,enrollment_m,Progress_m,QuizCheckpoint_m,QuizHistory_m,shift_m,user_shifts_m,shift_change_request_m,
-    shift_roster_m,shift_roster_detail_m,attendance_m,attendance_punch_m,leavemaster_m,holiday_m,permission_m,
+    shift_roster_m,shift_roster_detail_m,attendance_punch_m,leavemaster_m,holiday_m,permission_m,
     salary_structure_m,formula_m,payroll_m,payroll_attendance_m,job_posting_m,job_description_m,candidate_m,
-    candidate_documents_m,notification_m,test_report_m,)
+    candidate_documents_m,notification_m,test_report_m,attendance_summary_m,leavetype_m,leaveconfig_m,leave_balance_m)
 
 from app.routes import (auth_routes,role_routes,organization_routes,branch_routes,
     menu_routes,role_right_routes,department_routes,categorys_routes,course_routes,video_routes,
     enrollment_routes,progress_routes,quiz_checkpoint_routes,quiz_history_routes,shift_routes,shift_change_request_routes,
-    user_shifts_routes,shift_roster_routes,shift_roster_detail_routes,shift_summery_routes,attendance_routes,attendance_punch_routes,
+    user_shifts_routes,shift_roster_routes,shift_roster_detail_routes,shift_summery_routes,attendance_punch_routes,
     leavemaster_routes,holiday_routes,permission_routes,salary_structure_routes,formula_routes,payroll_routes,
     payroll_attendance_routes,job_posting_routes,job_description_routes,candidate_routes,candidates_documents_routes,
-    notification_routes,test_report_routes,)
+    notification_routes,test_report_routes,attendance_summary_routes,leavetype_routes,leave_config_routes,leave_balance_routes)
+
 from app.routes.admin_dashboard import user_routes
 from app.seeders.role_seeder import seed_roles
 from app.seeders.menu_seeder import seed_menus
@@ -55,16 +56,19 @@ app.include_router(notification_routes.router)
 
 app.include_router(shift_routes.router)
 app.include_router(shift_change_request_routes.router)
+app.include_router(attendance_punch_routes.router)
+app.include_router(attendance_summary_routes.router)
+app.include_router(leavetype_routes.router)
+app.include_router(leave_config_routes.router)
+app.include_router(leavemaster_routes.router)
+app.include_router(leave_balance_routes.router)
+app.include_router(holiday_routes.router)
+app.include_router(permission_routes.router)
+
 app.include_router(user_shifts_routes.router)
 app.include_router(shift_roster_routes.router)
 app.include_router(shift_roster_detail_routes.router)
 app.include_router(shift_summery_routes.router)
-
-app.include_router(attendance_routes.router)
-app.include_router(attendance_punch_routes.router)
-app.include_router(leavemaster_routes.router)
-app.include_router(holiday_routes.router)
-app.include_router(permission_routes.router)
 
 app.include_router(salary_structure_routes.router)
 app.include_router(formula_routes.router)

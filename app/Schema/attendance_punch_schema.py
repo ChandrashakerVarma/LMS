@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime, date as DateType, time as TimeType
 from typing import Optional
 
@@ -40,6 +40,4 @@ class AttendancePunchResponse(BaseModel):
     created_at: Optional[datetime]
     modified_at: Optional[datetime]
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = ConfigDict(from_attributes=True)

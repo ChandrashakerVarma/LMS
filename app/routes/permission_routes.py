@@ -1,8 +1,6 @@
-# app/routes/permission_routes.py
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List
 
 from app.database import get_db
@@ -16,7 +14,6 @@ from app.schema.permission_schema import (
 )
 from app.dependencies import get_current_user
 
-# 🔐 Permission checks
 from app.permission_dependencies import (
     require_view_permission,
     require_create_permission,
@@ -29,9 +26,9 @@ MENU_ID = 46
 router = APIRouter(prefix="/permissions", tags=["Permissions"])
 
 
-# ➕ CREATE PERMISSION
+# ------------------- CREATE PERMISSION -------------------
 @router.post(
-    "/", 
+    "/",
     response_model=PermissionResponse,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_create_permission(menu_id=MENU_ID))]
@@ -51,7 +48,7 @@ def create_permission(
     if not shift:
         raise HTTPException(status_code=404, detail="Shift not found")
 
-    # Check if permission already exists for same date
+    # Check duplicate permission same date
     exists = (
         db.query(Permission)
         .filter(Permission.user_id == data.user_id,
@@ -62,11 +59,11 @@ def create_permission(
     if exists:
         raise HTTPException(
             status_code=400,
-            detail="Permission request for this user on this date already exists"
+            detail="Permission request already exists for this date"
         )
 
     new_permission = Permission(
-        **data.dict(),
+        **data.model_dump(),              # ✔ UPDATED for Pydantic V2
         created_by=current_user.first_name
     )
 
@@ -77,9 +74,9 @@ def create_permission(
     return new_permission
 
 
-# 📋 GET ALL PERMISSIONS
+# ------------------- GET ALL -------------------
 @router.get(
-    "/", 
+    "/",
     response_model=List[PermissionResponse],
     dependencies=[Depends(require_view_permission(menu_id=MENU_ID))]
 )
@@ -90,7 +87,7 @@ def get_all_permissions(
     return db.query(Permission).all()
 
 
-# 🔍 GET BY ID
+# ------------------- GET BY ID -------------------
 @router.get(
     "/{permission_id}",
     response_model=PermissionResponse,
@@ -108,7 +105,7 @@ def get_permission_by_id(
     return permission
 
 
-# ✏️ UPDATE PERMISSION
+# ------------------- UPDATE -------------------
 @router.put(
     "/{permission_id}",
     response_model=PermissionResponse,
@@ -124,12 +121,13 @@ def update_permission(
     if not permission:
         raise HTTPException(status_code=404, detail="Permission not found")
 
-    # Apply updates
-    for key, value in updated_data.dict(exclude_unset=True).items():
+    update_data = updated_data.model_dump(exclude_unset=True)   # ✔ UPDATED
+
+    for key, value in update_data.items():
         setattr(permission, key, value)
 
     permission.modified_by = current_user.first_name
-    permission.updated_at = datetime.utcnow()
+    permission.updated_at = datetime.now(timezone.utc)          # ✔ UPDATED
 
     db.commit()
     db.refresh(permission)
@@ -137,7 +135,7 @@ def update_permission(
     return permission
 
 
-# ❌ DELETE PERMISSION
+# ------------------- DELETE -------------------
 @router.delete(
     "/{permission_id}",
     dependencies=[Depends(require_delete_permission(menu_id=MENU_ID))]
