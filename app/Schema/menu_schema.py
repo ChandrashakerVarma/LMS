@@ -1,8 +1,13 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from __main__ import MenuTreeResponse  # for type checkers
 
 class MenuBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     name: str
     display_name: str
     route: Optional[str] = None
@@ -11,10 +16,14 @@ class MenuBase(BaseModel):
     menu_order: Optional[int] = 0
     is_active: Optional[bool] = True
 
+
 class MenuCreate(MenuBase):
     pass
 
+
 class MenuUpdate(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     name: Optional[str] = None
     display_name: Optional[str] = None
     route: Optional[str] = None
@@ -23,6 +32,7 @@ class MenuUpdate(BaseModel):
     menu_order: Optional[int] = None
     is_active: Optional[bool] = None
 
+
 class MenuResponse(MenuBase):
     id: int
     created_at: Optional[datetime] = None
@@ -30,18 +40,13 @@ class MenuResponse(MenuBase):
     created_by: Optional[str] = None
     modified_by: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MenuTreeResponse(MenuResponse):
-    # Correct forward reference usage
     children: List["MenuTreeResponse"] = Field(default_factory=list)
-
-    model_config = {
-    "from_attributes": True
-}
+    model_config = ConfigDict(from_attributes=True)
 
 
-MenuTreeResponse.update_forward_refs()
-
+# Pydantic v2 replacement for update_forward_refs
+MenuTreeResponse.model_rebuild()

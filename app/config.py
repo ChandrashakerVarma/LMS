@@ -18,7 +18,7 @@ DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 # PYDANTIC SETTINGS
 # -------------------------------
 from pydantic_settings import BaseSettings
-from pydantic import EmailStr
+from pydantic import ConfigDict, EmailStr
 
 
 class Settings(BaseSettings):
@@ -45,9 +45,11 @@ class Settings(BaseSettings):
     AWS_REGION_VIDEO: str
     AWS_S3_BUCKET_VIDEO: str
 
-    class Config:
-        env_file = ".env"
-        extra = "allow"  # Allow additional keys
+    model_config = ConfigDict(
+        env_file=".env",
+        extra="allow"  # Allow additional keys
+    )
+
 
 
 settings = Settings()
@@ -64,3 +66,4 @@ mail_conf = ConnectionConfig(
     USE_CREDENTIALS=True,
     VALIDATE_CERTS=True
 )
+ 

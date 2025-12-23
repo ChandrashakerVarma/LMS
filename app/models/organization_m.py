@@ -48,3 +48,4 @@ class Organization(Base):
     courses = relationship("Course", back_populates="organization", cascade="all, delete-orphan")
     add_ons = relationship("OrganizationAddOn", back_populates="organization", cascade="all, delete-orphan")
     payments = relationship("Payment", back_populates="organization", cascade="all, delete-orphan")
+    job_postings = relationship("JobPosting", back_populates="organization")
