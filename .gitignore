@@ -2,6 +2,7 @@
 # Python Virtual Environments
 # ===============================
 venv/
+hr_env2/
 .env_venv/
 lms_env/
 lms_env1/
