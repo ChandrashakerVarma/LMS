@@ -15,7 +15,7 @@ from app.permission_dependencies import (
 )
 
 router = APIRouter(prefix="/branches", tags=["branches"])
-
+ 
 # ✅ Correct Menu ID from your Seeder
 BRANCHES_MENU_ID = 8
 

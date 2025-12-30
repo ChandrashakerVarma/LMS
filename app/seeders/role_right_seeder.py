@@ -162,7 +162,8 @@ def seed_role_rights():
                 "videos":               (True, False, False, False),
                 "enrollments":          (True, True, False, False),  # Enroll team
                 "progress":             (True, False, False, False),  # View team progress
-                
+                 # Hiring Module — Manager can only create/post jobs
+                "job_postings":         (True, True, False, False),
                 # Hiring (if manager is hiring manager)
                 "candidates":           (True, True, True, False),
                 "candidate_documents":  (True, True, False, False),

@@ -1,9 +1,14 @@
 from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from __main__ import MenuTreeResponse  # for type checkers
 
 
 class MenuBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     name: str
     display_name: str
     route: Optional[str] = None
@@ -18,6 +23,8 @@ class MenuCreate(MenuBase):
 
 
 class MenuUpdate(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     name: Optional[str] = None
     display_name: Optional[str] = None
     route: Optional[str] = None
@@ -39,9 +46,16 @@ class MenuResponse(MenuBase):
 
 class MenuTreeResponse(MenuResponse):
     children: List["MenuTreeResponse"] = Field(default_factory=list)
+<<<<<<< HEAD
+    model_config = ConfigDict(from_attributes=True)
+
+
+# Pydantic v2 replacement for update_forward_refs
+=======
 
     model_config = ConfigDict(from_attributes=True)
 
 
 # Pydantic v2 forward reference fix
+>>>>>>> origin/main
 MenuTreeResponse.model_rebuild()

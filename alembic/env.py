@@ -22,8 +22,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from app.database import Base
 from app.models import (
     role_m, user_m, course_m, Progress_m, video_m,
-    QuizCheckpoint_m, QuizHistory_m, enrollment_m,
-    shift_m, department_m, leavemaster_m, payroll_attendance_m,
+    QuizCheckpoint_m, QuizHistory_m, enrollment_m,shift_m, department_m, leavemaster_m, payroll_attendance_m,
     branch_m, category_m, organization_m, salary_structure_m, payroll_m,
     formula_m, permission_m, candidate_documents_m,
     candidate_m, job_posting_m, shift_change_request_m, shift_roster_detail_m,

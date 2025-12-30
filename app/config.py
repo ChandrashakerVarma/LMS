@@ -64,3 +64,4 @@ mail_conf = ConnectionConfig(
     USE_CREDENTIALS=True,
     VALIDATE_CERTS=True
 )
+ 
