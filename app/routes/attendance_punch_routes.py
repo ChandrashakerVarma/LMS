@@ -9,7 +9,7 @@ from app.models.attendance_punch_m import AttendancePunch
 from app.schema.attendance_punch_schema import (
     AttendancePunchCreate,
     AttendancePunchUpdate,
-    AttendancePunchResponse,
+    AttendancePunchResponse
 )
 from app.dependencies import get_current_user
 from app.permission_dependencies import (

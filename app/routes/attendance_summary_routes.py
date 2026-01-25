@@ -1,5 +1,3 @@
-# app/routes/attendance_summary_routes.py
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
@@ -32,7 +30,7 @@ router = APIRouter(prefix="/attendance-summary", tags=["Attendance Summary"])
 
 
 # ----------------------------------------------------
-# GENERATE MONTHLY SUMMARY  (Create Permission)
+# GENERATE MONTHLY SUMMARY
 # ----------------------------------------------------
 @router.post(
     "/generate/{user_id}/{year}/{month}",
@@ -53,12 +51,11 @@ def generate_monthly_summary(
 
     summary.created_by = current_user.first_name
     db.commit()
-
     return summary
 
 
 # ----------------------------------------------------
-# GET SUMMARY BY USER ID + YEAR + MONTH (View Permission)
+# GET SUMMARY BY USER + MONTH
 # ----------------------------------------------------
 @router.get(
     "/{user_id}/{year}/{month}",
@@ -66,7 +63,6 @@ def generate_monthly_summary(
     dependencies=[Depends(require_view_permission(ATTENDANCE_MENU_ID))]
 )
 def get_summary(user_id: int, year: int, month: int, db: Session = Depends(get_db)):
-
     month_start = date(year, month, 1)
 
     summary = (
@@ -82,7 +78,7 @@ def get_summary(user_id: int, year: int, month: int, db: Session = Depends(get_d
 
 
 # ----------------------------------------------------
-# GET SUMMARY BY ID (View Permission)
+# GET SUMMARY BY ID
 # ----------------------------------------------------
 @router.get(
     "/id/{attendance_id}",
@@ -90,7 +86,6 @@ def get_summary(user_id: int, year: int, month: int, db: Session = Depends(get_d
     dependencies=[Depends(require_view_permission(ATTENDANCE_MENU_ID))]
 )
 def get_summary_by_id(attendance_id: int, db: Session = Depends(get_db)):
-
     summary = db.query(Attendance).filter(Attendance.id == attendance_id).first()
 
     if not summary:
@@ -100,7 +95,7 @@ def get_summary_by_id(attendance_id: int, db: Session = Depends(get_db)):
 
 
 # ----------------------------------------------------
-# GET ALL SUMMARIES (View Permission)
+# GET ALL SUMMARIES
 # ----------------------------------------------------
 @router.get(
     "/",
@@ -112,7 +107,7 @@ def get_all_summaries(db: Session = Depends(get_db)):
 
 
 # ----------------------------------------------------
-# GET ALL SUMMARIES FOR A SPECIFIC USER (View Permission)
+# GET ALL SUMMARIES FOR USER
 # ----------------------------------------------------
 @router.get(
     "/user/{user_id}",
@@ -120,7 +115,6 @@ def get_all_summaries(db: Session = Depends(get_db)):
     dependencies=[Depends(require_view_permission(ATTENDANCE_MENU_ID))]
 )
 def get_summaries_for_user(user_id: int, db: Session = Depends(get_db)):
-
     summaries = db.query(Attendance).filter(Attendance.user_id == user_id).all()
 
     if not summaries:
@@ -130,7 +124,7 @@ def get_summaries_for_user(user_id: int, db: Session = Depends(get_db)):
 
 
 # ----------------------------------------------------
-# DELETE SUMMARY BY ID (Delete Permission)
+# DELETE SUMMARY
 # ----------------------------------------------------
 @router.delete(
     "/delete/{attendance_id}",
@@ -141,7 +135,6 @@ def delete_summary(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
-
     summary = db.query(Attendance).filter(Attendance.id == attendance_id).first()
 
     if not summary:
@@ -156,7 +149,7 @@ def delete_summary(
 
 
 # ----------------------------------------------------
-# ⭐ NEW FEATURE — DAILY DETAILED VIEW (View Permission)
+# ⭐ DAILY ATTENDANCE VIEW
 # ----------------------------------------------------
 @router.get(
     "/daily/{user_id}/{year}/{month}",
@@ -172,18 +165,17 @@ def get_daily_attendance(user_id: int, year: int, month: int, db: Session = Depe
     _, days_in_month = calendar.monthrange(year, month)
     month_end = date(year, month, days_in_month)
 
-    # Fetch punches
+    # ------------------ Punches ------------------
     punches = db.query(AttendancePunch).filter(
         AttendancePunch.bio_id == user.biometric_id,
-        AttendancePunch.punch_date >= month_start,
-        AttendancePunch.punch_date <= month_end
+        AttendancePunch.punch_date.between(month_start, month_end)
     ).all()
 
     punch_map = {}
     for p in punches:
         punch_map.setdefault(p.punch_date, []).append(p)
 
-    # Leaves
+    # ------------------ Leaves ------------------
     leaves = db.query(LeaveMaster).filter(
         LeaveMaster.user_id == user_id,
         LeaveMaster.status == "approved",
@@ -199,104 +191,114 @@ def get_daily_attendance(user_id: int, year: int, month: int, db: Session = Depe
             leave_map[d] = l
             d += timedelta(days=1)
 
-    # Permissions
+    # ------------------ Permissions ------------------
     permissions = db.query(Permission).filter(
         Permission.user_id == user_id,
-        Permission.date >= month_start,
-        Permission.date <= month_end,
+        Permission.date.between(month_start, month_end),
         Permission.status == "approved"
     ).all()
 
     permission_map = {p.date: p for p in permissions}
 
-    # Holidays
+    # ------------------ Holidays & Week Offs ------------------
     holiday_dates = {
         h.date for h in db.query(Holiday)
-        .filter(Holiday.date >= month_start, Holiday.date <= month_end)
+        .filter(Holiday.date.between(month_start, month_end))
         .all()
     }
 
-    # Sundays
-    sundays = {
+    weekoffs = {
         month_start + timedelta(days=i)
         for i in range(days_in_month)
         if (month_start + timedelta(days=i)).weekday() == 6
     }
 
-    # ------------------------------
-    # BUILD DAYWISE RESULT
-    # ------------------------------
+    # ------------------ Build Response ------------------
     daywise = []
 
     for i in range(days_in_month):
         day = month_start + timedelta(days=i)
+        weekday_name = day.strftime("%A")
 
         punches_today = sorted(punch_map.get(day, []), key=lambda x: x.punch_time)
         punch_in = punches_today[0].punch_time if len(punches_today) >= 1 else None
         punch_out = punches_today[-1].punch_time if len(punches_today) >= 2 else None
 
         status = "Absent"
+        status_code = "A"
+
         worked_minutes = late = early_exit = overtime = 0
         leave_type = None
         permission_info = None
 
-        # Holiday
         if day in holiday_dates:
             status = "Holiday"
+            status_code = "HLD"
 
-        # Sunday
-        elif day in sundays:
-            status = "Sunday"
+        elif day in weekoffs:
+            status = "Week Off"
+            status_code = "WO"
 
-        # Leave
         elif day in leave_map:
             leave = leave_map[day]
             leave_type = leave.leave_type
-            status = "Half-Day Leave" if leave.is_half_day else "Full-Day Leave"
+            if leave.is_half_day:
+                status = "Half-Day Leave"
+                status_code = "HL"
+            else:
+                status = "Full-Day Leave"
+                status_code = "L"
 
-        # Permission
-        elif day in permission_map:
+        if day in permission_map:
             p = permission_map[day]
             permission_info = {
                 "from": str(p.from_time),
                 "to": str(p.to_time),
                 "reason": p.reason
             }
-            status = "Permission"
 
-        else:
-            # Punch logic
-            if punch_in and punch_out:
-                in_dt = datetime.combine(day, punch_in)
-                out_dt = datetime.combine(day, punch_out)
+        if punch_in and punch_out:
+            in_dt = datetime.combine(day, punch_in)
+            out_dt = datetime.combine(day, punch_out)
 
-                if out_dt < in_dt:
-                    out_dt += timedelta(days=1)
+            if out_dt < in_dt:
+                out_dt += timedelta(days=1)
 
-                worked_minutes = int((out_dt - in_dt).total_seconds() / 60)
+            worked_minutes = int((out_dt - in_dt).total_seconds() / 60)
 
-                shift_start = datetime.combine(day, datetime.strptime("09:00", "%H:%M").time())
-                shift_end = datetime.combine(day, datetime.strptime("17:00", "%H:%M").time())
+            shift_start = datetime.combine(day, datetime.strptime("09:00", "%H:%M").time())
+            shift_end = datetime.combine(day, datetime.strptime("17:00", "%H:%M").time())
 
-                if in_dt > shift_start:
-                    late = int((in_dt - shift_start).total_seconds() / 60)
+            if in_dt > shift_start:
+                late = int((in_dt - shift_start).total_seconds() / 60)
 
-                if out_dt < shift_end:
-                    early_exit = int((shift_end - out_dt).total_seconds() / 60)
+            if out_dt < shift_end:
+                early_exit = int((shift_end - out_dt).total_seconds() / 60)
 
-                if out_dt > shift_end:
-                    overtime = int((out_dt - shift_end).total_seconds() / 60)
+            if out_dt > shift_end:
+                overtime = int((out_dt - shift_end).total_seconds() / 60)
 
-                if worked_minutes >= 480 * 0.8:
-                    status = "Present"
-                elif worked_minutes >= 480 * 0.5:
-                    status = "Half"
+            if worked_minutes >= 480 * 0.8:
+                if permission_info:
+                    status = "Permission Present"
+                    status_code = "PP"
                 else:
-                    status = "Absent"
+                    status = "Present"
+                    status_code = "P"
+
+            elif worked_minutes >= 480 * 0.5:
+                if permission_info:
+                    status = "Permission Half-Day"
+                    status_code = "PH"
+                else:
+                    status = "Half Day"
+                    status_code = "H"
 
         daywise.append({
             "date": str(day),
+            "weekday": weekday_name,
             "status": status,
+            "status_code": status_code,
             "punch_in": str(punch_in) if punch_in else None,
             "punch_out": str(punch_out) if punch_out else None,
             "worked_minutes": worked_minutes,

@@ -1,42 +1,38 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime, date as DateType, time as TimeType
-from typing import Optional
+from typing import Optional, Literal
 
 
-# ----------- Base Schema -----------
+# ----------- Base Schema -----------  
 class AttendancePunchBase(BaseModel):
     bio_id: str
     punch_date: DateType
     punch_time: TimeType
-    punch_type: Optional[str] = None   # IN / OUT / NA
+    punch_type: Literal["IN", "OUT"] = Field(...)  # ✅ REQUIRED & VALIDATED
 
 
-# ----------- Create Schema -----------
+# ----------- Create Schema -----------  
 class AttendancePunchCreate(AttendancePunchBase):
-    pass   # created_by is handled internally, not from user input
+    pass
 
 
-# ----------- Update Schema -----------
+# ----------- Update Schema -----------  
 class AttendancePunchUpdate(BaseModel):
     punch_date: Optional[DateType] = None
     punch_time: Optional[TimeType] = None
-    punch_type: Optional[str] = None
-    # modified_by removed from input as per your requirement
+    punch_type: Optional[Literal["IN", "OUT"]] = None
 
 
-# ----------- Response Schema -----------
+# ----------- Response Schema -----------  
 class AttendancePunchResponse(BaseModel):
     id: int
-
     bio_id: str
     punch_date: DateType
     punch_time: TimeType
-    punch_type: Optional[str]
+    punch_type: str
 
-    # >>> Audit Fields Only in Response <<<
     created_by: Optional[str]
     modified_by: Optional[str]
-
     created_at: Optional[datetime]
     modified_at: Optional[datetime]
 

@@ -15,10 +15,11 @@ from app.schema.leave_balance_schema import (
 
 router = APIRouter(prefix="/leave-balances", tags=["Leave Balances"])
 
-@router.post(
-    "/",
-    response_model=LeaveBalanceResponse
-)
+
+# =================================================
+# CREATE LEAVE BALANCE
+# =================================================
+@router.post("/", response_model=LeaveBalanceResponse)
 def create_leave_balance(
     user_id: int,
     leave_type_id: int,
@@ -28,15 +29,11 @@ def create_leave_balance(
 ):
     year = date.today().year
 
-    existing = (
-        db.query(LeaveBalance)
-        .filter_by(
-            user_id=user_id,
-            leave_type_id=leave_type_id,
-            year=year
-        )
-        .first()
-    )
+    existing = db.query(LeaveBalance).filter_by(
+        user_id=user_id,
+        leave_type_id=leave_type_id,
+        year=year
+    ).first()
 
     if existing:
         raise HTTPException(400, "Leave balance already exists")
@@ -48,7 +45,8 @@ def create_leave_balance(
         allocated=allocated,
         used=0.0,
         pending=0.0,
-        balance=allocated
+        balance=allocated,
+        created_by=current_user.first_name   # ✅ FIX
     )
 
     db.add(balance)
@@ -57,10 +55,11 @@ def create_leave_balance(
 
     return balance
 
-@router.get(
-    "/me",
-    response_model=LeaveBalanceListResponse
-)
+
+# =================================================
+# GET MY LEAVE BALANCES
+# =================================================
+@router.get("/me", response_model=LeaveBalanceListResponse)
 def get_my_leave_balances(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -93,10 +92,11 @@ def get_my_leave_balances(
         ]
     )
 
-@router.get(
-    "/user/{user_id}",
-    response_model=LeaveBalanceListResponse
-)
+
+# =================================================
+# GET USER LEAVE BALANCES (ADMIN)
+# =================================================
+@router.get("/user/{user_id}", response_model=LeaveBalanceListResponse)
 def get_user_leave_balances(
     user_id: int,
     db: Session = Depends(get_db),
@@ -134,10 +134,11 @@ def get_user_leave_balances(
         ]
     )
 
-@router.put(
-    "/{balance_id}",
-    response_model=LeaveBalanceResponse
-)
+
+# =================================================
+# UPDATE LEAVE BALANCE
+# =================================================
+@router.put("/{balance_id}", response_model=LeaveBalanceResponse)
 def update_leave_balance(
     balance_id: int,
     allocated: float | None = None,
@@ -159,15 +160,22 @@ def update_leave_balance(
     if pending is not None:
         balance.pending = pending
 
-    # ✅ Always recalculate balance
+    # ✅ Always recalculate
     balance.used = min(balance.used, balance.allocated)
     balance.pending = max(0.0, balance.pending)
     balance.balance = balance.allocated - balance.used
+
+    # ✅ FIX
+    balance.updated_by = current_user.first_name
 
     db.commit()
     db.refresh(balance)
     return balance
 
+
+# =================================================
+# DELETE LEAVE BALANCE
+# =================================================
 @router.delete("/{balance_id}")
 def delete_leave_balance(
     balance_id: int,

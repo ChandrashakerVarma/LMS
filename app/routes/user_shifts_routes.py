@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-from datetime import datetime
+from datetime import date
+from calendar import monthrange
 
 from app.database import get_db
 from app.models.user_shifts_m import UserShift
@@ -29,7 +30,9 @@ router = APIRouter(prefix="/user_shifts", tags=["User Shifts"])
 MENU_ID = 42
 
 
-# ➕ Assign Shift Automatically From Roster
+# =====================================================
+# ➕ ASSIGN SHIFT FOR A SINGLE DAY (Existing Logic)
+# =====================================================
 @router.post(
     "/",
     response_model=UserShiftResponse,
@@ -41,7 +44,6 @@ def assign_shift(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
-    # Validate User
     user = db.query(User).filter(User.id == user_shift.user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -76,7 +78,67 @@ def assign_shift(
     return new_assignment
 
 
-# 📋 Get All User Shifts
+# =====================================================
+# ➕ ASSIGN SHIFTS FOR A FULL MONTH (NEW)
+# =====================================================
+@router.post(
+    "/assign-month/{user_id}/{year}/{month}",
+    dependencies=[Depends(require_create_permission(MENU_ID))],
+    operation_id="assign_shift_for_month"
+)
+def assign_shift_for_month(
+    user_id: int,
+    year: int,
+    month: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user)
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user or not user.shift_roster_id:
+        raise HTTPException(status_code=400, detail="Invalid user or shift roster")
+
+    days_in_month = monthrange(year, month)[1]
+    created = 0
+
+    for day in range(1, days_in_month + 1):
+        current_date = date(year, month, day)
+        weekday = current_date.isoweekday()
+
+        roster_detail = db.query(ShiftRosterDetail).filter(
+            ShiftRosterDetail.shift_roster_id == user.shift_roster_id,
+            ShiftRosterDetail.week_day_id == weekday
+        ).first()
+
+        if not roster_detail:
+            continue
+
+        exists = db.query(UserShift).filter(
+            UserShift.user_id == user_id,
+            UserShift.assigned_date == current_date
+        ).first()
+
+        if exists:
+            continue
+
+        db.add(UserShift(
+            user_id=user_id,
+            shift_id=roster_detail.shift_id,
+            assigned_date=current_date,
+            created_by=current_user.first_name
+        ))
+        created += 1
+
+    db.commit()
+
+    return {
+        "message": "Monthly shifts assigned successfully",
+        "records_created": created
+    }
+
+
+# =====================================================
+# 📋 GET ALL USER SHIFTS
+# =====================================================
 @router.get(
     "/",
     response_model=List[UserShiftResponse],
@@ -87,7 +149,33 @@ def get_all_user_shifts(db: Session = Depends(get_db)):
     return db.query(UserShift).all()
 
 
-# 🔍 Get Single User Shift
+# =====================================================
+# 📅 GET USER SHIFTS FOR A MONTH (NEW)
+# =====================================================
+@router.get(
+    "/user/{user_id}/{year}/{month}",
+    response_model=List[UserShiftResponse],
+    dependencies=[Depends(require_view_permission(MENU_ID))],
+    operation_id="get_user_shifts_for_month"
+)
+def get_user_shifts_for_month(
+    user_id: int,
+    year: int,
+    month: int,
+    db: Session = Depends(get_db)
+):
+    start_date = date(year, month, 1)
+    end_date = date(year, month, monthrange(year, month)[1])
+
+    return db.query(UserShift).filter(
+        UserShift.user_id == user_id,
+        UserShift.assigned_date.between(start_date, end_date)
+    ).all()
+
+
+# =====================================================
+# 🔍 GET SINGLE USER SHIFT
+# =====================================================
 @router.get(
     "/{assignment_id}",
     response_model=UserShiftResponse,
@@ -101,7 +189,9 @@ def get_user_shift(assignment_id: int, db: Session = Depends(get_db)):
     return assignment
 
 
-# ✏️ Update User Shift
+# =====================================================
+# ✏️ UPDATE USER SHIFT
+# =====================================================
 @router.put(
     "/{assignment_id}",
     response_model=UserShiftResponse,
@@ -118,10 +208,8 @@ def update_user_shift(
     if not assignment:
         raise HTTPException(status_code=404, detail="User shift not found")
 
-    # Reassign shift if date changed
     if updated_data.assigned_date:
         user = db.query(User).filter(User.id == assignment.user_id).first()
-
         weekday = updated_data.assigned_date.isoweekday()
 
         roster_detail = db.query(ShiftRosterDetail).filter(
@@ -132,25 +220,25 @@ def update_user_shift(
         if not roster_detail:
             raise HTTPException(
                 status_code=404,
-                detail=f"No shift found for weekday {weekday} in user's roster"
+                detail=f"No shift found for weekday {weekday}"
             )
 
         assignment.shift_id = roster_detail.shift_id
         assignment.assigned_date = updated_data.assigned_date
 
-    # Update is_active
     if updated_data.is_active is not None:
         assignment.is_active = updated_data.is_active
 
     assignment.modified_by = current_user.first_name
-
     db.commit()
     db.refresh(assignment)
 
     return assignment
 
 
-# ❌ Delete User Shift
+# =====================================================
+# ❌ DELETE USER SHIFT
+# =====================================================
 @router.delete(
     "/{assignment_id}",
     dependencies=[Depends(require_delete_permission(MENU_ID))],
